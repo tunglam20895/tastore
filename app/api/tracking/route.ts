@@ -14,7 +14,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true })
     }
 
-    await supabase.from('luot_truy_cap').insert({ trang, user_agent: userAgent, ref })
+    const { error } = await supabase.from('luot_truy_cap').insert({ trang, user_agent: userAgent, ref })
+    if (error) console.error('Tracking insert error:', error.message)
     return NextResponse.json({ success: true })
   } catch {
     // Tracking không block

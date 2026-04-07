@@ -6,13 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="9808f6dd-980e-420b-b86b-d604628d875d" name="Changes" comment="update dashboard">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/admin/dashboard/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/dashboard/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/khach-hang/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/khach-hang/route.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/api/thong-ke/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/thong-ke/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/admin/Pagination.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/admin/Pagination.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/layout/Footer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/layout/Footer.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/layout/Header.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/layout/Header.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/shop/ProductCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/shop/ProductCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/api/tracking/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/tracking/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/supabase.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/supabase.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/next.config.mjs" beforeDir="false" afterPath="$PROJECT_DIR$/next.config.mjs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,6 +32,9 @@
     "accountId": "f2a747cf-b7b7-4c9c-a9e7-8dd56a3db76b"
   }
 }]]></component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/node_modules/@types/node/process.d.ts" root0="SKIP_INSPECTION" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 3
 }</component>
@@ -59,7 +60,7 @@
     "nodejs_package_manager_path": "npm",
     "npm.build.executor": "Run",
     "npm.dev.executor": "Run",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "settings.editor.selected.configurable": "preferences.lookFeel",
     "ts.external.directory.path": "G:\\TA_STORE\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
   }
@@ -111,7 +112,7 @@
       <updated>1775467592164</updated>
       <workItem from="1775467593549" duration="4299000" />
       <workItem from="1775525809036" duration="73000" />
-      <workItem from="1775525893096" duration="17152000" />
+      <workItem from="1775525893096" duration="19441000" />
     </task>
     <task id="LOCAL-00001" summary="update">
       <option name="closed" value="true" />
@@ -145,7 +146,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775547545201</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="update dashboard">
+      <option name="closed" value="true" />
+      <created>1775548196397</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1775548196397</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -172,7 +181,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/next.config.mjs</url>
-          <line>10</line>
+          <line>17</line>
           <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="1" />
         </line-breakpoint>

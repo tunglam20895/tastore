@@ -44,13 +44,13 @@ export async function GET(request: NextRequest) {
       donHangToday,
       donHangThang,
       donHangThangTruoc,
+      donHangTheoNgay,
       sanPhamDangBan,
       sanPhamHetHang,
       trackingToday,
       trackingThang,
       trackingTotal,
       trackingTheoNgay,
-      trackingTopTrang,
     ] = await Promise.all([
       // Tất cả đơn hàng (để tính tổng + bán chạy + danh mục)
       supabase.from('don_hang').select('tong_tien, trang_thai, san_pham, thoi_gian'),
@@ -63,6 +63,9 @@ export async function GET(request: NextRequest) {
       // Đơn tháng trước
       supabase.from('don_hang').select('tong_tien, trang_thai')
         .gte('thoi_gian', prevMonthStart).lte('thoi_gian', prevMonthEnd),
+      // Đơn hàng 7 ngày (group JS-side)
+      supabase.from('don_hang').select('thoi_gian, trang_thai')
+        .gte('thoi_gian', sevenDaysAgo.toISOString()),
       // SP đang bán
       supabase.from('san_pham').select('id', { count: 'exact', head: true }).eq('con_hang', true),
       // SP hết hàng
@@ -78,8 +81,6 @@ export async function GET(request: NextRequest) {
       // Tracking 7 ngày theo ngày (lấy raw rồi group JS-side)
       supabase.from('luot_truy_cap').select('thoi_gian')
         .gte('thoi_gian', sevenDaysAgo.toISOString()),
-      // Top trang
-      supabase.from('luot_truy_cap').select('trang'),
     ])
 
     // --- Doanh thu ---
@@ -173,32 +174,31 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.soLuong - a.soLuong)
       .slice(0, 3)
 
-    // --- Tracking 7 ngày theo ngày ---
-    const trackingRows = trackingTheoNgay.data || []
-    const chartData: { ngay: string; luot: number }[] = []
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now)
-      d.setDate(d.getDate() - i)
-      const label = `${d.getDate()}/${d.getMonth() + 1}`
-      const dayStart = new Date(d); dayStart.setHours(0, 0, 0, 0)
-      const dayEnd = new Date(d); dayEnd.setHours(23, 59, 59, 999)
-      const luot = trackingRows.filter((r) => {
-        const t = new Date(r.thoi_gian as string)
-        return t >= dayStart && t <= dayEnd
-      }).length
-      chartData.push({ ngay: label, luot })
+    // --- Helper group theo ngày ---
+    const groupByDay = (rows: { thoi_gian: unknown }[]) => {
+      const result: { ngay: string; count: number }[] = []
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now)
+        d.setDate(d.getDate() - i)
+        const label = `${d.getDate()}/${d.getMonth() + 1}`
+        const dayStart = new Date(d); dayStart.setHours(0, 0, 0, 0)
+        const dayEnd = new Date(d); dayEnd.setHours(23, 59, 59, 999)
+        const count = rows.filter((r) => {
+          const t = new Date(r.thoi_gian as string)
+          return t >= dayStart && t <= dayEnd
+        }).length
+        result.push({ ngay: label, count })
+      }
+      return result
     }
 
-    // --- Top trang ---
-    const trangCount: Record<string, number> = {}
-    for (const row of trackingTopTrang.data || []) {
-      const t = (row.trang as string) || '/'
-      trangCount[t] = (trangCount[t] || 0) + 1
-    }
-    const topTrang = Object.entries(trangCount)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([trang, luot]) => ({ trang, luot }))
+    // --- Tracking 7 ngày ---
+    const trackingRows = trackingTheoNgay.data || []
+    const chartData = groupByDay(trackingRows).map(r => ({ ngay: r.ngay, luot: r.count }))
+
+    // --- Đơn hàng 7 ngày ---
+    const donHangRows = (donHangTheoNgay.data || []).filter(o => o.trang_thai !== 'Huỷ')
+    const donHangChartData = groupByDay(donHangRows).map(r => ({ ngay: r.ngay, don: r.count }))
 
     return NextResponse.json({
       success: true,
@@ -230,8 +230,8 @@ export async function GET(request: NextRequest) {
           thangNay: trackingThang.count ?? 0,
           tongCong: trackingTotal.count ?? 0,
           chartData,
-          topTrang,
         },
+        donHangChart: donHangChartData,
       },
     })
   } catch (error) {

@@ -1,5 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.cache = false;
+      config.watchOptions = { poll: 500, aggregateTimeout: 200 };
+    }
+    return config;
+  },
   images: {
     remotePatterns: [
       {

@@ -34,8 +34,8 @@ type ThongKe = {
     thangNay: number;
     tongCong: number;
     chartData: { ngay: string; luot: number }[];
-    topTrang: { trang: string; luot: number }[];
   };
+  donHangChart: { ngay: string; don: number }[];
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -92,14 +92,14 @@ function StatCard({
 }
 
 // ─── Custom Tooltip recharts ──────────────────────────────────────────────────
-function CustomTooltip({ active, payload, label }: {
-  active?: boolean; payload?: { value: number }[]; label?: string;
+function CustomTooltip({ active, payload, label, donVi = "lượt" }: {
+  active?: boolean; payload?: { value: number }[]; label?: string; donVi?: string;
 }) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-espresso text-cream text-xs px-3 py-2 rounded shadow-lg">
       <p className="font-medium">{label}</p>
-      <p>{fmtNum(payload[0].value)} lượt</p>
+      <p>{fmtNum(payload[0].value)} {donVi}</p>
     </div>
   );
 }
@@ -183,7 +183,7 @@ export default function DashboardPage() {
         <KpiCard
           label="Lượt truy cập hôm nay"
           value={d ? fmtNum(d.tracking.homNay) : "—"}
-          sub={`Tháng này: ${d ? fmtNum(d.tracking.thangNay) : "—"} lượt`}
+          sub={`Tổng: ${d ? fmtNum(d.tracking.tongCong) : "—"} • Tháng: ${d ? fmtNum(d.tracking.thangNay) : "—"}`}
           accent="border-stone-400"
           loading={loading}
         />
@@ -208,38 +208,29 @@ export default function DashboardPage() {
         <StatCard label={`Đơn huỷ (${d?.donHang.tiLeHuy ?? 0}%)`} value={d ? fmtNum(d.donHang.huy) : "—"} color="text-rose" loading={loading} />
       </div>
 
-      {/* ── ROW 3: Biểu đồ + Top trang ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        {/* Biểu đồ 7 ngày — 60% */}
-        <div className="lg:col-span-3 bg-white border border-stone-300 rounded-xl p-6 shadow-md">
-          <h2 className="text-xs uppercase tracking-widest text-stone-500 font-medium mb-6">
-            Lượt truy cập 7 ngày qua
-          </h2>
+      {/* ── ROW 3: 2 biểu đồ ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Lượt truy cập 7 ngày */}
+        <div className="bg-white border border-stone-300 rounded-xl p-6 shadow-md">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xs uppercase tracking-widest text-stone-500 font-medium">
+              Lượt truy cập 7 ngày qua
+            </h2>
+            <span className="text-xs text-stone-500 font-medium tabular-nums">
+              Tổng: {d ? fmtNum(d.tracking.tongCong) : "—"}
+            </span>
+          </div>
           {loading ? (
-            <Skel className="h-48 w-full" />
+            <Skel className="h-44 w-full" />
           ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={d?.tracking.chartData || []} barSize={28}>
-                <XAxis
-                  dataKey="ngay"
-                  tick={{ fontSize: 11, fill: "#8C7B72" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  allowDecimals={false}
-                  tick={{ fontSize: 11, fill: "#8C7B72" }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={28}
-                />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: "#FAF8F5" }} />
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={d?.tracking.chartData || []} barSize={24}>
+                <XAxis dataKey="ngay" tick={{ fontSize: 11, fill: "#5E4E46" }} axisLine={false} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#5E4E46" }} axisLine={false} tickLine={false} width={28} />
+                <Tooltip content={<CustomTooltip donVi="lượt" />} cursor={{ fill: "#EDE8DF" }} />
                 <Bar dataKey="luot" radius={[4, 4, 0, 0]}>
                   {(d?.tracking.chartData || []).map((_, i, arr) => (
-                    <Cell
-                      key={i}
-                      fill={i === arr.length - 1 ? "#2C1A12" : "#E8D5C4"}
-                    />
+                    <Cell key={i} fill={i === arr.length - 1 ? "#1A0A04" : "#C8A991"} />
                   ))}
                 </Bar>
               </BarChart>
@@ -247,47 +238,31 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Top trang — 40% */}
-        <div className="lg:col-span-2 bg-white border border-stone-300 rounded-xl p-6 shadow-md">
-          <h2 className="text-xs uppercase tracking-widest text-stone-500 font-medium mb-5">
-            Trang xem nhiều nhất
-          </h2>
+        {/* Đơn hàng 7 ngày */}
+        <div className="bg-white border border-stone-300 rounded-xl p-6 shadow-md">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xs uppercase tracking-widest text-stone-500 font-medium">
+              Đơn hàng 7 ngày qua
+            </h2>
+            <span className="text-xs text-stone-500 font-medium tabular-nums">
+              Tổng: {d ? fmtNum(d.donHang.tongCong) : "—"} đơn
+            </span>
+          </div>
           {loading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skel key={i} className="h-8 w-full" />
-              ))}
-            </div>
+            <Skel className="h-44 w-full" />
           ) : (
-            <div className="space-y-2.5">
-              {(d?.tracking.topTrang || []).map((row, i) => {
-                const maxLuot = d?.tracking.topTrang[0]?.luot || 1;
-                const pct = Math.round((row.luot / maxLuot) * 100);
-                return (
-                  <div key={row.trang}>
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="text-stone-600 truncate max-w-[160px]" title={row.trang}>
-                        <span className="text-stone-300 mr-1.5">{i + 1}.</span>
-                        {row.trang === "/" ? "Trang chủ" : row.trang}
-                      </span>
-                      <span className="font-medium text-espresso ml-2">{fmtNum(row.luot)}</span>
-                    </div>
-                    <div className="h-1 bg-blush rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-espresso/40 rounded-full transition-all"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-              {(!d?.tracking.topTrang || d.tracking.topTrang.length === 0) && (
-                <p className="text-xs text-stone-500 py-4 text-center">Chưa có dữ liệu</p>
-              )}
-              <p className="text-xs text-stone-500 font-medium pt-2 border-t border-stone-200">
-                Tổng: {d ? fmtNum(d.tracking.tongCong) : "—"} lượt
-              </p>
-            </div>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={d?.donHangChart || []} barSize={24}>
+                <XAxis dataKey="ngay" tick={{ fontSize: 11, fill: "#5E4E46" }} axisLine={false} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#5E4E46" }} axisLine={false} tickLine={false} width={28} />
+                <Tooltip content={<CustomTooltip donVi="đơn" />} cursor={{ fill: "#EDE8DF" }} />
+                <Bar dataKey="don" radius={[4, 4, 0, 0]}>
+                  {(d?.donHangChart || []).map((_, i, arr) => (
+                    <Cell key={i} fill={i === arr.length - 1 ? "#1A0A04" : "#A8705F"} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           )}
         </div>
       </div>
