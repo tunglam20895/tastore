@@ -1,36 +1,133 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TRANH ANH STORE
 
-## Getting Started
+Website bán hàng cho shop tranh nghệ thuật.
 
-First, run the development server:
+**Stack:** Next.js 14 (App Router) + Google Sheets + Cloudinary + Telegram Bot + Gemini AI
+
+---
+
+## Setup
+
+### 1. Cài đặt dependencies
+
+```bash
+npm install
+```
+
+### 2. Cấu hình .env.local
+
+```bash
+cp .env.example .env.local
+```
+
+Điền đầy đủ các giá trị trong `.env.local`
+
+### 3. Chạy dev server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Mở [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Google Sheets Setup
 
-## Learn More
+1. Truy cập [Google Cloud Console](https://console.cloud.google.com/)
+2. Tạo project mới → Enable **Google Sheets API**
+3. Tạo **Service Account** → tạo JSON key → copy `client_email` và `private_key`
+4. Tạo Google Sheet mới → **Share** sheet cho email service account (Editor)
+5. Tạo 4 tabs: `SanPham`, `DonHang`, `DanhMuc`, `CaiDat`
 
-To learn more about Next.js, take a look at the following resources:
+### Headers cho từng tab:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Tab | Headers (hàng 1) |
+|-----|------------------|
+| **SanPham** | ID \| Ten \| Gia \| AnhURL \| MoTa \| DanhMuc \| ConHang |
+| **DonHang** | ID \| TenKH \| SDT \| DiaChi \| SanPham \| TongTien \| ThoiGian \| TrangThai |
+| **DanhMuc** | ID \| TenDanhMuc |
+| **CaiDat** | Key \| Value (dòng 2-6: LogoURL, TenShop, SDT, DiaChi, Email) |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+> **Lưu ý:** `GOOGLE_PRIVATE_KEY` trong `.env.local` phải giữ nguyên `\n`, bao quanh bằng quotes:
+> ```
+> GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----\n"
+> ```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Telegram Bot Setup
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Nhắn `/newbot` tới [@BotFather](https://t.me/BotFather)
+2. Làm theo hướng dẫn để nhận `BOT_TOKEN`
+3. Nhắn tin cho bot của bạn
+4. Truy cập `https://api.telegram.org/bot{TOKEN}/getUpdates` → tìm `chat.id`
+5. Cấu hình webhook (tự động khi có đơn hàng mới)
+
+---
+
+## Cloudinary Setup
+
+1. Đăng ký tại [cloudinary.com](https://cloudinary.com) (free tier: 25GB storage, 25GB bandwidth/tháng)
+2. Vào Dashboard → copy `Cloud Name`, `API Key`, `API Secret`
+
+---
+
+## Gemini AI Setup
+
+1. Truy cập [Google AI Studio](https://aistudio.google.com/)
+2. Tạo API key → copy vào `GEMINI_API_KEY`
+
+---
+
+## Admin Panel
+
+1. Truy cập `/admin`
+2. Nhập mật khẩu (từ `ADMIN_PASSWORD` trong `.env.local`)
+3. Các chức năng:
+   - **Upload/thay logo shop** — lưu Cloudinary, URL ghi vào Google Sheet
+   - **Thêm/sửa/xóa sản phẩm** — upload ảnh lên Cloudinary
+   - **Tạo mô tả AI** — Gemini tự động viết mô tả từ tên sản phẩm
+   - **Xem đơn hàng** — lọc theo trạng thái
+   - **Cập nhật trạng thái** — Mới / Đang xử lý / Đã giao / Huỷ
+   - **Cài đặt shop** — tên, SĐT, địa chỉ, email, logo
+
+---
+
+## Deploy lên Vercel
+
+1. Push code lên GitHub
+2. Vào [vercel.com](https://vercel.com) → Import repository
+3. Thêm tất cả environment variables trong **Settings → Environment Variables**
+4. Deploy
+
+> **Lưu ý:** `GOOGLE_PRIVATE_KEY` paste nguyên string có `\n`, đặt trong quotes trên Vercel.
+
+---
+
+## Cấu trúc thư mục
+
+```
+├── app/
+│   ├── layout.tsx             # Root layout (Header + Footer)
+│   ├── page.tsx               # Trang chủ - danh sách sản phẩm
+│   ├── san-pham/[id]/         # Chi tiết sản phẩm
+│   ├── gio-hang/              # Giỏ hàng (localStorage)
+│   ├── dat-hang/              # Form đặt hàng
+│   ├── admin/                 # Admin panel (middleware bảo vệ)
+│   │   ├── login/             # Đăng nhập
+│   │   ├── dashboard/         # Tổng quan
+│   │   ├── san-pham/          # Quản lý sản phẩm
+│   │   ├── don-hang/          # Quản lý đơn hàng
+│   │   └── cai-dat/           # Cài đặt shop
+│   └── api/                   # API routes (serverless)
+├── components/
+│   ├── layout/                # Header, Footer
+│   ├── shop/                  # ProductCard, ProductGrid, CartItem, OrderForm
+│   └── admin/                 # ProductForm, OrderTable, LogoUpload, ImageUpload, AdminNav
+├── lib/                       # google-sheets, cloudinary, telegram, gemini, auth
+├── types/                     # TypeScript types
+├── middleware.ts              # Bảo vệ admin routes
+├── .env.example               # Mẫu env
+└── CLAUDE.md                  # Documentation
+```
