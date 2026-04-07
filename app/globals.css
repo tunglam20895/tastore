@@ -6,11 +6,11 @@
 
 @layer base {
   :root {
-    --color-cream: #FAF8F5;
-    --color-blush: #E8D5C4;
-    --color-rose: #C9A99A;
-    --color-espresso: #2C1A12;
-    --color-stone: #8C7B72;
+    --color-cream: #EDE8DF;
+    --color-blush: #C8A991;
+    --color-rose: #A8705F;
+    --color-espresso: #1A0A04;
+    --color-stone: #5E4E46;
     --color-white: #FFFFFF;
   }
 
@@ -22,10 +22,31 @@
 
   h1, h2, h3, .font-heading {
     font-family: 'Cormorant Garamond', Georgia, serif;
+    font-feature-settings: 'lnum' 1;
   }
 }
 
 @layer components {
+  /* Admin card — used across all admin screens */
+  .admin-card {
+    @apply bg-white border border-stone-300 rounded-xl shadow-md;
+  }
+
+  /* Số liệu trong admin dùng DM Sans để tránh chữ La Mã */
+  .stat-number {
+    @apply font-sans font-bold tabular-nums;
+  }
+
+  /* Input admin */
+  .admin-input {
+    @apply w-full border border-stone-300 rounded-lg px-3 py-2 text-sm text-espresso bg-white focus:outline-none focus:border-espresso transition-colors placeholder-stone-400;
+  }
+
+  /* Label admin */
+  .admin-label {
+    @apply block text-xs font-medium text-stone-600 mb-1 uppercase tracking-wider;
+  }
+
   .btn-primary {
     @apply bg-espresso text-cream uppercase tracking-widest text-sm font-medium py-3 px-8 transition-all duration-300 hover:opacity-80;
   }

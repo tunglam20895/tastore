@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyAdminPassword } from '@/lib/auth'
-import type { SanPham } from '@/types'
+import type { SanPham, SizeItem } from '@/types'
 
 function computeGiaHienThi(giaGoc: number, phanTramGiam: number | null): number {
   if (!phanTramGiam) return giaGoc
@@ -24,17 +24,51 @@ function mapRow(row: Record<string, unknown>): SanPham {
     danhMuc: (row.danh_muc as string) || '',
     conHang: row.con_hang as boolean,
     soLuong,
+    sizes: ((row.sizes as Array<{ ten: string; so_luong: number }>) || []).map(
+      (s): SizeItem => ({ ten: s.ten, soLuong: Number(s.so_luong ?? 0) })
+    ),
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const { data, error } = await supabase
-      .from('san_pham')
-      .select('*')
-      .order('created_at', { ascending: false })
+    const { searchParams } = new URL(request.url)
+    const page = searchParams.get('page') ? Math.max(1, parseInt(searchParams.get('page')!)) : null
+    const limit = page ? Math.max(1, parseInt(searchParams.get('limit') || '20')) : null
+    const search = searchParams.get('search') || ''
+    const danhMuc = searchParams.get('danh_muc') || ''
+    const tonKho = searchParams.get('ton_kho') || ''
+    const conHang = searchParams.get('con_hang') || ''
 
+    let query = supabase.from('san_pham').select('*', { count: page ? 'exact' : undefined }).order('created_at', { ascending: false })
+
+    if (search) query = query.ilike('ten', `%${search}%`)
+    if (danhMuc) query = query.eq('danh_muc', danhMuc)
+    if (conHang !== '') query = query.eq('con_hang', conHang === 'true')
+    if (tonKho === 'it') query = query.gte('so_luong', 5).lte('so_luong', 30)
+    else if (tonKho === 'trung_binh') query = query.gt('so_luong', 30).lte('so_luong', 100)
+    else if (tonKho === 'nhieu') query = query.gt('so_luong', 100)
+
+    if (page && limit) {
+      const from = (page - 1) * limit
+      query = query.range(from, from + limit - 1)
+    }
+
+    const { data, error, count } = await query
     if (error) throw error
+
+    if (page && limit) {
+      const total = count ?? 0
+      return NextResponse.json({
+        success: true,
+        data: (data || []).map(mapRow),
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      })
+    }
+
     return NextResponse.json({ success: true, data: (data || []).map(mapRow) })
   } catch (error) {
     console.error('GET /api/san-pham error:', error)
@@ -62,6 +96,7 @@ export async function POST(request: NextRequest) {
         danh_muc: body.danhMuc || null,
         so_luong: soLuong,
         con_hang: soLuong > 0,
+        sizes: (body.sizes || []).map((s: SizeItem) => ({ ten: s.ten, so_luong: s.soLuong })),
       })
       .select()
       .single()

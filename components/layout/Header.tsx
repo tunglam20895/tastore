@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import type { CaiDat } from "@/types";
+import { useSettings } from "@/contexts/SettingsContext";
 
 function BagIcon({ count }: { count: number }) {
   return (
@@ -25,16 +24,9 @@ function BagIcon({ count }: { count: number }) {
 
 export default function Header() {
   const pathname = usePathname();
-  const [settings, setSettings] = useState<CaiDat | null>(null);
+  const { settings } = useSettings();
   const [cartCount, setCartCount] = useState(0);
   const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/cai-dat")
-      .then((res) => res.json())
-      .then((data) => { if (data.success) setSettings(data.data); })
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     try {
@@ -51,7 +43,6 @@ export default function Header() {
 
   if (pathname?.startsWith("/admin")) return null;
 
-  // On home page hero (not yet scrolled), use cream text over the dark hero image
   const isHero = pathname === "/" && !scrolled;
   const navColor = isHero
     ? "text-cream hover:text-cream/70"
@@ -67,7 +58,6 @@ export default function Header() {
     >
       <div className="max-w-7xl mx-auto px-6">
         <div className="relative flex items-center justify-between">
-          {/* Left nav */}
           <nav className="flex items-center gap-8">
             <Link href="/" className={`text-xs uppercase tracking-widest font-medium transition-colors ${navColor}`}>
               Trang Chủ
@@ -77,10 +67,9 @@ export default function Header() {
             </Link>
           </nav>
 
-          {/* Logo — absolutely centered */}
           <Link href="/" className="absolute left-1/2 -translate-x-1/2">
             {settings?.logoURL ? (
-              <Image
+              <img
                 src={settings.logoURL}
                 alt={settings.tenShop || "TRANH ANH STORE"}
                 width={120}
@@ -98,7 +87,6 @@ export default function Header() {
             )}
           </Link>
 
-          {/* Right nav */}
           <nav className="flex items-center gap-8">
             <Link href="/#san-pham" className={`text-xs uppercase tracking-widest font-medium transition-colors ${navColor}`}>
               Sale

@@ -27,12 +27,32 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
     }
 
-    const { data, error } = await supabase
-      .from('ma_giam_gia')
-      .select('*')
-      .order('created_at', { ascending: false })
+    const { searchParams } = new URL(request.url)
+    const page = searchParams.get('page') ? Math.max(1, parseInt(searchParams.get('page')!)) : null
+    const limit = page ? Math.max(1, parseInt(searchParams.get('limit') || '20')) : null
 
+    let query = supabase.from('ma_giam_gia').select('*', { count: page ? 'exact' : undefined }).order('created_at', { ascending: false })
+
+    if (page && limit) {
+      const from = (page - 1) * limit
+      query = query.range(from, from + limit - 1)
+    }
+
+    const { data, error, count } = await query
     if (error) throw error
+
+    if (page && limit) {
+      const total = count ?? 0
+      return NextResponse.json({
+        success: true,
+        data: (data || []).map(mapRow),
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      })
+    }
+
     return NextResponse.json({ success: true, data: (data || []).map(mapRow) })
   } catch (error) {
     console.error('GET /api/ma-giam-gia error:', error)

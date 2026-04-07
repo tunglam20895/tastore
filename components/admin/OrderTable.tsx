@@ -47,7 +47,7 @@ export default function OrderTable({
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-stone-200 text-xs uppercase tracking-widest text-stone-400">
+          <tr className="border-b border-stone-200 bg-stone-100/50 text-xs uppercase tracking-widest text-stone-600 font-medium">
             <th className="text-left py-3 px-4">Mã đơn</th>
             <th className="text-left py-3 px-4">Khách hàng</th>
             <th className="text-left py-3 px-4">SĐT</th>
@@ -67,13 +67,13 @@ export default function OrderTable({
               <>
                 <tr
                   key={order.id}
-                  className="border-b border-stone-100 hover:bg-cream/50 transition-colors cursor-pointer"
+                  className="border-b border-stone-200 hover:bg-stone-100/40 transition-colors cursor-pointer"
                   onClick={() => setExpanded(expanded === order.id ? null : order.id)}
                 >
                   <td className="py-3 px-4 font-mono text-xs text-rose">{order.id}</td>
                   <td className="py-3 px-4 font-medium text-espresso">{order.tenKH}</td>
                   <td className="py-3 px-4 text-stone-500">{order.sdt}</td>
-                  <td className="py-3 px-4 text-stone-400 text-xs">
+                  <td className="py-3 px-4 text-stone-500 text-xs">
                     {order.giaTriGiam > 0 ? `${tamTinh.toLocaleString("vi-VN")}đ` : "—"}
                   </td>
                   <td className="py-3 px-4">
@@ -91,7 +91,7 @@ export default function OrderTable({
                   <td className="py-3 px-4 font-medium text-espresso">
                     {order.tongTien.toLocaleString("vi-VN")}đ
                   </td>
-                  <td className="py-3 px-4 text-stone-400 text-xs">
+                  <td className="py-3 px-4 text-stone-500 text-xs">
                     {new Date(order.thoiGian).toLocaleString("vi-VN")}
                   </td>
                   <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
@@ -121,7 +121,9 @@ export default function OrderTable({
                         {order.sanPham.map((sp, i) => (
                           <div key={i} className="flex justify-between text-sm text-stone-600">
                             <span>
-                              {sp.ten} ×{sp.soLuong}
+                              {sp.ten}
+                              {sp.sizeChon && <span className="ml-2 text-xs bg-blush text-espresso px-1.5 py-0.5">Size: {sp.sizeChon}</span>}
+                              <span className="ml-1">×{sp.soLuong}</span>
                               {sp.phanTramGiam && sp.phanTramGiam > 0 && (
                                 <span className="ml-2 text-xs text-stone-400 line-through">
                                   {sp.giaGoc.toLocaleString("vi-VN")}đ

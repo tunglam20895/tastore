@@ -37,6 +37,11 @@ export default function CartItem({
         <h4 className="font-heading text-base font-light text-espresso line-clamp-2 leading-snug mb-1">
           {item.ten}
         </h4>
+        {item.sizeChon && (
+          <p className="text-xs text-stone-500 mb-1">
+            Size: <span className="font-medium text-espresso">{item.sizeChon}</span>
+          </p>
+        )}
         <div className="flex items-baseline gap-2 mb-4">
           {item.phanTramGiam && item.phanTramGiam > 0 ? (
             <>

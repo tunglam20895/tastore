@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyAdminPassword } from '@/lib/auth'
-import type { SanPham } from '@/types'
+import type { SanPham, SizeItem } from '@/types'
 
 function computeGiaHienThi(giaGoc: number, phanTramGiam: number | null): number {
   if (!phanTramGiam) return giaGoc
@@ -23,6 +23,9 @@ function mapRow(row: Record<string, unknown>): SanPham {
     danhMuc: (row.danh_muc as string) || '',
     conHang: row.con_hang as boolean,
     soLuong: Number(row.so_luong ?? 0),
+    sizes: ((row.sizes as Array<{ ten: string; so_luong: number }>) || []).map(
+      (s): SizeItem => ({ ten: s.ten, soLuong: Number(s.so_luong ?? 0) })
+    ),
   }
 }
 
@@ -50,6 +53,9 @@ export async function PUT(
       updateData.con_hang = soLuong > 0
     } else if (body.conHang !== undefined) {
       updateData.con_hang = body.conHang
+    }
+    if (body.sizes !== undefined) {
+      updateData.sizes = (body.sizes as SizeItem[]).map(s => ({ ten: s.ten, so_luong: s.soLuong }))
     }
 
     const { data, error } = await supabase

@@ -1,3 +1,8 @@
+export type SizeItem = {
+  ten: string
+  soLuong: number
+}
+
 export type SanPham = {
   id: string
   ten: string
@@ -8,7 +13,8 @@ export type SanPham = {
   moTa: string
   danhMuc: string
   conHang: boolean
-  soLuong: number
+  soLuong: number        // tổng tồn kho (= sum(sizes.soLuong) khi có sizes)
+  sizes: SizeItem[]      // [] nếu không quản lý theo size
 }
 
 export type CartItem = {
@@ -19,6 +25,7 @@ export type CartItem = {
   giaHienThi: number
   anhURL: string
   soLuong: number
+  sizeChon: string | null  // size đã chọn, null nếu sản phẩm không có size
 }
 
 export type DonHang = {
@@ -59,6 +66,31 @@ export type MaGiamGia = {
   conHieuLuc: boolean
   ngayHetHan: string | null
   createdAt: string
+}
+
+export type KhachHang = {
+  sdt: string
+  ten: string
+  tongDon: number
+  tongDoanhThu: number
+  trangThai: string
+  ghiChu?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type TrangThaiKH = {
+  id: string
+  ten: string
+  mau: string
+}
+
+export type PaginatedResponse<T> = {
+  data: T[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
 }
 
 export type ApiResponse<T = unknown> = {

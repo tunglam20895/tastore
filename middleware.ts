@@ -21,5 +21,10 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: [
+    // Chỉ bảo vệ admin pages, không bảo vệ API routes (chúng tự xác thực bằng header)
+    "/admin/:path*",
+  ],
+  // Exclude API routes from middleware
+  exclude: ["/api/:path*"],
 };

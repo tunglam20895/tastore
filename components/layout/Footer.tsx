@@ -1,20 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import type { CaiDat } from "@/types";
+import { useSettings } from "@/contexts/SettingsContext";
 
 export default function Footer() {
   const pathname = usePathname();
-  const [settings, setSettings] = useState<CaiDat | null>(null);
-
-  useEffect(() => {
-    fetch("/api/cai-dat")
-      .then((res) => res.json())
-      .then((data) => { if (data.success) setSettings(data.data); })
-      .catch(() => {});
-  }, []);
+  const { settings } = useSettings();
 
   if (pathname.startsWith("/admin")) return null;
 
@@ -23,7 +16,6 @@ export default function Footer() {
   return (
     <footer className="bg-espresso text-cream">
       <div className="max-w-7xl mx-auto px-6 pt-16 pb-10">
-        {/* Brand */}
         <div className="text-center mb-12">
           <h3 className="font-heading text-2xl font-light tracking-[0.3em] uppercase text-cream mb-3">
             {tenShop}
@@ -35,7 +27,6 @@ export default function Footer() {
 
         <div className="w-full h-px bg-cream/10 mb-12" />
 
-        {/* Columns */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-center md:text-left">
           <div>
             <h4 className="text-xs uppercase tracking-widest font-medium text-cream/40 mb-5">

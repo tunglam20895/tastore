@@ -1,32 +1,75 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import LogoUpload from "@/components/admin/LogoUpload";
-import type { CaiDat } from "@/types";
+import { useSettings } from "@/contexts/SettingsContext";
+import type { TrangThaiKH } from "@/types";
 
 export default function AdminSettingsPage() {
-  const [settings, setSettings] = useState<CaiDat>({
-    logoURL: "", tenShop: "TRANH ANH STORE", sdt: "", diaChi: "", email: "",
-  });
-  const [loading, setLoading] = useState(true);
+  const { settings, refresh } = useSettings();
+  const [localSettings, setLocalSettings] = useState(settings);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [adminPassword, setAdminPassword] = useState<string>("");
+
+  // Trạng thái KH
+  const [trangThaiList, setTrangThaiList] = useState<TrangThaiKH[]>([]);
+  const [newTenTT, setNewTenTT] = useState("");
+  const [newMauTT, setNewMauTT] = useState("#8C7B72");
+  const [addingTT, setAddingTT] = useState(false);
+
+  const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : "";
+
+  const loadTrangThai = useCallback(() => {
+    fetch("/api/trang-thai-kh")
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setTrangThaiList(d.data); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => { loadTrangThai(); }, [loadTrangThai]);
+
+  const handleAddTrangThai = async () => {
+    if (!newTenTT.trim()) return;
+    setAddingTT(true);
+    try {
+      const res = await fetch("/api/trang-thai-kh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword || "" },
+        body: JSON.stringify({ ten: newTenTT.trim(), mau: newMauTT }),
+      });
+      const d = await res.json();
+      if (d.success) {
+        setNewTenTT("");
+        setNewMauTT("#8C7B72");
+        loadTrangThai();
+      } else {
+        alert(d.error);
+      }
+    } catch { alert("Không thể thêm trạng thái"); }
+    setAddingTT(false);
+  };
+
+  const handleDeleteTrangThai = async (id: string) => {
+    if (!confirm("Xóa trạng thái này?")) return;
+    try {
+      const res = await fetch(`/api/trang-thai-kh/${id}`, {
+        method: "DELETE",
+        headers: { "x-admin-password": adminPassword || "" },
+      });
+      const d = await res.json();
+      if (d.success) loadTrangThai();
+      else alert(d.error);
+    } catch { alert("Không thể xóa trạng thái"); }
+  };
 
   useEffect(() => {
-    const pwd = localStorage.getItem("admin-password") || "";
-    setAdminPassword(pwd);
-
-    fetch("/api/cai-dat")
-        .then((res) => res.json())
-        .then((data) => { if (data.success) setSettings(data.data); })
-        .catch(() => {})
-        .finally(() => setLoading(false));
-  }, []);
+    setLocalSettings(settings);
+  }, [settings]);
 
   const handleSave = async () => {
     setSaving(true);
     setSuccess(false);
+    const adminPassword = localStorage.getItem("admin-password") || "";
     try {
       const res = await fetch("/api/cai-dat", {
         method: "PUT",
@@ -34,12 +77,13 @@ export default function AdminSettingsPage() {
           "Content-Type": "application/json",
           "x-admin-password": adminPassword,
         },
-        body: JSON.stringify(settings),
+        body: JSON.stringify(localSettings),
       });
       const data = await res.json();
       if (data.success) {
         setSuccess(true);
-        setSettings(data.data);
+        // Refresh settings globally
+        await refresh();
       } else {
         alert(data.error);
       }
@@ -52,58 +96,105 @@ export default function AdminSettingsPage() {
 
   const inputCls = "w-full max-w-md px-3 py-2 border border-stone-200 text-espresso text-sm focus:outline-none focus:border-espresso transition-colors bg-white";
 
-  if (loading) {
-    return (
-        <div className="flex justify-center py-16">
-          <div className="w-6 h-6 border border-espresso border-t-transparent rounded-full animate-spin" />
-        </div>
-    );
-  }
-
   return (
-      <div>
-        <h1 className="font-heading text-2xl font-light text-espresso mb-8">Cài đặt shop</h1>
+    <div>
+      <h1 className="font-heading text-2xl font-light text-espresso mb-8">Cài đặt shop</h1>
 
-        {success && (
-            <div className="mb-6 p-4 bg-green-50 text-green-700 text-sm border border-green-100">
-              Đã lưu cài đặt thành công!
-            </div>
-        )}
+      {success && (
+        <div className="mb-6 p-4 bg-green-50 text-green-700 text-sm border border-green-100">
+          Đã lưu cài đặt thành công!
+        </div>
+      )}
 
-        <div className="bg-white p-8 border border-stone-100 space-y-8 max-w-xl">
-          <div>
-            <label className="block text-xs uppercase tracking-widest text-stone-400 mb-3">Logo shop</label>
-            <LogoUpload
-                currentLogo={settings.logoURL}
-                onUpload={(url) => setSettings((prev) => ({ ...prev, logoURL: url }))}
+      <div className="bg-white p-8 border border-stone-100 space-y-8 max-w-xl">
+        <div>
+          <label className="block text-xs uppercase tracking-widest text-stone-400 mb-3">Logo shop</label>
+          <LogoUpload
+            currentLogo={localSettings.logoURL}
+            onUpload={(url) => setLocalSettings((prev) => ({ ...prev, logoURL: url }))}
+          />
+        </div>
+
+        {[
+          { key: "tenShop", label: "Tên shop", type: "text" },
+          { key: "sdt", label: "Số điện thoại", type: "text" },
+          { key: "diaChi", label: "Địa chỉ", type: "text" },
+          { key: "email", label: "Email", type: "email" },
+        ].map(({ key, label, type }) => (
+          <div key={key}>
+            <label className="block text-xs uppercase tracking-widest text-stone-400 mb-2">{label}</label>
+            <input
+              type={type}
+              value={localSettings[key as keyof typeof localSettings]}
+              onChange={(e) => setLocalSettings((prev) => ({ ...prev, [key]: e.target.value }))}
+              className={inputCls}
             />
           </div>
+        ))}
 
-          {[
-            { key: "tenShop", label: "Tên shop", type: "text" },
-            { key: "sdt", label: "Số điện thoại", type: "text" },
-            { key: "diaChi", label: "Địa chỉ", type: "text" },
-            { key: "email", label: "Email", type: "email" },
-          ].map(({ key, label, type }) => (
-              <div key={key}>
-                <label className="block text-xs uppercase tracking-widest text-stone-400 mb-2">{label}</label>
-                <input
-                    type={type}
-                    value={settings[key as keyof CaiDat]}
-                    onChange={(e) => setSettings({ ...settings, [key]: e.target.value })}
-                    className={inputCls}
-                />
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="px-6 py-2 bg-espresso text-cream text-xs uppercase tracking-widest hover:opacity-80 transition-opacity disabled:opacity-50"
+        >
+          {saving ? "Đang lưu..." : "Lưu cài đặt"}
+        </button>
+      </div>
+
+      {/* Trạng thái khách hàng */}
+      <div className="bg-white p-8 border border-stone-100 space-y-6 max-w-xl mt-8">
+        <h2 className="font-heading text-lg font-light text-espresso">Trạng thái khách hàng</h2>
+
+        <div className="space-y-2">
+          {trangThaiList.map((t) => (
+            <div key={t.id} className="flex items-center justify-between py-2 border-b border-stone-50">
+              <div className="flex items-center gap-3">
+                <span
+                  className="px-3 py-1 text-xs font-medium rounded-sm"
+                  style={{ backgroundColor: t.mau + "22", color: t.mau }}
+                >
+                  {t.ten}
+                </span>
+                <span className="text-xs text-stone-400 font-mono">{t.mau}</span>
               </div>
+              <button
+                onClick={() => handleDeleteTrangThai(t.id)}
+                className="text-xs text-stone-300 hover:text-rose transition-colors uppercase tracking-widest"
+              >
+                Xóa
+              </button>
+            </div>
           ))}
+        </div>
 
+        <div className="flex gap-3 items-end pt-2">
+          <div className="flex-1">
+            <label className="block text-xs uppercase tracking-widest text-stone-400 mb-2">Tên trạng thái</label>
+            <input
+              value={newTenTT}
+              onChange={(e) => setNewTenTT(e.target.value)}
+              placeholder="VD: VIP, Bom hàng..."
+              className="w-full px-3 py-2 border border-stone-200 text-sm text-espresso focus:outline-none focus:border-espresso bg-white"
+            />
+          </div>
+          <div>
+            <label className="block text-xs uppercase tracking-widest text-stone-400 mb-2">Màu</label>
+            <input
+              type="color"
+              value={newMauTT}
+              onChange={(e) => setNewMauTT(e.target.value)}
+              className="w-10 h-9 border border-stone-200 cursor-pointer bg-white p-0.5"
+            />
+          </div>
           <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-6 py-2 bg-espresso text-cream text-xs uppercase tracking-widest hover:opacity-80 transition-opacity disabled:opacity-50"
+            onClick={handleAddTrangThai}
+            disabled={addingTT || !newTenTT.trim()}
+            className="px-5 py-2 bg-espresso text-cream text-xs uppercase tracking-widest hover:opacity-80 transition-opacity disabled:opacity-50"
           >
-            {saving ? "Đang lưu..." : "Lưu cài đặt"}
+            {addingTT ? "..." : "Thêm"}
           </button>
         </div>
       </div>
+    </div>
   );
 }

@@ -28,12 +28,43 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
     }
 
-    const { data, error } = await supabase
-        .from('don_hang')
-        .select('*')
-        .order('thoi_gian', { ascending: false })
+    const { searchParams } = new URL(request.url)
+    const page = searchParams.get('page') ? Math.max(1, parseInt(searchParams.get('page')!)) : null
+    const limit = page ? Math.max(1, parseInt(searchParams.get('limit') || '20')) : null
+    const trangThai = searchParams.get('trang_thai') || ''
+    const sdt = searchParams.get('sdt') || ''
+    const searchTen = searchParams.get('search_ten') || ''
+    const searchSdt = searchParams.get('search_sdt') || ''
+    const tuNgay = searchParams.get('tu_ngay') || ''
+    const denNgay = searchParams.get('den_ngay') || ''
 
+    let query = supabase.from('don_hang').select('*', { count: page ? 'exact' : undefined }).order('thoi_gian', { ascending: false })
+    if (trangThai) query = query.eq('trang_thai', trangThai)
+    if (sdt) query = query.eq('sdt', sdt)
+    if (searchTen) query = query.ilike('ten_kh', `%${searchTen}%`)
+    if (searchSdt) query = query.ilike('sdt', `%${searchSdt}%`)
+    if (tuNgay) query = query.gte('thoi_gian', tuNgay)
+    if (denNgay) query = query.lte('thoi_gian', denNgay + 'T23:59:59Z')
+    if (page && limit) {
+      const from = (page - 1) * limit
+      query = query.range(from, from + limit - 1)
+    }
+
+    const { data, error, count } = await query
     if (error) throw error
+
+    if (page && limit) {
+      const total = count ?? 0
+      return NextResponse.json({
+        success: true,
+        data: (data || []).map(mapRow),
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      })
+    }
+
     return NextResponse.json({ success: true, data: (data || []).map(mapRow) })
   } catch (error) {
     console.error('GET /api/don-hang error:', error)
@@ -120,20 +151,56 @@ export async function POST(request: NextRequest) {
     for (const item of donHang.sanPham) {
       (async () => {
         try {
-          await supabase.rpc('decrement_so_luong', {
-            product_id: item.id,
-            quantity: item.soLuong,
-          })
+          if (item.sizeChon) {
+            await supabase.rpc('decrement_size_so_luong', {
+              p_product_id: item.id,
+              p_size_name: item.sizeChon,
+              p_quantity: item.soLuong,
+            })
+          } else {
+            await supabase.rpc('decrement_so_luong', {
+              product_id: item.id,
+              quantity: item.soLuong,
+            })
+          }
         } catch {
           // fire-and-forget, bỏ qua lỗi
         }
       })()
     }
 
-    // fire-and-forget
+    // Upsert khach_hang + gửi Telegram (fire-and-forget)
+    ;(async () => {
+      try {
+        await supabase.rpc('upsert_khach_hang', {
+          p_sdt: body.sdt,
+          p_ten: body.tenKH,
+          p_doanh_thu: tongTienSauGiam,
+        })
+        const { data: kh } = await supabase
+          .from('khach_hang')
+          .select('trang_thai, tong_don, tong_doanh_thu')
+          .eq('sdt', body.sdt)
+          .single()
+        await sendOrderNotification(
+          donHang,
+          kh
+            ? {
+                trangThai: kh.trang_thai as string,
+                tongDon: Number(kh.tong_don),
+                tongDoanhThu: Number(kh.tong_doanh_thu),
+              }
+            : undefined
+        )
+      } catch {
+        // fire-and-forget
+        try { await sendOrderNotification(donHang) } catch { /* ignore */ }
+      }
+    })()
+
+    // fire-and-forget sheets
     Promise.allSettled([
       appendDonHangToSheet(donHang),
-      sendOrderNotification(donHang),
     ]).catch(() => {})
 
     return NextResponse.json({ success: true, data: donHang })

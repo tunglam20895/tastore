@@ -2,6 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { MaGiamGia } from "@/types";
+import Pagination from "@/components/admin/Pagination";
+
+const LIMIT = 20;
 
 function generateCode(): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -247,18 +250,28 @@ export default function AdminCouponsPage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<MaGiamGia | null>(null);
   const [creating, setCreating] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
 
-  const loadCoupons = useCallback(() => {
+  const loadCoupons = useCallback((p = 1) => {
     setLoading(true);
-    fetch("/api/ma-giam-gia", { headers: { "x-admin-password": adminPassword || "" } })
+    fetch(`/api/ma-giam-gia?page=${p}&limit=${LIMIT}`, { headers: { "x-admin-password": adminPassword || "" } })
       .then((res) => res.json())
-      .then((data) => { if (data.success) setCoupons(data.data); })
+      .then((data) => {
+        if (data.success) {
+          setCoupons(data.data);
+          setTotal(data.total ?? data.data.length);
+          setTotalPages(data.totalPages ?? 1);
+          setPage(p);
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [adminPassword]);
 
-  useEffect(() => { loadCoupons(); }, [loadCoupons]);
+  useEffect(() => { loadCoupons(1); }, [loadCoupons]);
 
   const handleDelete = async (id: string, ma: string) => {
     if (!confirm(`Xóa mã ${ma}?`)) return;
@@ -268,7 +281,7 @@ export default function AdminCouponsPage() {
         headers: { "x-admin-password": adminPassword || "" },
       });
       const data = await res.json();
-      if (data.success) loadCoupons();
+      if (data.success) loadCoupons(page);
       else alert(data.error);
     } catch {
       alert("Không thể xóa mã");
@@ -304,7 +317,7 @@ export default function AdminCouponsPage() {
         <div className="bg-white p-8 border border-stone-100">
           <CouponForm
             coupon={editing || undefined}
-            onSave={() => { setEditing(null); setCreating(false); loadCoupons(); }}
+            onSave={() => { setEditing(null); setCreating(false); loadCoupons(page); }}
             onCancel={() => { setEditing(null); setCreating(false); }}
           />
         </div>
@@ -326,8 +339,6 @@ export default function AdminCouponsPage() {
 
       {loading ? (
         <div className="text-center py-16 text-stone-400 text-sm">Đang tải...</div>
-      ) : coupons.length === 0 ? (
-        <div className="text-center py-16 text-stone-400 text-sm">Chưa có mã giảm giá nào</div>
       ) : (
         <div className="bg-white border border-stone-100 overflow-x-auto">
           <table className="w-full text-sm">
@@ -405,6 +416,12 @@ export default function AdminCouponsPage() {
               })}
             </tbody>
           </table>
+          {coupons.length === 0 && (
+            <div className="text-center py-16 text-stone-400 text-sm">Chưa có mã giảm giá nào</div>
+          )}
+          <div className="px-4">
+            <Pagination page={page} totalPages={totalPages} total={total} limit={LIMIT} onPageChange={loadCoupons} />
+          </div>
         </div>
       )}
     </div>

@@ -29,9 +29,9 @@ export default function CartPage() {
 
   useEffect(() => { loadCart(); }, [loadCart]);
 
-  const updateQuantity = useCallback((id: string, quantity: number) => {
+  const updateQuantity = useCallback((id: string, sizeChon: string | null, quantity: number) => {
     const items: CartItemType[] = JSON.parse(localStorage.getItem("cart") || "[]");
-    const item = items.find((i) => i.id === id);
+    const item = items.find((i) => i.id === id && i.sizeChon === sizeChon);
     if (item) {
       item.soLuong = quantity;
       localStorage.setItem("cart", JSON.stringify(items));
@@ -39,9 +39,9 @@ export default function CartPage() {
     }
   }, [loadCart]);
 
-  const removeItem = useCallback((id: string) => {
+  const removeItem = useCallback((id: string, sizeChon: string | null) => {
     const items: CartItemType[] = JSON.parse(localStorage.getItem("cart") || "[]");
-    localStorage.setItem("cart", JSON.stringify(items.filter((i) => i.id !== id)));
+    localStorage.setItem("cart", JSON.stringify(items.filter((i) => !(i.id === id && i.sizeChon === sizeChon))));
     loadCart();
   }, [loadCart]);
 
@@ -75,10 +75,10 @@ export default function CartPage() {
         <div className="lg:col-span-2">
           {cart.map((item) => (
             <CartItem
-              key={item.id}
+              key={`${item.id}_${item.sizeChon ?? ""}`}
               item={item}
-              onUpdate={(q) => updateQuantity(item.id, q)}
-              onRemove={() => removeItem(item.id)}
+              onUpdate={(q) => updateQuantity(item.id, item.sizeChon, q)}
+              onRemove={() => removeItem(item.id, item.sizeChon)}
             />
           ))}
 

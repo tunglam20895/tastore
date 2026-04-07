@@ -14,49 +14,81 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [added, setAdded] = useState(false);
   const [qty, setQty] = useState(1);
+  const [sizeChon, setSizeChon] = useState<string | null>(null);
+  const [sizeError, setSizeError] = useState(false);
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/san-pham").then((res) => res.json()),
-      fetch("/api/danh-muc").then((res) => res.json()),
-    ])
-      .then(([productsRes, categoriesRes]) => {
-        if (productsRes.success) {
-          const found = productsRes.data.find((p: SanPham) => p.id === params.id);
-          setProduct(found || null);
-        }
-        if (categoriesRes.success) setCategories(categoriesRes.data);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      fetch(`/api/san-pham/${params.id}`).then((r) => r.json()).catch(() => null),
+      fetch("/api/san-pham").then((r) => r.json()).catch(() => null),
+      fetch("/api/danh-muc").then((r) => r.json()).catch(() => null),
+    ]).then(([singleRes, allRes, catsRes]) => {
+      // Ưu tiên fetch single nếu có route, fallback về fetch all
+      if (singleRes?.success && singleRes.data) {
+        setProduct(singleRes.data);
+      } else if (allRes?.success) {
+        const found = (allRes.data as SanPham[]).find((p) => p.id === params.id);
+        setProduct(found || null);
+      }
+      if (catsRes?.success) setCategories(catsRes.data);
+    }).finally(() => setLoading(false));
   }, [params.id]);
 
-  const addToCart = useCallback((buyNow = false) => {
-    if (!product || product.soLuong === 0) return;
-    const cart: CartItemType[] = JSON.parse(localStorage.getItem("cart") || "[]");
-    const existing = cart.find((item) => item.id === product.id);
-    if (existing) {
-      existing.soLuong = Math.min(existing.soLuong + qty, product.soLuong);
-    } else {
-      cart.push({
-        id: product.id,
-        ten: product.ten,
-        giaGoc: product.giaGoc,
-        phanTramGiam: product.phanTramGiam,
-        giaHienThi: product.giaHienThi,
-        anhURL: product.anhURL,
-        soLuong: qty,
-      });
-    }
-    localStorage.setItem("cart", JSON.stringify(cart));
-    window.dispatchEvent(new Event("cartUpdated"));
-    if (buyNow) {
-      router.push("/dat-hang");
-    } else {
-      setAdded(true);
-      setTimeout(() => setAdded(false), 2000);
-    }
-  }, [product, qty, router]);
+  // Tồn kho của size đang chọn
+  const selectedSizeStock = sizeChon && product?.sizes.length
+    ? (product.sizes.find((s) => s.ten === sizeChon)?.soLuong ?? 0)
+    : (product?.soLuong ?? 0);
+
+  const maxQty = selectedSizeStock;
+
+  const addToCart = useCallback(
+    (buyNow = false) => {
+      if (!product || product.soLuong === 0) return;
+
+      // Validate: phải chọn size nếu sản phẩm có sizes
+      if (product.sizes.length > 0 && !sizeChon) {
+        setSizeError(true);
+        setTimeout(() => setSizeError(false), 2500);
+        return;
+      }
+
+      // Validate: size đã chọn còn hàng không
+      if (sizeChon) {
+        const sizeItem = product.sizes.find((s) => s.ten === sizeChon);
+        if (sizeItem && sizeItem.soLuong === 0) return;
+      }
+
+      const cart: CartItemType[] = JSON.parse(localStorage.getItem("cart") || "[]");
+      // Unique key: productId + sizeChon
+      const existing = cart.find(
+        (item) => item.id === product.id && item.sizeChon === sizeChon
+      );
+      if (existing) {
+        existing.soLuong = Math.min(existing.soLuong + qty, maxQty);
+      } else {
+        cart.push({
+          id: product.id,
+          ten: product.ten,
+          giaGoc: product.giaGoc,
+          phanTramGiam: product.phanTramGiam,
+          giaHienThi: product.giaHienThi,
+          anhURL: product.anhURL,
+          soLuong: qty,
+          sizeChon: sizeChon,
+        });
+      }
+      localStorage.setItem("cart", JSON.stringify(cart));
+      window.dispatchEvent(new Event("cartUpdated"));
+
+      if (buyNow) {
+        router.push("/dat-hang");
+      } else {
+        setAdded(true);
+        setTimeout(() => setAdded(false), 2000);
+      }
+    },
+    [product, qty, sizeChon, maxQty, router]
+  );
 
   if (loading) {
     return (
@@ -69,8 +101,13 @@ export default function ProductDetailPage() {
   if (!product) {
     return (
       <div className="max-w-4xl mx-auto px-6 py-24 pt-32 text-center">
-        <p className="font-heading text-2xl font-light text-stone-400 mb-6">Không tìm thấy sản phẩm</p>
-        <button onClick={() => router.push("/")} className="text-xs uppercase tracking-widest text-espresso hover:text-rose transition-colors">
+        <p className="font-heading text-2xl font-light text-stone-400 mb-6">
+          Không tìm thấy sản phẩm
+        </p>
+        <button
+          onClick={() => router.push("/")}
+          className="text-xs uppercase tracking-widest text-espresso hover:text-rose transition-colors"
+        >
           Quay về trang chủ
         </button>
       </div>
@@ -80,16 +117,21 @@ export default function ProductDetailPage() {
   const hasDiscount = product.phanTramGiam && product.phanTramGiam > 0;
   const isOutOfStock = !product.conHang || product.soLuong === 0;
   const categoryName = categories.find((c) => c.id === product.danhMuc)?.tenDanhMuc;
+  const hasSizes = product.sizes && product.sizes.length > 0;
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-12 pt-28">
       {/* Breadcrumb */}
       <div className="flex gap-2 text-xs uppercase tracking-widest text-stone mb-10">
-        <Link href="/" className="hover:text-espresso transition-colors">Trang Chủ</Link>
+        <Link href="/" className="hover:text-espresso transition-colors">
+          Trang Chủ
+        </Link>
         <span>/</span>
         {categoryName && (
           <>
-            <Link href="/" className="hover:text-espresso transition-colors">{categoryName}</Link>
+            <Link href="/" className="hover:text-espresso transition-colors">
+              {categoryName}
+            </Link>
             <span>/</span>
           </>
         )}
@@ -97,7 +139,7 @@ export default function ProductDetailPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20 items-start">
-        {/* Image — sticky on scroll */}
+        {/* Ảnh — sticky */}
         <div className="md:sticky md:top-28">
           <div className="relative aspect-[3/4] overflow-hidden bg-blush">
             {product.anhURL ? (
@@ -127,7 +169,7 @@ export default function ProductDetailPage() {
             {product.ten}
           </h1>
 
-          {/* Price */}
+          {/* Giá */}
           <div className="mb-3">
             {hasDiscount ? (
               <div className="flex items-baseline gap-3">
@@ -148,8 +190,8 @@ export default function ProductDetailPage() {
             )}
           </div>
 
-          {/* Stock info */}
-          {!isOutOfStock && (
+          {/* Tồn kho (chỉ hiện khi không có sizes) */}
+          {!isOutOfStock && !hasSizes && (
             <p className={`text-xs mb-4 ${product.soLuong <= 5 ? "text-rose" : "text-stone"}`}>
               Còn lại: {product.soLuong} sản phẩm
             </p>
@@ -173,6 +215,62 @@ export default function ProductDetailPage() {
             </div>
           ) : (
             <>
+              {/* Size selector */}
+              {hasSizes && (
+                <div className="mb-6">
+                  <p
+                    className={`text-xs uppercase tracking-widest mb-3 transition-colors ${
+                      sizeError ? "text-rose" : "text-stone"
+                    }`}
+                  >
+                    {sizeError ? "Vui lòng chọn size" : "Chọn size"}
+                    {sizeChon && (
+                      <span className="ml-2 font-medium text-espresso normal-case tracking-normal">
+                        — {sizeChon}
+                        {selectedSizeStock <= 5 && selectedSizeStock > 0 && (
+                          <span className="ml-1 text-rose">(còn {selectedSizeStock})</span>
+                        )}
+                      </span>
+                    )}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {product.sizes.map((s) => {
+                      const outOfStock = s.soLuong === 0;
+                      const isSelected = sizeChon === s.ten;
+                      return (
+                        <button
+                          key={s.ten}
+                          type="button"
+                          disabled={outOfStock}
+                          onClick={() => {
+                            if (!outOfStock) {
+                              setSizeChon(s.ten);
+                              setSizeError(false);
+                              setQty(1);
+                            }
+                          }}
+                          className={`relative min-w-[2.75rem] h-10 px-3 text-xs font-medium border transition-all duration-200 ${
+                            outOfStock
+                              ? "border-stone-200 text-stone-300 cursor-not-allowed bg-stone-50"
+                              : isSelected
+                              ? "bg-espresso text-cream border-espresso"
+                              : "border-stone/30 text-espresso hover:border-espresso"
+                          }`}
+                        >
+                          {s.ten}
+                          {outOfStock && (
+                            <span className="absolute inset-0 flex items-center justify-center">
+                              <span className="absolute w-full h-px bg-stone-300 rotate-[-20deg]" />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {/* Gợi ý size chart nếu cần */}
+                </div>
+              )}
+
               {/* Qty selector */}
               <div className="flex items-center gap-4 mb-6">
                 <p className="text-xs uppercase tracking-widest text-stone">Số lượng</p>
@@ -183,9 +281,11 @@ export default function ProductDetailPage() {
                   >
                     −
                   </button>
-                  <span className="w-10 text-center text-sm font-medium text-espresso">{qty}</span>
+                  <span className="w-10 text-center text-sm font-medium text-espresso">
+                    {qty}
+                  </span>
                   <button
-                    onClick={() => setQty((q) => Math.min(product.soLuong, q + 1))}
+                    onClick={() => setQty((q) => Math.min(maxQty || 99, q + 1))}
                     className="w-9 h-9 flex items-center justify-center text-espresso hover:bg-blush transition-colors"
                   >
                     +
@@ -214,9 +314,19 @@ export default function ProductDetailPage() {
             </>
           )}
 
-          {/* Shipping info */}
+          {/* Shipping */}
           <div className="mt-6 flex items-center gap-3 text-xs text-stone uppercase tracking-wider">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="flex-shrink-0"
+            >
               <rect x="1" y="3" width="15" height="13" rx="1" />
               <path d="M16 8h4l3 5v3h-7V8z" />
               <circle cx="5.5" cy="18.5" r="2.5" />

@@ -16,6 +16,7 @@ export default function AdminNav({ children }: { children: React.ReactNode }) {
     { href: "/admin/dashboard", label: "Dashboard" },
     { href: "/admin/san-pham", label: "Sản phẩm" },
     { href: "/admin/don-hang", label: "Đơn hàng" },
+    { href: "/admin/khach-hang", label: "Khách hàng" },
     { href: "/admin/ma-giam-gia", label: "Mã giảm giá" },
     { href: "/admin/cai-dat", label: "Cài đặt" },
   ];

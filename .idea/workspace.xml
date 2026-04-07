@@ -6,7 +6,38 @@
   <component name="ChangeListManager">
     <list default="true" id="9808f6dd-980e-420b-b86b-d604628d875d" name="Changes" comment="update">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/admin/cai-dat/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/cai-dat/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/admin/dashboard/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/dashboard/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/admin/don-hang/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/don-hang/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/admin/ma-giam-gia/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/ma-giam-gia/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/admin/san-pham/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/san-pham/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/api/don-hang/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/don-hang/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/api/ma-giam-gia/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/ma-giam-gia/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/api/san-pham/[id]/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/san-pham/[id]/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/api/san-pham/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/san-pham/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/dat-hang/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/dat-hang/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/gio-hang/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/gio-hang/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/globals.css" beforeDir="false" afterPath="$PROJECT_DIR$/app/globals.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/san-pham/[id]/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/san-pham/[id]/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/admin/AdminNav.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/admin/AdminNav.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/admin/OrderTable.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/admin/OrderTable.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/admin/ProductForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/admin/ProductForm.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/layout/Footer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/layout/Footer.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/layout/Header.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/layout/Header.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/shop/CartItem.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/shop/CartItem.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/shop/ProductGrid.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/shop/ProductGrid.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/632679577_1683186056324555_3225129500691332563_n.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/632916688_1683186006324560_6341647830644378327_n.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/633713752_1683186142991213_8298818705996631640_n.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/633965185_1683186032991224_7904243218194610514_n.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/634321411_1683186162991211_4172407940886209673_n.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/telegram.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/telegram.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/middleware.ts" beforeDir="false" afterPath="$PROJECT_DIR$/middleware.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tailwind.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tailwind.config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/types/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/types/index.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -105,7 +136,7 @@
       <updated>1775467592164</updated>
       <workItem from="1775467593549" duration="4299000" />
       <workItem from="1775525809036" duration="73000" />
-      <workItem from="1775525893096" duration="6830000" />
+      <workItem from="1775525893096" duration="16361000" />
     </task>
     <task id="LOCAL-00001" summary="update">
       <option name="closed" value="true" />
@@ -115,11 +146,38 @@
       <option name="project" value="LOCAL" />
       <updated>1775534398713</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="update">
+      <option name="closed" value="true" />
+      <created>1775534798949</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1775534798949</updated>
+    </task>
+    <task id="LOCAL-00003" summary="update">
+      <option name="closed" value="true" />
+      <created>1775536396568</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1775536396568</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="update" />

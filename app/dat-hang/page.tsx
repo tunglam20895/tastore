@@ -92,7 +92,7 @@ export default function CheckoutPage() {
             {/* Cart items */}
             <div className="space-y-5 mb-6">
               {cart.map((item) => (
-                <div key={item.id} className="flex items-start gap-4">
+                <div key={`${item.id}_${item.sizeChon ?? ""}`} className="flex items-start gap-4">
                   <div className="relative w-14 flex-shrink-0 overflow-hidden bg-blush" style={{ aspectRatio: "3/4" }}>
                     {item.anhURL ? (
                       <Image src={item.anhURL} alt={item.ten} fill className="object-cover" />
@@ -102,6 +102,7 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-espresso font-light leading-snug line-clamp-2">{item.ten}</p>
+                    {item.sizeChon && <p className="text-xs text-stone mt-0.5">Size: {item.sizeChon}</p>}
                     <p className="text-xs text-stone mt-0.5">×{item.soLuong}</p>
                   </div>
                   <span className="text-sm font-medium text-espresso whitespace-nowrap">
