@@ -29,9 +29,9 @@ export async function GET(request: NextRequest) {
     }
 
     const { data, error } = await supabase
-      .from('don_hang')
-      .select('*')
-      .order('thoi_gian', { ascending: false })
+        .from('don_hang')
+        .select('*')
+        .order('thoi_gian', { ascending: false })
 
     if (error) throw error
     return NextResponse.json({ success: true, data: (data || []).map(mapRow) })
@@ -51,17 +51,17 @@ export async function POST(request: NextRequest) {
     if (body.maGiamGia) {
       const maMaUppercase = (body.maGiamGia as string).toUpperCase().trim()
       const { data: maData } = await supabase
-        .from('ma_giam_gia')
-        .select('*')
-        .eq('ma', maMaUppercase)
-        .single()
+          .from('ma_giam_gia')
+          .select('*')
+          .eq('ma', maMaUppercase)
+          .single()
 
       if (
-        maData &&
-        maData.con_hieu_luc &&
-        maData.da_dung < maData.so_luong &&
-        (!maData.ngay_het_han || new Date(maData.ngay_het_han) >= new Date()) &&
-        body.tongTien >= Number(maData.don_hang_toi_thieu)
+          maData &&
+          maData.con_hieu_luc &&
+          maData.da_dung < maData.so_luong &&
+          (!maData.ngay_het_han || new Date(maData.ngay_het_han) >= new Date()) &&
+          body.tongTien >= Number(maData.don_hang_toi_thieu)
       ) {
         if (maData.loai === 'phan_tram') {
           giaTriGiam = Math.round(body.tongTien * Number(maData.gia_tri) / 100)
@@ -78,47 +78,56 @@ export async function POST(request: NextRequest) {
     const tongTienSauGiam = Math.max(0, body.tongTien - giaTriGiam)
 
     const { data, error } = await supabase
-      .from('don_hang')
-      .insert({
-        ten_kh: body.tenKH,
-        sdt: body.sdt,
-        dia_chi: body.diaChi,
-        san_pham: body.sanPham,
-        tong_tien: tongTienSauGiam,
-        ma_giam_gia: maGiamGia || null,
-        gia_tri_giam: giaTriGiam,
-      })
-      .select()
-      .single()
+        .from('don_hang')
+        .insert({
+          ten_kh: body.tenKH,
+          sdt: body.sdt,
+          dia_chi: body.diaChi,
+          san_pham: body.sanPham,
+          tong_tien: tongTienSauGiam,
+          ma_giam_gia: maGiamGia || null,
+          gia_tri_giam: giaTriGiam,
+        })
+        .select()
+        .single()
 
     if (error) throw error
     const donHang = mapRow(data)
 
     // Tăng da_dung của mã giảm giá (fire-and-forget)
     if (maGiamGia) {
-      const capturedMa = maGiamGia
-      supabase
-        .from('ma_giam_gia')
-        .select('da_dung')
-        .eq('ma', capturedMa)
-        .single()
-        .then(({ data: mgg }) => {
-          if (mgg) {
-            return supabase
+      const capturedMa = maGiamGia;
+      (async () => {
+        try {
+          const { data: mgg } = await supabase
               .from('ma_giam_gia')
-              .update({ da_dung: Number(mgg.da_dung) + 1 })
+              .select('da_dung')
               .eq('ma', capturedMa)
+              .single()
+          if (mgg) {
+            await supabase
+                .from('ma_giam_gia')
+                .update({ da_dung: Number(mgg.da_dung) + 1 })
+                .eq('ma', capturedMa)
           }
-        })
-        .catch(() => {})
+        } catch {
+          // fire-and-forget, bỏ qua lỗi
+        }
+      })()
     }
 
-    // Trừ tồn kho
+    // Trừ tồn kho (fire-and-forget)
     for (const item of donHang.sanPham) {
-      supabase
-        .rpc('decrement_so_luong', { product_id: item.id, quantity: item.soLuong })
-        .then(() => {})
-        .catch(() => {})
+      (async () => {
+        try {
+          await supabase.rpc('decrement_so_luong', {
+            product_id: item.id,
+            quantity: item.soLuong,
+          })
+        } catch {
+          // fire-and-forget, bỏ qua lỗi
+        }
+      })()
     }
 
     // fire-and-forget
