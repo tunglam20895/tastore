@@ -139,10 +139,10 @@ export default function DashboardPage() {
   const pctDangBan = tong === 0 ? 0 : Math.round(((d?.sanPham.dangBan ?? 0) / tong) * 100);
 
   const growth = d?.doanhThu.phanTramTangTruong;
-  const growthColor = growth === null ? "text-stone-400"
-    : growth > 0 ? "text-green-600" : growth < 0 ? "text-rose" : "text-stone-400";
-  const growthText = growth === null ? "N/A"
-    : growth > 0 ? `+${growth}%` : `${growth}%`;
+  const growthColor = growth == null ? "text-stone-400"
+      : growth > 0 ? "text-green-600" : growth < 0 ? "text-rose" : "text-stone-400";
+  const growthText = growth == null ? "N/A"
+      : growth > 0 ? `+${growth}%` : `${growth}%`;
 
   return (
     <div className="space-y-6">

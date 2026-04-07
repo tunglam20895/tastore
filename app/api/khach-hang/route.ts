@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyAdminPassword } from '@/lib/auth'
 import type { KhachHang } from '@/types'
+export const dynamic = "force-dynamic";
 
 function mapRow(row: Record<string, unknown>): KhachHang {
   return {

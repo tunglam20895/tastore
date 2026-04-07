@@ -23,6 +23,7 @@ export default function ProductCard({ product, index = 0 }: { product: SanPham; 
         giaHienThi: product.giaHienThi,
         anhURL: product.anhURL,
         soLuong: 1,
+        sizeChon: null,
       });
     }
     localStorage.setItem("cart", JSON.stringify(cart));

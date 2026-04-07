@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyAdminPassword } from '@/lib/auth'
+export const dynamic = "force-dynamic";
 
 function startOfDay(d: Date) {
   const r = new Date(d); r.setHours(0, 0, 0, 0); return r.toISOString()

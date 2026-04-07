@@ -69,6 +69,7 @@ export default function Header() {
 
           <Link href="/" className="absolute left-1/2 -translate-x-1/2">
             {settings?.logoURL ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={settings.logoURL}
                 alt={settings.tenShop || "TRANH ANH STORE"}
