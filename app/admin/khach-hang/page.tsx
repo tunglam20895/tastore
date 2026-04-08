@@ -5,7 +5,7 @@ import type { KhachHang, TrangThaiKH, DonHang } from "@/types";
 import Pagination from "@/components/admin/Pagination";
 import { useToast } from "@/contexts/ToastContext";
 
-const LIMIT = 20;
+const LIMIT_DEFAULT = 20;
 
 function formatMoney(n: number) {
   return new Intl.NumberFormat("vi-VN").format(n) + "đ";
@@ -22,6 +22,7 @@ export default function AdminKhachHangPage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [limit, setLimit] = useState(LIMIT_DEFAULT);
   const [filterTT, setFilterTT] = useState("");
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -46,7 +47,7 @@ export default function AdminKhachHangPage() {
 
   const loadCustomers = useCallback((p = 1, tt = "", s = "") => {
     setLoading(true);
-    const params = new URLSearchParams({ page: String(p), limit: String(LIMIT) });
+    const params = new URLSearchParams({ page: String(p), limit: String(limit) });
     if (tt) params.set("trang_thai", tt);
     if (s) params.set("search", s);
     fetch(`/api/khach-hang?${params}`, { headers: { "x-admin-password": adminPassword || "" } })
@@ -61,7 +62,7 @@ export default function AdminKhachHangPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [adminPassword]);
+  }, [adminPassword, limit]);
 
   useEffect(() => { loadTrangThai(); }, [loadTrangThai]);
   useEffect(() => { loadCustomers(1, filterTT, search); }, [loadCustomers, filterTT, search]);
@@ -117,9 +118,9 @@ export default function AdminKhachHangPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6 sm:mb-8">
         <div>
-          <h1 className="font-heading text-2xl font-light text-espresso">Khách hàng</h1>
+          <h1 className="font-heading text-xl sm:text-2xl font-light text-espresso">Khách hàng</h1>
           <p className="text-xs text-stone-400 mt-1">Tổng {total} khách hàng</p>
         </div>
       </div>
@@ -131,7 +132,7 @@ export default function AdminKhachHangPage() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Tìm tên hoặc SĐT..."
-            className="px-3 py-1.5 border border-stone-200 text-sm text-espresso focus:outline-none focus:border-espresso bg-white w-52"
+            className="px-3 py-1.5 border border-stone-200 text-sm text-espresso focus:outline-none focus:border-espresso bg-white w-full sm:w-52"
           />
           <button
             type="submit"
@@ -220,8 +221,9 @@ export default function AdminKhachHangPage() {
               page={page}
               totalPages={totalPages}
               total={total}
-              limit={LIMIT}
+              limit={limit}
               onPageChange={(p) => loadCustomers(p, filterTT, search)}
+              onLimitChange={(l) => { setLimit(l); loadCustomers(1, filterTT, search); }}
             />
           </div>
         </div>
@@ -231,7 +233,7 @@ export default function AdminKhachHangPage() {
       {selectedKH && (
         <div className="fixed inset-0 bg-espresso/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
-            <div className="flex items-center justify-between p-6 border-b border-stone-100">
+            <div className="p-4 sm:p-6 border-b border-stone-100">
               <div>
                 <h2 className="font-heading text-xl font-light text-espresso">{selectedKH.ten}</h2>
                 <p className="text-xs text-stone-400 mt-0.5">{selectedKH.sdt}</p>
@@ -244,9 +246,9 @@ export default function AdminKhachHangPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               {/* Edit */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs uppercase tracking-widest text-stone-400 mb-2">Trạng thái</label>
                   <select
@@ -287,7 +289,7 @@ export default function AdminKhachHangPage() {
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-2 gap-4 py-4 border-y border-stone-100">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4 border-y border-stone-100">
                 <div>
                   <p className="text-xs text-stone-400 uppercase tracking-widest">Tổng đơn</p>
                   <p className="text-2xl font-light text-espresso mt-1">{selectedKH.tongDon}</p>

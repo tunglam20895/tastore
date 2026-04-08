@@ -58,8 +58,8 @@ function KpiCard({
   label: string; value: string; sub?: string; accent?: string; loading: boolean;
 }) {
   return (
-    <div className={`bg-white border border-stone-300 rounded-xl p-6 border-t-4 ${accent} shadow-md`}>
-      <p className="text-xs uppercase tracking-widest text-stone-500 font-medium mb-3">{label}</p>
+    <div className={`bg-white border border-stone-300 rounded-xl p-4 sm:p-6 border-t-4 ${accent} shadow-md`}>
+      <p className="text-xs uppercase tracking-widest text-stone-500 font-medium mb-2 sm:mb-3">{label}</p>
       {loading ? (
         <>
           <Skel className="h-9 w-3/4 mb-2" />
@@ -113,12 +113,17 @@ export default function DashboardPage() {
   const adminPassword =
     typeof window !== "undefined" ? localStorage.getItem("admin-password") : "";
 
-  const load = useCallback(() => {
-    fetch("/api/thong-ke", {
-      headers: { "x-admin-password": adminPassword || "" },
-    })
-      .then((r) => r.json())
-      .then((res) => {
+  const load = useCallback((initialLoad = false) => {
+    const minLoading = initialLoad
+      ? new Promise<void>((resolve) => setTimeout(resolve, 600))
+      : Promise.resolve();
+
+    Promise.all([
+      fetch("/api/thong-ke", {
+        headers: { "x-admin-password": adminPassword || "" },
+      }).then((r) => r.json()),
+      minLoading,
+    ]).then(([res]) => {
         if (res.success) {
           setData(res.data);
           setLastUpdate(new Date());
@@ -129,10 +134,11 @@ export default function DashboardPage() {
   }, [adminPassword]);
 
   useEffect(() => {
-    load();
-    const interval = setInterval(load, 60_000);
+    load(true);
+    const interval = setInterval(() => load(false), 60_000);
     return () => clearInterval(interval);
-  }, [load]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const d = data;
   const tong = (d?.sanPham.dangBan ?? 0) + (d?.sanPham.hetHang ?? 0);
@@ -145,10 +151,10 @@ export default function DashboardPage() {
       : growth > 0 ? `+${growth}%` : `${growth}%`;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="font-heading text-2xl font-light text-espresso">Dashboard</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="font-heading text-xl sm:text-2xl font-light text-espresso">Dashboard</h1>
         <div className="flex items-center gap-3">
           {lastUpdate && (
             <span className="text-xs text-stone-400">
@@ -156,7 +162,7 @@ export default function DashboardPage() {
             </span>
           )}
           <button
-            onClick={load}
+            onClick={() => load(false)}
             className="text-xs uppercase tracking-widest text-stone-400 hover:text-espresso transition-colors"
           >
             Làm mới
@@ -211,8 +217,8 @@ export default function DashboardPage() {
       {/* ── ROW 3: 2 biểu đồ ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Lượt truy cập 7 ngày */}
-        <div className="bg-white border border-stone-300 rounded-xl p-6 shadow-md">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white border border-stone-300 rounded-xl p-4 sm:p-6 shadow-md">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
             <h2 className="text-xs uppercase tracking-widest text-stone-500 font-medium">
               Lượt truy cập 7 ngày qua
             </h2>
@@ -239,8 +245,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Đơn hàng 7 ngày */}
-        <div className="bg-white border border-stone-300 rounded-xl p-6 shadow-md">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white border border-stone-300 rounded-xl p-4 sm:p-6 shadow-md">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
             <h2 className="text-xs uppercase tracking-widest text-stone-500 font-medium">
               Đơn hàng 7 ngày qua
             </h2>
@@ -270,8 +276,8 @@ export default function DashboardPage() {
       {/* ── ROW 4: Bán chạy + Danh mục ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Top sản phẩm bán chạy */}
-        <div className="bg-white border border-stone-300 rounded-xl p-6 shadow-md">
-          <h2 className="text-xs uppercase tracking-widest text-stone-500 font-medium mb-5">
+        <div className="bg-white border border-stone-300 rounded-xl p-4 sm:p-6 shadow-md">
+          <h2 className="text-xs uppercase tracking-widest text-stone-500 font-medium mb-3 sm:mb-5">
             Sản phẩm bán chạy nhất
           </h2>
           {loading ? (
@@ -312,8 +318,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Top danh mục */}
-        <div className="bg-white border border-stone-300 rounded-xl p-6 shadow-md">
-          <h2 className="text-xs uppercase tracking-widest text-stone-500 font-medium mb-5">
+        <div className="bg-white border border-stone-300 rounded-xl p-4 sm:p-6 shadow-md">
+          <h2 className="text-xs uppercase tracking-widest text-stone-500 font-medium mb-3 sm:mb-5">
             Danh mục bán chạy nhất
           </h2>
           {loading ? (
@@ -353,17 +359,17 @@ export default function DashboardPage() {
       </div>
 
       {/* ── ROW 5: Tổng kho ── */}
-      <div className="bg-white border border-stone-300 rounded-xl p-6 shadow-md">
-        <h2 className="text-xs uppercase tracking-widest text-stone-500 font-medium mb-5">Tổng quan kho hàng</h2>
+      <div className="bg-white border border-stone-300 rounded-xl p-4 sm:p-6 shadow-md">
+        <h2 className="text-xs uppercase tracking-widest text-stone-500 font-medium mb-3 sm:mb-5">Tổng quan kho hàng</h2>
         {loading ? (
           <div className="grid grid-cols-2 gap-4">
             <Skel className="h-20" />
             <Skel className="h-20" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 items-center">
             <div className="text-center">
-              <p className="font-sans text-4xl font-bold text-espresso tabular-nums">
+              <p className="font-sans text-3xl sm:text-4xl font-bold text-espresso tabular-nums">
                 {fmtNum((d?.sanPham.dangBan ?? 0) + (d?.sanPham.hetHang ?? 0))}
               </p>
               <p className="text-xs text-stone-600 font-medium mt-1 uppercase tracking-widest">Tổng sản phẩm</p>

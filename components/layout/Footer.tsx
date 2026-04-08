@@ -14,9 +14,9 @@ export default function Footer() {
 
   return (
     <footer className="bg-espresso text-cream">
-      <div className="max-w-7xl mx-auto px-6 pt-16 pb-10">
-        <div className="text-center mb-12">
-          <h3 className="font-heading text-2xl font-light tracking-[0.3em] uppercase text-cream mb-3">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-10 md:pt-16 pb-8 md:pb-10">
+        <div className="text-center mb-8 md:mb-12">
+          <h3 className="font-heading text-xl md:text-2xl font-light tracking-[0.3em] uppercase text-cream mb-3">
             {tenShop}
           </h3>
           <p className="text-xs text-cream/50 tracking-wider uppercase">
@@ -24,9 +24,9 @@ export default function Footer() {
           </p>
         </div>
 
-        <div className="w-full h-px bg-cream/10 mb-12" />
+        <div className="w-full h-px bg-cream/10 mb-8 md:mb-12" />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-center md:text-left">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 text-center md:text-left">
           <div>
             <h4 className="text-xs uppercase tracking-widest font-medium text-cream/40 mb-5">
               Về Chúng Tôi
@@ -65,7 +65,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="w-full h-px bg-cream/10 mt-12 mb-8" />
+        <div className="w-full h-px bg-cream/10 mt-8 md:mt-12 mb-6 md:mb-8" />
 
         <p className="text-center text-xs text-cream/30 tracking-wider uppercase">
           © 2026 {tenShop}. All rights reserved.

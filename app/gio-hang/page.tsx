@@ -16,15 +16,15 @@ function EmptyBagIcon() {
 
 export default function CartPage() {
   const router = useRouter();
-  const { cart, updateQuantity, removeItem } = useCart();
+  const { cart, updateQuantity, updateSize, removeItem } = useCart();
 
   const total = cart.reduce((sum, item) => sum + item.giaHienThi * item.soLuong, 0);
 
   if (cart.length === 0) {
     return (
-      <div className="max-w-2xl mx-auto px-6 py-24 pt-36 text-center">
+      <div className="max-w-2xl mx-auto px-4 md:px-6 py-16 md:py-24 pt-28 md:pt-36 text-center">
         <EmptyBagIcon />
-        <h2 className="font-heading text-3xl font-light text-espresso mb-3">Giỏ Hàng Trống</h2>
+        <h2 className="font-heading text-2xl md:text-3xl font-light text-espresso mb-3">Giỏ Hàng Trống</h2>
         <p className="text-sm text-stone mb-10">Hãy thêm sản phẩm yêu thích vào giỏ hàng của bạn</p>
         <button
           onClick={() => router.push("/")}
@@ -37,27 +37,28 @@ export default function CartPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-12 pt-32">
-      <h2 className="font-heading text-3xl font-light text-espresso mb-10">
+    <div className="max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12 pt-24 md:pt-32">
+      <h2 className="font-heading text-2xl md:text-3xl font-light text-espresso mb-6 md:mb-10">
         Giỏ Hàng
-        <span className="text-base font-sans font-normal text-stone ml-3">({cart.length} sản phẩm)</span>
+        <span className="text-sm md:text-base font-sans font-normal text-stone ml-3">({cart.length} sản phẩm)</span>
       </h2>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
         {/* Items */}
         <div className="lg:col-span-2">
           {cart.map((item) => (
             <CartItem
-              key={`${item.id}_${item.sizeChon ?? ""}`}
+              key={`${item.id}`}
               item={item}
               onUpdate={(q) => updateQuantity(item.id, item.sizeChon, q)}
+              onUpdateSize={(newSize) => updateSize(item.id, item.sizeChon, newSize)}
               onRemove={() => removeItem(item.id, item.sizeChon)}
             />
           ))}
 
           <button
             onClick={() => router.push("/")}
-            className="mt-8 text-xs uppercase tracking-widest text-stone hover:text-espresso transition-colors flex items-center gap-2"
+            className="mt-6 md:mt-8 text-xs uppercase tracking-widest text-stone hover:text-espresso transition-colors flex items-center gap-2"
           >
             <span>←</span>
             <span>Tiếp Tục Mua Sắm</span>
@@ -66,7 +67,7 @@ export default function CartPage() {
 
         {/* Order summary */}
         <div className="lg:col-span-1">
-          <div className="bg-blush/20 p-6 sticky top-28">
+          <div className="bg-blush/20 p-4 md:p-6 sticky top-20 md:lg:top-28">
             <h3 className="text-xs uppercase tracking-widest text-stone mb-6">Đơn Hàng</h3>
 
             <div className="flex justify-between text-sm text-stone mb-3">

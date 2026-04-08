@@ -88,22 +88,22 @@ export default function AdminNav({ children }: { children: React.ReactNode }) {
     <ToastProvider>
     <>
       <nav className="bg-white sticky top-0 z-50 border-b border-stone-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-14">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 flex items-center justify-between h-14">
           {/* Logo */}
           <Link
             href="/"
-            className="font-heading text-base font-light tracking-widest text-espresso uppercase shrink-0 pr-6 border-r border-stone-200"
+            className="font-heading text-base font-light tracking-widest text-espresso uppercase shrink-0 pr-3 sm:pr-6 border-r border-stone-200"
           >
-            TRANH ANH STORE
+            TRANH ANH
           </Link>
 
-          {/* Nav items */}
-          <div className="flex items-center gap-1 flex-1 px-6">
+          {/* Nav items — scrollable on mobile */}
+          <div className="flex items-center gap-1 flex-1 overflow-x-auto px-3 sm:px-6 scrollbar-hide">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`px-3 py-1.5 text-xs uppercase tracking-widest transition-colors rounded-sm ${
+                className={`px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs uppercase tracking-widest transition-colors rounded-sm whitespace-nowrap ${
                   pathname === item.href
                     ? "bg-espresso text-cream font-semibold"
                     : "text-stone-600 hover:text-espresso hover:bg-stone-100"
@@ -115,7 +115,7 @@ export default function AdminNav({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Bell notification */}
-          <div className="relative pl-6 border-l border-stone-200 shrink-0" ref={dropdownRef}>
+          <div className="relative pl-3 sm:pl-6 border-l border-stone-200 shrink-0" ref={dropdownRef}>
             <button
               onClick={handleOpenNotif}
               className="relative flex items-center text-stone-500 hover:text-espresso transition-colors"
@@ -131,7 +131,7 @@ export default function AdminNav({ children }: { children: React.ReactNode }) {
 
             {/* Dropdown */}
             {open && (
-              <div className="absolute right-0 top-full mt-3 w-80 bg-white border border-stone-200 shadow-xl z-50">
+              <div className="absolute right-0 top-full mt-3 w-72 sm:w-80 bg-white border border-stone-200 shadow-xl z-50">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100">
                   <span className="text-xs font-semibold uppercase tracking-widest text-espresso">
                     Đơn mới
@@ -183,20 +183,21 @@ export default function AdminNav({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* User info + Logout */}
-          <div className="flex items-center gap-3 pl-4 border-l border-stone-200 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 pl-3 sm:pl-4 border-l border-stone-200 shrink-0">
             {isStaff && staffTen && (
               <span className="text-xs text-stone-500 hidden sm:block">{staffTen}</span>
             )}
             <button
               onClick={handleLogout}
-              className="text-xs uppercase tracking-widest text-stone-500 hover:text-espresso transition-colors"
+              className="text-[10px] sm:text-xs uppercase tracking-widest text-stone-500 hover:text-espresso transition-colors"
             >
-              Đăng xuất
+              <span className="hidden sm:inline">Đăng xuất</span>
+              <span className="sm:hidden">Thoát</span>
             </button>
           </div>
         </div>
       </nav>
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-8 bg-cream min-h-screen">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-8 bg-cream min-h-screen">
         {children}
       </main>
 

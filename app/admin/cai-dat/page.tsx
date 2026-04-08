@@ -14,6 +14,7 @@ export default function AdminSettingsPage() {
 
   // Trạng thái KH
   const [trangThaiList, setTrangThaiList] = useState<TrangThaiKH[]>([]);
+  const [deletingTTId, setDeletingTTId] = useState<string | null>(null);
   const [newTenTT, setNewTenTT] = useState("");
   const [newMauTT, setNewMauTT] = useState("#8C7B72");
   const [addingTT, setAddingTT] = useState(false);
@@ -53,6 +54,7 @@ export default function AdminSettingsPage() {
 
   const handleDeleteTrangThai = async (id: string) => {
     if (!confirm("Xóa trạng thái này?")) return;
+    setDeletingTTId(id);
     try {
       const res = await fetch(`/api/trang-thai-kh/${id}`, {
         method: "DELETE",
@@ -62,6 +64,7 @@ export default function AdminSettingsPage() {
       if (d.success) loadTrangThai();
       else showToast(d.error || "Xóa thất bại");
     } catch { showToast("Không thể xóa trạng thái"); }
+    setDeletingTTId(null);
   };
 
   useEffect(() => {
@@ -100,15 +103,15 @@ export default function AdminSettingsPage() {
 
   return (
     <div>
-      <h1 className="font-heading text-2xl font-light text-espresso mb-8">Cài đặt shop</h1>
+      <h1 className="font-heading text-xl sm:text-2xl font-light text-espresso mb-6 sm:mb-8">Cài đặt shop</h1>
 
       {success && (
-        <div className="mb-6 p-4 bg-green-50 text-green-700 text-sm border border-green-100">
+        <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-green-50 text-green-700 text-sm border border-green-100">
           Đã lưu cài đặt thành công!
         </div>
       )}
 
-      <div className="bg-white p-8 border border-stone-100 space-y-8 max-w-xl">
+      <div className="bg-white p-4 sm:p-6 lg:p-8 border border-stone-100 space-y-4 sm:space-y-6 lg:space-y-8 max-w-xl">
         <div>
           <label className="block text-xs uppercase tracking-widest text-stone-400 mb-3">Logo shop</label>
           <LogoUpload
@@ -144,12 +147,12 @@ export default function AdminSettingsPage() {
       </div>
 
       {/* Trạng thái khách hàng */}
-      <div className="bg-white p-8 border border-stone-100 space-y-6 max-w-xl mt-8">
+      <div className="bg-white p-4 sm:p-6 lg:p-8 border border-stone-100 space-y-4 sm:space-y-6 max-w-xl mt-6 sm:mt-8">
         <h2 className="font-heading text-lg font-light text-espresso">Trạng thái khách hàng</h2>
 
         <div className="space-y-2">
           {trangThaiList.map((t) => (
-            <div key={t.id} className="flex items-center justify-between py-2 border-b border-stone-50">
+            <div key={t.id} className="flex items-center justify-between gap-2 py-2 border-b border-stone-50">
               <div className="flex items-center gap-3">
                 <span
                   className="px-3 py-1 text-xs font-medium rounded-sm"
@@ -161,15 +164,18 @@ export default function AdminSettingsPage() {
               </div>
               <button
                 onClick={() => handleDeleteTrangThai(t.id)}
-                className="text-xs text-stone-300 hover:text-rose transition-colors uppercase tracking-widest"
+                disabled={deletingTTId === t.id}
+                className="text-xs text-stone-300 hover:text-rose transition-colors uppercase tracking-widest disabled:opacity-50"
               >
-                Xóa
+                {deletingTTId === t.id ? (
+                  <span className="inline-block w-3 h-3 border border-rose border-t-transparent rounded-full animate-spin align-middle" />
+                ) : "Xóa"}
               </button>
             </div>
           ))}
         </div>
 
-        <div className="flex gap-3 items-end pt-2">
+        <div className="flex flex-col sm:flex-row gap-3 items-end pt-2">
           <div className="flex-1">
             <label className="block text-xs uppercase tracking-widest text-stone-400 mb-2">Tên trạng thái</label>
             <input
@@ -179,22 +185,29 @@ export default function AdminSettingsPage() {
               className="w-full px-3 py-2 border border-stone-200 text-sm text-espresso focus:outline-none focus:border-espresso bg-white"
             />
           </div>
-          <div>
-            <label className="block text-xs uppercase tracking-widest text-stone-400 mb-2">Màu</label>
-            <input
-              type="color"
-              value={newMauTT}
-              onChange={(e) => setNewMauTT(e.target.value)}
-              className="w-10 h-9 border border-stone-200 cursor-pointer bg-white p-0.5"
-            />
+          <div className="flex gap-3 w-full sm:w-auto">
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-stone-400 mb-2">Màu</label>
+              <input
+                type="color"
+                value={newMauTT}
+                onChange={(e) => setNewMauTT(e.target.value)}
+                className="w-10 h-9 border border-stone-200 cursor-pointer bg-white p-0.5"
+              />
+            </div>
+            <button
+              onClick={handleAddTrangThai}
+              disabled={addingTT || !newTenTT.trim()}
+              className="flex-1 sm:flex-none px-5 py-2 bg-espresso text-cream text-xs uppercase tracking-widest hover:opacity-80 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {addingTT ? (
+                <>
+                  <span className="inline-block w-3 h-3 border border-cream border-t-transparent rounded-full animate-spin" />
+                  Đang thêm...
+                </>
+              ) : "Thêm"}
+            </button>
           </div>
-          <button
-            onClick={handleAddTrangThai}
-            disabled={addingTT || !newTenTT.trim()}
-            className="px-5 py-2 bg-espresso text-cream text-xs uppercase tracking-widest hover:opacity-80 transition-opacity disabled:opacity-50"
-          >
-            {addingTT ? "..." : "Thêm"}
-          </button>
         </div>
       </div>
     </div>

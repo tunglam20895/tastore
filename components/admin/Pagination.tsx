@@ -1,15 +1,18 @@
 "use client";
 
+const LIMIT_OPTIONS = [20, 50, 100, 200, 500];
+
 interface PaginationProps {
   page: number;
   totalPages: number;
   total: number;
   limit: number;
   onPageChange: (page: number) => void;
+  onLimitChange?: (limit: number) => void;
 }
 
-export default function Pagination({ page, totalPages, total, onPageChange }: PaginationProps) {
-  if (totalPages <= 1) return null;
+export default function Pagination({ page, totalPages, total, limit, onPageChange, onLimitChange }: PaginationProps) {
+  if (totalPages <= 1 && !onLimitChange) return null;
 
   const getPages = () => {
     const pages: (number | "...")[] = [];
@@ -30,10 +33,26 @@ export default function Pagination({ page, totalPages, total, onPageChange }: Pa
   const btnBase = "w-8 h-8 flex items-center justify-center text-xs transition-colors";
 
   return (
-    <div className="flex items-center justify-between mt-6 pt-4 border-t border-stone-200">
-      <span className="text-xs text-stone-500 font-medium">
-        Trang {page}/{totalPages} • Tổng {total} kết quả
-      </span>
+    <div className="flex flex-col sm:flex-row items-center justify-between mt-6 pt-4 border-t border-stone-200 gap-3">
+      <div className="flex items-center gap-3">
+        <span className="text-xs text-stone-500 font-medium">
+          Trang {page}/{totalPages || 1} • Tổng {total} kết quả
+        </span>
+        {onLimitChange && (
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-stone-400">Hiển thị</span>
+            <select
+              value={limit}
+              onChange={(e) => onLimitChange(Number(e.target.value))}
+              className="text-xs border border-stone-200 rounded px-2 py-1 text-stone-600 focus:outline-none focus:border-espresso bg-white"
+            >
+              {LIMIT_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
       <div className="flex items-center gap-1">
         <button
           onClick={() => onPageChange(page - 1)}

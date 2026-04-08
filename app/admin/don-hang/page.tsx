@@ -6,7 +6,7 @@ import Pagination from "@/components/admin/Pagination";
 import type { DonHang } from "@/types";
 import { useToast } from "@/contexts/ToastContext";
 
-const LIMIT = 20;
+const LIMIT_DEFAULT = 20;
 
 const ALL_STATUSES = ["", "Mới", "Chốt để lên đơn", "Đã lên đơn", "Đang xử lý", "Đã giao", "Huỷ"] as const;
 
@@ -16,6 +16,7 @@ export default function AdminOrdersPage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [limit, setLimit] = useState(LIMIT_DEFAULT);
 
   // Filters
   const [trangThai, setTrangThai] = useState("");
@@ -35,11 +36,12 @@ export default function AdminOrdersPage() {
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
 
   const loadOrders = useCallback((
-    p: number, tt: string, ten: string, sdt: string, tu: string, den: string
+    p: number, tt: string, ten: string, sdt: string, tu: string, den: string, lim?: number
   ) => {
     setLoading(true);
     setSelectedIds([]);
-    const params = new URLSearchParams({ page: String(p), limit: String(LIMIT) });
+    const l = lim ?? limit;
+    const params = new URLSearchParams({ page: String(p), limit: String(l) });
     if (tt) params.set("trang_thai", tt);
     if (ten) params.set("search_ten", ten);
     if (sdt) params.set("search_sdt", sdt);
@@ -57,12 +59,12 @@ export default function AdminOrdersPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [adminPassword]);
+  }, [adminPassword, limit]);
 
   useEffect(() => {
     loadOrders(page, trangThai, searchTen, searchSdt, tuNgay, denNgay);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, trangThai, searchTen, searchSdt, tuNgay, denNgay]);
+  }, [page, trangThai, searchTen, searchSdt, tuNgay, denNgay, limit]);
 
   const handleTrangThaiChange = (tt: string) => {
     setTrangThai(tt);
@@ -176,13 +178,13 @@ export default function AdminOrdersPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="font-heading text-2xl font-light text-espresso">Quản lý đơn hàng</h1>
-        <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <h1 className="font-heading text-xl sm:text-2xl font-light text-espresso">Quản lý đơn hàng</h1>
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={handleExportChotDonHang}
             disabled={exportLoading}
-            className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white text-xs uppercase tracking-widest hover:bg-teal-700 disabled:opacity-50 transition-colors rounded"
+            className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-teal-600 text-white text-[10px] sm:text-xs uppercase tracking-widest hover:bg-teal-700 disabled:opacity-50 transition-colors rounded"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
@@ -204,13 +206,13 @@ export default function AdminOrdersPage() {
           value={searchTenInput}
           onChange={(e) => setSearchTenInput(e.target.value)}
           placeholder="Tìm tên khách hàng..."
-          className="px-3 py-1.5 border border-stone-300 rounded text-sm text-espresso focus:outline-none focus:border-espresso bg-white w-44"
+          className="px-3 py-1.5 border border-stone-300 rounded text-sm text-espresso focus:outline-none focus:border-espresso bg-white w-full sm:w-44"
         />
         <input
           value={searchSdtInput}
           onChange={(e) => setSearchSdtInput(e.target.value)}
           placeholder="Tìm SĐT..."
-          className="px-3 py-1.5 border border-stone-300 rounded text-sm text-espresso focus:outline-none focus:border-espresso bg-white w-36"
+          className="px-3 py-1.5 border border-stone-300 rounded text-sm text-espresso focus:outline-none focus:border-espresso bg-white w-full sm:w-36"
         />
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-stone-400">Từ</span>
@@ -307,8 +309,9 @@ export default function AdminOrdersPage() {
               page={page}
               totalPages={totalPages}
               total={total}
-              limit={LIMIT}
+              limit={limit}
               onPageChange={(p) => setPage(p)}
+              onLimitChange={(l) => { setLimit(l); setPage(1); }}
             />
           </div>
         </div>

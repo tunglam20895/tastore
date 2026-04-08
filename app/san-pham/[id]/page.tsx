@@ -77,6 +77,7 @@ export default function ProductDetailPage() {
         anhURL: product.anhURL,
         soLuong: qty,
         sizeChon: sizeChon,
+        sizes: product.sizes,
       });
 
       if (buyNow) {
@@ -91,7 +92,7 @@ export default function ProductDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-24 pt-32">
+      <div className="flex justify-center py-16 md:py-24 pt-24 md:pt-32">
         <div className="w-8 h-8 border border-espresso border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -99,8 +100,8 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-24 pt-32 text-center">
-        <p className="font-heading text-2xl font-light text-stone-400 mb-6">
+      <div className="max-w-4xl mx-auto px-4 md:px-6 py-16 md:py-24 pt-24 md:pt-32 text-center">
+        <p className="font-heading text-xl md:text-2xl font-light text-stone-400 mb-6">
           Không tìm thấy sản phẩm
         </p>
         <button
@@ -119,9 +120,9 @@ export default function ProductDetailPage() {
   const hasSizes = product.sizes && product.sizes.length > 0;
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-12 pt-28">
+    <div className="max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-12 pt-20 md:pt-28">
       {/* Breadcrumb */}
-      <div className="flex gap-2 text-xs uppercase tracking-widest text-stone mb-10">
+      <div className="flex flex-wrap gap-x-2 gap-y-1 text-[10px] md:text-xs uppercase tracking-widest text-stone mb-6 md:mb-10">
         <Link href="/" className="hover:text-espresso transition-colors">
           Trang Chủ
         </Link>
@@ -134,12 +135,12 @@ export default function ProductDetailPage() {
             <span>/</span>
           </>
         )}
-        <span className="text-espresso">{product.ten}</span>
+        <span className="text-espresso truncate">{product.ten}</span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 lg:gap-20 items-start">
         {/* Ảnh — sticky */}
-        <div className="md:sticky md:top-28">
+        <div className="md:sticky md:top-24 lg:top-28">
           <div className="relative aspect-[3/4] overflow-hidden bg-blush">
             {product.anhURL ? (
               <Image
@@ -163,8 +164,8 @@ export default function ProductDetailPage() {
         </div>
 
         {/* Info */}
-        <div className="py-4">
-          <h1 className="font-heading text-3xl md:text-4xl font-light text-espresso leading-tight mb-6">
+        <div className="py-2 md:py-4">
+          <h1 className="font-heading text-2xl md:text-3xl lg:text-4xl font-light text-espresso leading-tight mb-4 md:mb-6">
             {product.ten}
           </h1>
 
@@ -172,10 +173,10 @@ export default function ProductDetailPage() {
           <div className="mb-3">
             {hasDiscount ? (
               <div className="flex items-baseline gap-3">
-                <p className="text-stone line-through text-sm">
+                <p className="text-stone line-through text-xs md:text-sm">
                   {product.giaGoc.toLocaleString("vi-VN")}đ
                 </p>
-                <p className="text-2xl font-medium text-espresso">
+                <p className="text-xl md:text-2xl font-medium text-espresso">
                   {product.giaHienThi.toLocaleString("vi-VN")}đ
                 </p>
                 <span className="text-xs bg-espresso text-cream px-2 py-0.5 rounded-full">
@@ -183,7 +184,7 @@ export default function ProductDetailPage() {
                 </span>
               </div>
             ) : (
-              <p className="text-2xl font-medium text-espresso">
+              <p className="text-xl md:text-2xl font-medium text-espresso">
                 {product.giaHienThi.toLocaleString("vi-VN")}đ
               </p>
             )}

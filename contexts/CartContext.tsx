@@ -15,6 +15,7 @@ type CartContextType = {
   cartCount: number;
   addItem: (item: CartItemType) => void;
   updateQuantity: (id: string, sizeChon: string | null, quantity: number) => void;
+  updateSize: (id: string, oldSizeChon: string | null, newSizeChon: string | null) => void;
   removeItem: (id: string, sizeChon: string | null) => void;
   clearCart: () => void;
   refreshCart: () => void;
@@ -96,6 +97,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const updateSize = useCallback((id: string, oldSizeChon: string | null, newSizeChon: string | null) => {
+    const items = loadCart();
+    // Find the item with the old size
+    const itemIndex = items.findIndex((i) => i.id === id && i.sizeChon === oldSizeChon);
+    if (itemIndex === -1) return;
+
+    const item = items[itemIndex];
+
+    // Check if there's already an item with the new size
+    const existingIndex = items.findIndex((i) => i.id === id && i.sizeChon === newSizeChon);
+    if (existingIndex !== -1) {
+      // Merge quantities
+      items[existingIndex].soLuong += item.soLuong;
+      items.splice(itemIndex, 1);
+    } else {
+      // Just update the size
+      item.sizeChon = newSizeChon;
+    }
+    saveCart(items);
+    setCart([...items]);
+  }, []);
+
   const removeItem = useCallback((id: string, sizeChon: string | null) => {
     const items = loadCart();
     const filtered = items.filter((i) => !(i.id === id && i.sizeChon === sizeChon));
@@ -109,7 +132,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <CartContext.Provider value={{ cart, cartCount, addItem, updateQuantity, removeItem, clearCart, refreshCart, triggerFly, flyTrigger, flyDone }}>
+    <CartContext.Provider value={{ cart, cartCount, addItem, updateQuantity, updateSize, removeItem, clearCart, refreshCart, triggerFly, flyTrigger, flyDone }}>
       {children}
     </CartContext.Provider>
   );

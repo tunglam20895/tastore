@@ -27,6 +27,7 @@ export default function AdminNhanVienPage() {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm());
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { showToast } = useToast();
 
   const load = useCallback(() => {
@@ -90,12 +91,14 @@ export default function AdminNhanVienPage() {
 
   const handleDelete = async (nv: NhanVien) => {
     if (!confirm(`Xóa nhân viên "${nv.ten}"?`)) return;
+    setDeletingId(nv.id);
     try {
       const res = await fetch(`/api/nhan-vien/${nv.id}`, { method: "DELETE", headers: headers() });
       const d = await res.json();
       if (d.success) { load(); showToast("Đã xóa nhân viên", "success"); }
       else showToast(d.error || "Xóa thất bại");
     } catch { showToast("Không thể xóa"); }
+    setDeletingId(null);
   };
 
   const toggleQuyen = (q: string) => {
@@ -109,9 +112,9 @@ export default function AdminNhanVienPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6 sm:mb-8">
         <div>
-          <h1 className="font-heading text-2xl font-light text-espresso">Nhân viên</h1>
+          <h1 className="font-heading text-xl sm:text-2xl font-light text-espresso">Nhân viên</h1>
           <p className="text-xs text-stone-400 mt-1">{list.length} tài khoản</p>
         </div>
         {!isFormOpen && (
@@ -124,8 +127,8 @@ export default function AdminNhanVienPage() {
 
       {/* Form tạo / chỉnh sửa */}
       {isFormOpen && (
-        <div className="bg-white border border-stone-200 p-6 mb-8 shadow-sm">
-          <h2 className="font-heading text-lg font-light text-espresso mb-6">
+        <div className="bg-white border border-stone-200 p-4 sm:p-6 mb-6 sm:mb-8 shadow-sm">
+          <h2 className="font-heading text-base sm:text-lg font-light text-espresso mb-4 sm:mb-6">
             {creating ? "Thêm nhân viên mới" : `Chỉnh sửa — ${editing?.ten}`}
           </h2>
 
@@ -206,10 +209,10 @@ export default function AdminNhanVienPage() {
           <div className="w-6 h-6 border border-espresso border-t-transparent rounded-full animate-spin" />
         </div>
       ) : list.length === 0 ? (
-        <div className="text-center py-16 text-stone-400 text-sm">Chưa có nhân viên nào</div>
+        <div className="text-center py-12 sm:py-16 text-stone-400 text-sm">Chưa có nhân viên nào</div>
       ) : (
-        <div className="bg-white border border-stone-200 overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white border border-stone-200 overflow-x-auto">
+          <table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="border-b border-stone-100 text-xs uppercase tracking-widest text-stone-400">
                 <th className="text-left py-3 px-4">Tên</th>
@@ -249,8 +252,11 @@ export default function AdminNhanVienPage() {
                       Sửa
                     </button>
                     <button onClick={() => handleDelete(nv)}
-                      className="text-xs uppercase tracking-widest text-stone-300 hover:text-rose transition-colors">
-                      Xóa
+                      disabled={deletingId === nv.id}
+                      className="text-xs uppercase tracking-widest text-stone-300 hover:text-rose transition-colors disabled:opacity-50">
+                      {deletingId === nv.id ? (
+                        <span className="inline-block w-3 h-3 border border-rose border-t-transparent rounded-full animate-spin align-middle" />
+                      ) : "Xóa"}
                     </button>
                   </td>
                 </tr>

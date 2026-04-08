@@ -26,6 +26,7 @@ export default function ProductCard({ product, index = 0 }: { product: SanPham; 
       anhURL: product.anhURL,
       soLuong: 1,
       sizeChon: null,
+      sizes: product.sizes,
     });
   };
 
@@ -60,8 +61,8 @@ export default function ProductCard({ product, index = 0 }: { product: SanPham; 
 
           {/* Sắp hết hàng badge */}
           {product.conHang && product.soLuong > 0 && product.soLuong <= 5 && (
-            <span className="absolute bottom-3 left-3 text-xs text-rose font-medium">
-              Còn {product.soLuong} sản phẩm
+            <span className="absolute top-3 left-3 md:bottom-3 md:left-3 md:top-auto text-xs text-rose font-medium bg-cream/80 backdrop-blur-sm px-2 py-0.5 rounded-sm">
+              Còn {product.soLuong}
             </span>
           )}
 
@@ -74,12 +75,12 @@ export default function ProductCard({ product, index = 0 }: { product: SanPham; 
             </div>
           ) : null}
 
-          {/* Quick add button — appears on hover */}
+          {/* Quick add button — always visible on mobile, hover on desktop */}
           {product.conHang && product.soLuong > 0 && (
-            <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+            <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 md:translate-y-full md:group-hover:translate-y-0 translate-y-0 transition-transform duration-300">
               <button
                 onClick={handleQuickAdd}
-                className="w-full bg-cream/90 backdrop-blur-sm text-espresso text-xs uppercase tracking-widest py-3 font-medium hover:bg-cream transition-colors"
+                className="w-full bg-cream/90 backdrop-blur-sm text-espresso text-xs uppercase tracking-widest py-3 font-medium hover:bg-cream transition-colors active:bg-blush"
               >
                 Thêm Vào Giỏ
               </button>

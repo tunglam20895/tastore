@@ -6,7 +6,7 @@ import ProductForm from "@/components/admin/ProductForm";
 import Pagination from "@/components/admin/Pagination";
 import { useToast } from "@/contexts/ToastContext";
 
-const LIMIT = 20;
+const LIMIT_DEFAULT = 20;
 
 function StockBadge({ n }: { n: number }) {
   if (n === 0) return <span className="text-xs px-2 py-0.5 bg-red-50 text-red-500">{n} — Hết</span>;
@@ -21,9 +21,11 @@ export default function AdminProductsPage() {
   const [editing, setEditing] = useState<SanPham | null>(null);
   const [creating, setCreating] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [limit, setLimit] = useState(LIMIT_DEFAULT);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -42,7 +44,7 @@ export default function AdminProductsPage() {
 
   const loadProducts = useCallback((p: number, s: string, dm: string, tk: string, ch: string) => {
     setLoading(true);
-    const params = new URLSearchParams({ page: String(p), limit: String(LIMIT) });
+    const params = new URLSearchParams({ page: String(p), limit: String(limit) });
     if (s) params.set("search", s);
     if (dm) params.set("danh_muc", dm);
     if (tk) params.set("ton_kho", tk);
@@ -59,12 +61,12 @@ export default function AdminProductsPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [limit]);
 
   useEffect(() => {
     loadProducts(page, search, danhMuc, tonKho, conHang);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, search, danhMuc, tonKho, conHang, refreshKey]);
+  }, [page, search, danhMuc, tonKho, conHang, refreshKey, limit]);
 
   const handleFilterChange = (key: string, value: string) => {
     if (key === "danhMuc") { setDanhMuc(value); setPage(1); }
@@ -80,6 +82,7 @@ export default function AdminProductsPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Bạn chắc chắn muốn xóa sản phẩm này?")) return;
+    setDeletingId(id);
     try {
       const res = await fetch(`/api/san-pham/${id}`, {
         method: "DELETE",
@@ -90,6 +93,8 @@ export default function AdminProductsPage() {
       else showToast(data.error || "Không thể xóa sản phẩm");
     } catch {
       showToast("Không thể xóa sản phẩm");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -102,8 +107,8 @@ export default function AdminProductsPage() {
   if (creating || editing) {
     return (
       <div>
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="font-heading text-2xl font-light text-espresso">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 sm:mb-8">
+          <h1 className="font-heading text-xl sm:text-2xl font-light text-espresso">
             {editing ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
           </h1>
           <button
@@ -113,7 +118,7 @@ export default function AdminProductsPage() {
             ← Quay lại
           </button>
         </div>
-        <div className="bg-white p-8 border border-stone-300 rounded-xl shadow-md">
+        <div className="bg-white p-4 sm:p-6 lg:p-8 border border-stone-300 rounded-xl shadow-md">
           <ProductForm
             product={editing || undefined}
             onSave={handleSave}
@@ -126,7 +131,7 @@ export default function AdminProductsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="font-heading text-2xl font-light text-espresso">Quản lý sản phẩm</h1>
         <button
           onClick={() => setCreating(true)}
@@ -143,7 +148,7 @@ export default function AdminProductsPage() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Tìm tên sản phẩm..."
-            className="px-3 py-1.5 border border-stone-300 text-sm text-espresso focus:outline-none focus:border-espresso bg-white rounded w-48"
+            className="px-3 py-1.5 border border-stone-300 text-sm text-espresso focus:outline-none focus:border-espresso bg-white rounded w-full sm:w-48"
           />
           <button type="submit" className="px-4 py-1.5 bg-espresso text-cream text-xs uppercase tracking-widest hover:opacity-80">
             Tìm
@@ -177,10 +182,12 @@ export default function AdminProductsPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-16 text-stone-400 text-sm">Đang tải...</div>
+        <div className="flex justify-center py-16">
+          <div className="w-6 h-6 border border-espresso border-t-transparent rounded-full animate-spin" />
+        </div>
       ) : (
-        <div className="bg-white border border-stone-300 rounded-xl shadow-md overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white border border-stone-300 rounded-xl shadow-md overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="border-b border-stone-200 bg-stone-100/50 text-xs uppercase tracking-widest text-stone-600 font-medium">
                 <th className="text-left py-3 px-4">Ảnh</th>
@@ -244,8 +251,14 @@ export default function AdminProductsPage() {
                     <button onClick={() => setEditing(p)} className="text-xs uppercase tracking-widest text-stone-400 hover:text-espresso transition-colors mr-4">
                       Sửa
                     </button>
-                    <button onClick={() => handleDelete(p.id)} className="text-xs uppercase tracking-widest text-stone-300 hover:text-rose transition-colors">
-                      Xóa
+                    <button
+                      onClick={() => handleDelete(p.id)}
+                      disabled={deletingId === p.id}
+                      className="text-xs uppercase tracking-widest text-stone-300 hover:text-rose transition-colors disabled:opacity-50"
+                    >
+                      {deletingId === p.id ? (
+                        <span className="inline-block w-3 h-3 border border-rose border-t-transparent rounded-full animate-spin align-middle" />
+                      ) : "Xóa"}
                     </button>
                   </td>
                 </tr>
@@ -253,7 +266,7 @@ export default function AdminProductsPage() {
             </tbody>
           </table>
           <div className="px-4">
-            <Pagination page={page} totalPages={totalPages} total={total} limit={LIMIT} onPageChange={(p) => setPage(p)} />
+            <Pagination page={page} totalPages={totalPages} total={total} limit={limit} onPageChange={(p) => setPage(p)} onLimitChange={(l) => { setLimit(l); setPage(1); }} />
           </div>
         </div>
       )}

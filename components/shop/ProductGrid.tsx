@@ -64,7 +64,7 @@ export default function ProductGrid() {
   return (
     <div ref={gridRef}>
       {/* Search */}
-      <form onSubmit={handleSearchSubmit} className="flex justify-center mb-8">
+      <form onSubmit={handleSearchSubmit} className="flex justify-center mb-6 md:mb-8 px-4">
         <div className="flex w-full max-w-sm border border-stone/30 focus-within:border-espresso transition-colors">
           <input
             value={searchInput}
@@ -73,9 +73,9 @@ export default function ProductGrid() {
               if (e.target.value === "") { setSearch(""); loadProducts(1, selectedCategory, ""); }
             }}
             placeholder="Tìm kiếm sản phẩm..."
-            className="flex-1 px-4 py-2.5 text-sm text-espresso bg-transparent focus:outline-none placeholder:text-stone/50"
+            className="flex-1 px-3 md:px-4 py-2.5 text-sm text-espresso bg-transparent focus:outline-none placeholder:text-stone/50"
           />
-          <button type="submit" className="px-4 text-stone hover:text-espresso transition-colors">
+          <button type="submit" className="px-3 md:px-4 text-stone hover:text-espresso transition-colors">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
@@ -85,10 +85,10 @@ export default function ProductGrid() {
 
       {/* Category filter */}
       {categories.length > 0 && (
-        <div className="flex gap-2.5 overflow-x-auto pb-2 mb-12 justify-center flex-wrap scrollbar-hide">
+        <div className="flex gap-2 md:gap-2.5 overflow-x-auto md:overflow-visible scrollbar-hide pb-2 mb-8 md:mb-12">
           <button
             onClick={() => handleCategoryChange("")}
-            className={`px-5 py-2 text-xs uppercase tracking-widest font-medium transition-all duration-200 rounded-full whitespace-nowrap ${
+            className={`flex-shrink-0 px-3 py-1.5 md:px-5 md:py-2 text-xs uppercase tracking-widest font-medium transition-all duration-200 rounded-full whitespace-nowrap ${
               selectedCategory === ""
                 ? "bg-espresso text-cream"
                 : "border border-stone text-stone hover:bg-blush hover:border-blush"
@@ -100,7 +100,7 @@ export default function ProductGrid() {
             <motion.button
               key={cat.id}
               onClick={() => handleCategoryChange(cat.id)}
-              className={`px-5 py-2 text-xs uppercase tracking-widest font-medium transition-all duration-200 rounded-full whitespace-nowrap ${
+              className={`flex-shrink-0 px-3 py-1.5 md:px-5 md:py-2 text-xs uppercase tracking-widest font-medium transition-all duration-200 rounded-full whitespace-nowrap ${
                 selectedCategory === cat.id
                   ? "bg-espresso text-cream"
                   : "border border-stone text-stone hover:bg-blush hover:border-blush"
@@ -117,12 +117,12 @@ export default function ProductGrid() {
           <div className="w-8 h-8 border border-espresso border-t-transparent rounded-full animate-spin" />
         </div>
       ) : products.length === 0 ? (
-        <div className="text-center py-24">
-          <p className="font-heading text-2xl font-light text-stone-400">Chưa có sản phẩm nào</p>
+        <div className="text-center py-24 px-4">
+          <p className="font-heading text-xl md:text-2xl font-light text-stone-400">Chưa có sản phẩm nào</p>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-10 md:gap-x-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-8 md:gap-x-6 md:gap-y-10 px-2 md:px-0">
             {products.map((product, i) => (
               <ProductCard key={product.id} product={product} index={i} />
             ))}

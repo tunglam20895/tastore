@@ -26,6 +26,7 @@ export type CartItem = {
   anhURL: string
   soLuong: number
   sizeChon: string | null  // size đã chọn, null nếu sản phẩm không có size
+  sizes?: SizeItem[]       // danh sách sizes của sản phẩm (để chọn lại size trong giỏ)
 }
 
 export type DonHang = {

@@ -5,8 +5,6 @@ import type { MaGiamGia } from "@/types";
 import Pagination from "@/components/admin/Pagination";
 import { useToast } from "@/contexts/ToastContext";
 
-const LIMIT = 20;
-
 function generateCode(): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
@@ -249,17 +247,20 @@ function CouponForm({
 export default function AdminCouponsPage() {
   const [coupons, setCoupons] = useState<MaGiamGia[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
   const [editing, setEditing] = useState<MaGiamGia | null>(null);
   const [creating, setCreating] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [limit, setLimit] = useState(20);
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
   const { showToast } = useToast();
 
   const loadCoupons = useCallback((p = 1) => {
     setLoading(true);
-    fetch(`/api/ma-giam-gia?page=${p}&limit=${LIMIT}`, { headers: { "x-admin-password": adminPassword || "" } })
+    fetch(`/api/ma-giam-gia?page=${p}&limit=${limit}`, { headers: { "x-admin-password": adminPassword || "" } })
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -271,12 +272,13 @@ export default function AdminCouponsPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [adminPassword]);
+  }, [adminPassword, limit]);
 
   useEffect(() => { loadCoupons(1); }, [loadCoupons]);
 
   const handleDelete = async (id: string, ma: string) => {
     if (!confirm(`Xóa mã ${ma}?`)) return;
+    setDeletingId(id);
     try {
       const res = await fetch(`/api/ma-giam-gia/${id}`, {
         method: "DELETE",
@@ -287,10 +289,13 @@ export default function AdminCouponsPage() {
       else showToast(data.error || "Xóa thất bại");
     } catch {
       showToast("Không thể xóa mã");
+    } finally {
+      setDeletingId(null);
     }
   };
 
   const handleToggle = async (coupon: MaGiamGia) => {
+    setTogglingId(coupon.id);
     try {
       const res = await fetch(`/api/ma-giam-gia/${coupon.id}`, {
         method: "PUT",
@@ -300,13 +305,14 @@ export default function AdminCouponsPage() {
       const data = await res.json();
       if (data.success) loadCoupons();
     } catch {}
+    setTogglingId(null);
   };
 
   if (creating || editing) {
     return (
       <div>
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="font-heading text-2xl font-light text-espresso">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 sm:mb-8">
+          <h1 className="font-heading text-xl sm:text-2xl font-light text-espresso">
             {editing ? "Chỉnh sửa mã giảm giá" : "Tạo mã giảm giá mới"}
           </h1>
           <button
@@ -329,8 +335,8 @@ export default function AdminCouponsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="font-heading text-2xl font-light text-espresso">Mã Giảm Giá</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6 sm:mb-8">
+        <h1 className="font-heading text-xl sm:text-2xl font-light text-espresso">Mã Giảm Giá</h1>
         <button
           onClick={() => setCreating(true)}
           className="px-5 py-2 bg-espresso text-cream text-xs uppercase tracking-widest hover:opacity-80 transition-opacity"
@@ -340,7 +346,9 @@ export default function AdminCouponsPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-16 text-stone-400 text-sm">Đang tải...</div>
+        <div className="flex justify-center py-16">
+          <div className="w-6 h-6 border border-espresso border-t-transparent rounded-full animate-spin" />
+        </div>
       ) : (
         <div className="bg-white border border-stone-100 overflow-x-auto">
           <table className="w-full text-sm">
@@ -391,9 +399,14 @@ export default function AdminCouponsPage() {
                     <td className="py-3 px-4">
                       <button
                         onClick={() => handleToggle(c)}
-                        className="flex items-center gap-1.5 text-xs"
+                        disabled={togglingId === c.id}
+                        className="flex items-center gap-1.5 text-xs disabled:opacity-50"
                       >
-                        <span className={`w-2 h-2 rounded-full ${isActive ? "bg-green-400" : "bg-stone-300"}`} />
+                        {togglingId === c.id ? (
+                          <span className="inline-block w-3 h-3 border border-espresso border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <span className={`w-2 h-2 rounded-full ${isActive ? "bg-green-400" : "bg-stone-300"}`} />
+                        )}
                         <span className={isActive ? "text-green-600" : "text-stone-400"}>
                           {isActive ? "Hiệu lực" : isExpired ? "Hết hạn" : isExhausted ? "Hết lượt" : "Vô hiệu"}
                         </span>
@@ -408,9 +421,12 @@ export default function AdminCouponsPage() {
                       </button>
                       <button
                         onClick={() => handleDelete(c.id, c.ma)}
-                        className="text-xs uppercase tracking-widest text-stone-300 hover:text-rose transition-colors"
+                        disabled={deletingId === c.id}
+                        className="text-xs uppercase tracking-widest text-stone-300 hover:text-rose transition-colors disabled:opacity-50"
                       >
-                        Xóa
+                        {deletingId === c.id ? (
+                          <span className="inline-block w-3 h-3 border border-rose border-t-transparent rounded-full animate-spin align-middle" />
+                        ) : "Xóa"}
                       </button>
                     </td>
                   </tr>
@@ -422,7 +438,7 @@ export default function AdminCouponsPage() {
             <div className="text-center py-16 text-stone-400 text-sm">Chưa có mã giảm giá nào</div>
           )}
           <div className="px-4">
-            <Pagination page={page} totalPages={totalPages} total={total} limit={LIMIT} onPageChange={loadCoupons} />
+            <Pagination page={page} totalPages={totalPages} total={total} limit={limit} onPageChange={loadCoupons} onLimitChange={(l) => { setLimit(l); loadCoupons(1); }} />
           </div>
         </div>
       )}

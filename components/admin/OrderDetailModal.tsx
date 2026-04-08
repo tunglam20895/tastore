@@ -80,13 +80,13 @@ export default function OrderDetailModal({ orderId, onClose, onStatusChange }: P
   return (
     <div className="fixed inset-0 bg-espresso/50 flex items-center justify-center z-[60] p-4" onClick={onClose}>
       <div
-        className="bg-white w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl"
+        className="bg-white w-full max-w-md sm:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100 sticky top-0 bg-white z-10">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-stone-100 sticky top-0 bg-white z-10">
           <div>
-            <h2 className="font-heading text-lg font-light text-espresso">Chi tiết đơn hàng</h2>
+            <h2 className="font-heading text-base sm:text-lg font-light text-espresso">Chi tiết đơn hàng</h2>
             {order && <p className="font-mono text-xs text-rose mt-0.5">{order.id}</p>}
           </div>
           <button onClick={onClose} className="text-stone-400 hover:text-espresso text-2xl leading-none">×</button>
@@ -99,7 +99,7 @@ export default function OrderDetailModal({ orderId, onClose, onStatusChange }: P
         ) : !order ? (
           <div className="py-16 text-center text-stone-400 text-sm">Không tìm thấy đơn hàng</div>
         ) : (
-          <div className="px-6 py-5 space-y-5">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5">
 
             {/* Trạng thái + thời gian + người xử lý */}
             <div className="flex items-center justify-between">
