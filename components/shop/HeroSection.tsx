@@ -11,7 +11,7 @@ export default function HeroSection() {
       {/* Background image */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1600"
+        src="/hero.jpg"
         alt="Fashion hero"
         className="absolute inset-0 w-full h-full object-cover"
       />
@@ -36,7 +36,7 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2 + i * 0.2, ease: "easeOut" }}
-              className="font-heading text-5xl md:text-6xl lg:text-7xl font-light text-cream leading-tight tracking-wide"
+              className="font-heading text-5xl md:text-6xl lg:text-7xl font-light text-cream/70 leading-tight tracking-wide"
             >
               {line}
             </motion.h1>
@@ -50,7 +50,7 @@ export default function HeroSection() {
         >
           <Link
             href="#san-pham"
-            className="inline-block border border-cream text-cream text-xs uppercase tracking-[0.25em] px-10 py-4 hover:bg-cream hover:text-espresso transition-all duration-300"
+            className="inline-block bg-white/20 backdrop-blur-sm border border-white/40 text-espresso text-xs uppercase tracking-[0.25em] px-10 py-4 hover:bg-cream hover:text-espresso hover:border-cream transition-all duration-300"
           >
             Khám Phá Ngay
           </Link>

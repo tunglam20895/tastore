@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { appendDonHangToSheet } from '@/lib/google-sheets'
 import { sendOrderNotification } from '@/lib/telegram'
-import { verifyAdminPassword } from '@/lib/auth'
+import { verifyAccess } from '@/lib/auth'
 import type { DonHang } from '@/types'
 
 function mapRow(row: Record<string, unknown>): DonHang {
@@ -23,8 +23,7 @@ function mapRow(row: Record<string, unknown>): DonHang {
 
 export async function GET(request: NextRequest) {
   try {
-    const adminPassword = request.headers.get('x-admin-password')
-    if (!adminPassword || !verifyAdminPassword(adminPassword)) {
+    if (!await verifyAccess(request, 'don-hang')) {
       return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
     }
 

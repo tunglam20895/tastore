@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import LogoUpload from "@/components/admin/LogoUpload";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useToast } from "@/contexts/ToastContext";
 import type { TrangThaiKH } from "@/types";
 
 export default function AdminSettingsPage() {
@@ -18,6 +19,7 @@ export default function AdminSettingsPage() {
   const [addingTT, setAddingTT] = useState(false);
 
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : "";
+  const { showToast } = useToast();
 
   const loadTrangThai = useCallback(() => {
     fetch("/api/trang-thai-kh")
@@ -43,9 +45,9 @@ export default function AdminSettingsPage() {
         setNewMauTT("#8C7B72");
         loadTrangThai();
       } else {
-        alert(d.error);
+        showToast(d.error || "Thêm thất bại");
       }
-    } catch { alert("Không thể thêm trạng thái"); }
+    } catch { showToast("Không thể thêm trạng thái"); }
     setAddingTT(false);
   };
 
@@ -58,8 +60,8 @@ export default function AdminSettingsPage() {
       });
       const d = await res.json();
       if (d.success) loadTrangThai();
-      else alert(d.error);
-    } catch { alert("Không thể xóa trạng thái"); }
+      else showToast(d.error || "Xóa thất bại");
+    } catch { showToast("Không thể xóa trạng thái"); }
   };
 
   useEffect(() => {
@@ -85,10 +87,10 @@ export default function AdminSettingsPage() {
         // Refresh settings globally
         await refresh();
       } else {
-        alert(data.error);
+        showToast(data.error || "Lưu thất bại");
       }
     } catch {
-      alert("Không thể lưu cài đặt");
+      showToast("Không thể lưu cài đặt");
     } finally {
       setSaving(false);
     }

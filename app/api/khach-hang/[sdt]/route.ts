@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { verifyAdminPassword } from '@/lib/auth'
+import { verifyAccess } from '@/lib/auth'
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: { sdt: string } }
 ) {
   try {
-    const adminPassword = request.headers.get('x-admin-password')
-    if (!adminPassword || !verifyAdminPassword(adminPassword)) {
+    if (!await verifyAccess(request, 'khach-hang')) {
       return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
     }
 

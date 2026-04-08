@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { verifyAdminPassword } from '@/lib/auth'
+import { verifyAccess } from '@/lib/auth'
 import type { KhachHang } from '@/types'
 export const dynamic = "force-dynamic";
 
@@ -20,8 +20,7 @@ function mapRow(row: Record<string, unknown>): KhachHang {
 
 export async function GET(request: NextRequest) {
   try {
-    const adminPassword = request.headers.get('x-admin-password')
-    if (!adminPassword || !verifyAdminPassword(adminPassword)) {
+    if (!await verifyAccess(request, 'khach-hang')) {
       return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
     }
 

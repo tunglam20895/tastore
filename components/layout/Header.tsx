@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useSettings } from "@/contexts/SettingsContext";
 
 function BagIcon({ count }: { count: number }) {
   return (
@@ -24,7 +23,6 @@ function BagIcon({ count }: { count: number }) {
 
 export default function Header() {
   const pathname = usePathname();
-  const { settings } = useSettings();
   const [cartCount, setCartCount] = useState(0);
   const [scrolled, setScrolled] = useState(false);
 
@@ -58,7 +56,8 @@ export default function Header() {
     >
       <div className="max-w-7xl mx-auto px-6">
         <div className="relative flex items-center justify-between">
-          <nav className="flex items-center gap-8">
+          {/* Nav trái */}
+          <nav className="flex items-center gap-8 w-1/3">
             <Link href="/" className={`text-xs uppercase tracking-widest font-medium transition-colors ${navColor}`}>
               Trang Chủ
             </Link>
@@ -67,28 +66,29 @@ export default function Header() {
             </Link>
           </nav>
 
-          <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-            {settings?.logoURL ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={settings.logoURL}
-                alt={settings.tenShop || "TRANH ANH STORE"}
-                width={120}
-                height={48}
-                className="object-contain"
-              />
-            ) : (
-              <span
-                className={`font-heading text-lg font-light tracking-[0.3em] uppercase transition-colors duration-300 ${
-                  isHero ? "text-cream" : "text-espresso"
-                }`}
-              >
-                {settings?.tenShop || "TRANH ANH STORE"}
-              </span>
-            )}
+          {/* Tên shop — căn giữa tuyệt đối */}
+          <Link
+            href="/"
+            className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 group"
+          >
+            <span
+              className={`font-heading text-xl font-light tracking-[0.25em] uppercase transition-colors duration-300 ${
+                isHero ? "text-cream" : "text-espresso"
+              }`}
+            >
+              Tranh Anh
+            </span>
+            <span
+              className={`text-[9px] uppercase tracking-[0.45em] transition-colors duration-300 ${
+                isHero ? "text-cream/60" : "text-stone-400"
+              }`}
+            >
+              Store
+            </span>
           </Link>
 
-          <nav className="flex items-center gap-8">
+          {/* Nav phải */}
+          <nav className="flex items-center gap-8 w-1/3 justify-end">
             <Link href="/#san-pham" className={`text-xs uppercase tracking-widest font-medium transition-colors ${navColor}`}>
               Sale
             </Link>

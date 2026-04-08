@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import type { KhachHang, TrangThaiKH, DonHang } from "@/types";
 import Pagination from "@/components/admin/Pagination";
+import { useToast } from "@/contexts/ToastContext";
 
 const LIMIT = 20;
 
@@ -32,6 +33,7 @@ export default function AdminKhachHangPage() {
   const [editGhiChu, setEditGhiChu] = useState("");
   const [editTrangThai, setEditTrangThai] = useState("");
   const [saving, setSaving] = useState(false);
+  const { showToast } = useToast();
 
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : "";
 
@@ -102,9 +104,9 @@ export default function AdminKhachHangPage() {
         setSelectedKH(null);
         loadCustomers(page, filterTT, search);
       } else {
-        alert(d.error);
+        showToast(d.error || "Lưu thất bại");
       }
-    } catch { alert("Không thể lưu"); }
+    } catch { showToast("Không thể lưu"); }
     setSaving(false);
   };
 
@@ -306,15 +308,15 @@ export default function AdminKhachHangPage() {
                 ) : modalOrders.length === 0 ? (
                   <p className="text-sm text-stone-400">Chưa có đơn hàng nào</p>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {modalOrders.map((o) => (
-                      <div key={o.id} className="flex items-center justify-between p-3 bg-cream/50 border border-stone-100 text-sm">
-                        <div>
-                          <span className="font-medium text-espresso">{o.id}</span>
-                          <span className="text-stone-400 ml-3 text-xs">{formatDate(o.thoiGian)}</span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className="font-medium text-espresso">{formatMoney(o.tongTien)}</span>
+                      <div key={o.id} className="p-4 bg-cream/50 border border-stone-100">
+                        {/* Row 1: mã đơn + ngày + trạng thái */}
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <span className="font-mono text-xs font-medium text-rose">{o.id}</span>
+                            <span className="text-stone-400 text-xs">{formatDate(o.thoiGian)}</span>
+                          </div>
                           <span className={`text-xs px-2 py-0.5 ${
                             o.trangThai === "Đã giao" ? "bg-green-50 text-green-600" :
                             o.trangThai === "Huỷ" ? "bg-red-50 text-red-500" :
@@ -323,6 +325,30 @@ export default function AdminKhachHangPage() {
                           }`}>
                             {o.trangThai}
                           </span>
+                        </div>
+
+                        {/* Row 2: danh sách sản phẩm */}
+                        <div className="space-y-1 mb-2">
+                          {o.sanPham.map((sp, i) => (
+                            <div key={i} className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-xs pl-1 border-l-2 border-blush">
+                              <span className="font-medium text-espresso">{sp.ten}</span>
+                              {sp.sizeChon && (
+                                <span className="bg-blush/60 text-espresso px-1.5 py-0.5 text-[10px] leading-none">
+                                  {sp.sizeChon}
+                                </span>
+                              )}
+                              <span className="text-stone-400">×{sp.soLuong}</span>
+                              <span className="text-stone-500 ml-auto">
+                                {formatMoney(sp.giaHienThi * sp.soLuong)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Row 3: tổng tiền */}
+                        <div className="flex justify-end pt-2 border-t border-stone-100">
+                          <span className="text-xs text-stone-400 mr-2">Tổng:</span>
+                          <span className="text-sm font-medium text-espresso">{formatMoney(o.tongTien)}</span>
                         </div>
                       </div>
                     ))}

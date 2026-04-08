@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import type { MaGiamGia } from "@/types";
 import Pagination from "@/components/admin/Pagination";
+import { useToast } from "@/contexts/ToastContext";
 
 const LIMIT = 20;
 
@@ -254,6 +255,7 @@ export default function AdminCouponsPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
+  const { showToast } = useToast();
 
   const loadCoupons = useCallback((p = 1) => {
     setLoading(true);
@@ -282,9 +284,9 @@ export default function AdminCouponsPage() {
       });
       const data = await res.json();
       if (data.success) loadCoupons(page);
-      else alert(data.error);
+      else showToast(data.error || "Xóa thất bại");
     } catch {
-      alert("Không thể xóa mã");
+      showToast("Không thể xóa mã");
     }
   };
 

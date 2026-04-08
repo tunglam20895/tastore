@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import ImageUpload from "./ImageUpload";
 import type { SanPham, DanhMuc, SizeItem } from "@/types";
+import { useToast } from "@/contexts/ToastContext";
 
 const QUICK_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "36", "37", "38", "39", "40", "41", "42"];
 
@@ -17,6 +18,7 @@ export default function ProductForm({
 }) {
   const isEditing = !!product;
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
+  const { showToast } = useToast();
 
   const [ten, setTen] = useState(product?.ten || "");
   const [giaGoc, setGiaGoc] = useState(product?.giaGoc || 0);
@@ -69,7 +71,7 @@ export default function ProductForm({
   const removeRow = (i: number) => setSizeRows(sizeRows.filter((_, idx) => idx !== i));
 
   const handleGenerateDescription = async () => {
-    if (!ten) { alert("Vui lòng nhập tên sản phẩm trước"); return; }
+    if (!ten) { showToast("Vui lòng nhập tên sản phẩm trước"); return; }
     setGenerating(true);
     try {
       const res = await fetch("/api/generate-mo-ta", {
@@ -79,9 +81,9 @@ export default function ProductForm({
       });
       const data = await res.json();
       if (data.success) setMoTa(data.data);
-      else alert(data.error || "Không thể tạo mô tả");
+      else showToast(data.error || "Không thể tạo mô tả");
     } catch {
-      alert("Lỗi khi gọi AI");
+      showToast("Lỗi khi gọi AI");
     } finally {
       setGenerating(false);
     }

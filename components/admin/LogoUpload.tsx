@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
+import { useToast } from "@/contexts/ToastContext";
 
 export default function LogoUpload({
   currentLogo,
@@ -12,6 +13,7 @@ export default function LogoUpload({
 }) {
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { showToast } = useToast();
 
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
 
@@ -33,9 +35,9 @@ export default function LogoUpload({
 
       const data = await res.json();
       if (data.success) onUpload(data.data.url);
-      else alert(data.error || "Upload thất bại");
+      else showToast(data.error || "Upload thất bại");
     } catch {
-      alert("Không thể upload logo");
+      showToast("Không thể upload logo");
     } finally {
       setUploading(false);
     }

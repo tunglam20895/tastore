@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import type { SanPham, DanhMuc } from "@/types";
 import ProductForm from "@/components/admin/ProductForm";
 import Pagination from "@/components/admin/Pagination";
+import { useToast } from "@/contexts/ToastContext";
 
 const LIMIT = 20;
 
@@ -30,14 +31,16 @@ export default function AdminProductsPage() {
   const [danhMuc, setDanhMuc] = useState("");
   const [tonKho, setTonKho] = useState("");
   const [conHang, setConHang] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
+  const { showToast } = useToast();
 
   useEffect(() => {
     fetch("/api/danh-muc").then((r) => r.json()).then((d) => { if (d.success) setCategories(d.data); }).catch(() => {});
   }, []);
 
-  const loadProducts = useCallback((p = 1, s = search, dm = danhMuc, tk = tonKho, ch = conHang) => {
+  const loadProducts = useCallback((p: number, s: string, dm: string, tk: string, ch: string) => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(p), limit: String(LIMIT) });
     if (s) params.set("search", s);
@@ -56,20 +59,23 @@ export default function AdminProductsPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [search, danhMuc, tonKho, conHang]);
+  }, []);
 
-  useEffect(() => { loadProducts(1); }, [loadProducts]);
+  useEffect(() => {
+    loadProducts(page, search, danhMuc, tonKho, conHang);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, search, danhMuc, tonKho, conHang, refreshKey]);
 
   const handleFilterChange = (key: string, value: string) => {
-    if (key === "danhMuc") { setDanhMuc(value); loadProducts(1, search, value, tonKho, conHang); }
-    if (key === "tonKho") { setTonKho(value); loadProducts(1, search, danhMuc, value, conHang); }
-    if (key === "conHang") { setConHang(value); loadProducts(1, search, danhMuc, tonKho, value); }
+    if (key === "danhMuc") { setDanhMuc(value); setPage(1); }
+    if (key === "tonKho") { setTonKho(value); setPage(1); }
+    if (key === "conHang") { setConHang(value); setPage(1); }
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setSearch(searchInput);
-    loadProducts(1, searchInput, danhMuc, tonKho, conHang);
+    setPage(1);
   };
 
   const handleDelete = async (id: string) => {
@@ -80,17 +86,17 @@ export default function AdminProductsPage() {
         headers: { "x-admin-password": adminPassword || "" },
       });
       const data = await res.json();
-      if (data.success) loadProducts(page);
-      else alert(data.error || "Không thể xóa sản phẩm");
+      if (data.success) setRefreshKey((k) => k + 1);
+      else showToast(data.error || "Không thể xóa sản phẩm");
     } catch {
-      alert("Không thể xóa sản phẩm");
+      showToast("Không thể xóa sản phẩm");
     }
   };
 
   const handleSave = () => {
     setEditing(null);
     setCreating(false);
-    loadProducts(page);
+    setRefreshKey((k) => k + 1);
   };
 
   if (creating || editing) {
@@ -143,7 +149,7 @@ export default function AdminProductsPage() {
             Tìm
           </button>
           {search && (
-            <button type="button" onClick={() => { setSearch(""); setSearchInput(""); loadProducts(1, "", danhMuc, tonKho, conHang); }}
+            <button type="button" onClick={() => { setSearch(""); setSearchInput(""); setPage(1); }}
               className="px-3 py-1.5 border border-stone-300 text-xs text-stone-500 hover:text-espresso rounded">×</button>
           )}
         </form>
@@ -247,7 +253,7 @@ export default function AdminProductsPage() {
             </tbody>
           </table>
           <div className="px-4">
-            <Pagination page={page} totalPages={totalPages} total={total} limit={LIMIT} onPageChange={(p) => loadProducts(p)} />
+            <Pagination page={page} totalPages={totalPages} total={total} limit={LIMIT} onPageChange={(p) => setPage(p)} />
           </div>
         </div>
       )}

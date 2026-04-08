@@ -98,3 +98,21 @@ export type ApiResponse<T = unknown> = {
   data?: T
   error?: string
 }
+
+export type NhanVien = {
+  id: string
+  ten: string
+  username: string
+  quyen: string[]
+  conHoatDong: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export const ALL_QUYEN = [
+  { key: 'dashboard',    label: 'Dashboard' },
+  { key: 'san-pham',     label: 'Sản phẩm' },
+  { key: 'don-hang',     label: 'Đơn hàng' },
+  { key: 'khach-hang',   label: 'Khách hàng' },
+  { key: 'ma-giam-gia',  label: 'Mã giảm giá' },
+] as const

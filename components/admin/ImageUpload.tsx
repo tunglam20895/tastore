@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
+import { useToast } from "@/contexts/ToastContext";
 
 export default function ImageUpload({
   onUpload,
@@ -13,6 +14,7 @@ export default function ImageUpload({
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentUrl || null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { showToast } = useToast();
 
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
 
@@ -38,9 +40,9 @@ export default function ImageUpload({
 
       const data = await res.json();
       if (data.success) onUpload(data.data.url);
-      else alert(data.error || "Upload thất bại");
+      else showToast(data.error || "Upload thất bại");
     } catch {
-      alert("Không thể upload ảnh");
+      showToast("Không thể upload ảnh");
     } finally {
       setUploading(false);
     }

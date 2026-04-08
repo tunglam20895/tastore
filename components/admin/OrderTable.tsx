@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { DonHang } from "@/types";
+import { useToast } from "@/contexts/ToastContext";
 
 const STATUS_COLORS: Record<string, string> = {
   "Mới": "bg-blue-50 text-blue-700",
@@ -18,7 +19,7 @@ export default function OrderTable({
   onStatusChange: () => void;
 }) {
   const [updating, setUpdating] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const handleStatusChange = async (orderId: string, status: string) => {
     const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
@@ -31,9 +32,9 @@ export default function OrderTable({
       });
       const data = await res.json();
       if (data.success) onStatusChange();
-      else alert(data.error);
+      else showToast(data.error || "Cập nhật thất bại");
     } catch {
-      alert("Không thể cập nhật trạng thái");
+      showToast("Không thể cập nhật trạng thái");
     } finally {
       setUpdating(null);
     }
@@ -48,101 +49,103 @@ export default function OrderTable({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-stone-200 bg-stone-100/50 text-xs uppercase tracking-widest text-stone-600 font-medium">
-            <th className="text-left py-3 px-4">Mã đơn</th>
-            <th className="text-left py-3 px-4">Khách hàng</th>
-            <th className="text-left py-3 px-4">SĐT</th>
-            <th className="text-left py-3 px-4">Tạm tính</th>
-            <th className="text-left py-3 px-4">Mã KM</th>
-            <th className="text-left py-3 px-4">Giảm</th>
-            <th className="text-left py-3 px-4">Tổng</th>
-            <th className="text-left py-3 px-4">Thời gian</th>
-            <th className="text-left py-3 px-4">Trạng thái</th>
-            <th className="py-3 px-4" />
+            <th className="text-left py-3 px-4 whitespace-nowrap">Mã đơn</th>
+            <th className="text-left py-3 px-4 whitespace-nowrap">Khách hàng</th>
+            <th className="text-left py-3 px-4">Địa chỉ</th>
+            <th className="text-left py-3 px-4">Sản phẩm</th>
+            <th className="text-left py-3 px-4 whitespace-nowrap">Tổng tiền</th>
+            <th className="text-left py-3 px-4 whitespace-nowrap">Ngày mua</th>
+            <th className="text-left py-3 px-4 whitespace-nowrap">Trạng thái</th>
           </tr>
         </thead>
         <tbody>
-          {orders.map((order) => {
-            const tamTinh = order.tongTien + order.giaTriGiam;
-            return (
-              <>
-                <tr
-                  key={order.id}
-                  className="border-b border-stone-200 hover:bg-stone-100/40 transition-colors cursor-pointer"
-                  onClick={() => setExpanded(expanded === order.id ? null : order.id)}
-                >
-                  <td className="py-3 px-4 font-mono text-xs text-rose">{order.id}</td>
-                  <td className="py-3 px-4 font-medium text-espresso">{order.tenKH}</td>
-                  <td className="py-3 px-4 text-stone-500">{order.sdt}</td>
-                  <td className="py-3 px-4 text-stone-500 text-xs">
-                    {order.giaTriGiam > 0 ? `${tamTinh.toLocaleString("vi-VN")}đ` : "—"}
-                  </td>
-                  <td className="py-3 px-4">
-                    {order.maGiamGia ? (
-                      <span className="text-xs bg-blush text-espresso px-2 py-0.5 font-mono">
-                        {order.maGiamGia}
+          {orders.map((order) => (
+            <tr
+              key={order.id}
+              className="border-b border-stone-200 hover:bg-stone-50 transition-colors align-top"
+            >
+              {/* Mã đơn */}
+              <td className="py-3 px-4 font-mono text-xs text-rose whitespace-nowrap">
+                {order.id}
+              </td>
+
+              {/* Khách hàng: tên + SĐT */}
+              <td className="py-3 px-4 whitespace-nowrap">
+                <p className="font-medium text-espresso">{order.tenKH}</p>
+                <p className="text-xs text-stone-500 mt-0.5">{order.sdt}</p>
+              </td>
+
+              {/* Địa chỉ */}
+              <td className="py-3 px-4 text-xs text-stone-500 max-w-[180px]">
+                {order.diaChi}
+              </td>
+
+              {/* Sản phẩm: tên + size + số lượng + giá */}
+              <td className="py-3 px-4 min-w-[200px]">
+                <div className="space-y-1">
+                  {order.sanPham.map((sp, i) => (
+                    <div key={i} className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-xs">
+                      <span className="font-medium text-espresso">{sp.ten}</span>
+                      {sp.sizeChon && (
+                        <span className="bg-blush text-espresso px-1.5 py-0.5 text-[10px]">
+                          {sp.sizeChon}
+                        </span>
+                      )}
+                      <span className="text-stone-400">×{sp.soLuong}</span>
+                      {sp.phanTramGiam && sp.phanTramGiam > 0 && (
+                        <span className="text-stone-300 line-through">
+                          {sp.giaGoc.toLocaleString("vi-VN")}đ
+                        </span>
+                      )}
+                      <span className="text-rose font-medium">
+                        {(sp.giaHienThi * sp.soLuong).toLocaleString("vi-VN")}đ
                       </span>
-                    ) : (
-                      <span className="text-stone-300 text-xs">—</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4 text-rose text-xs">
-                    {order.giaTriGiam > 0 ? `-${order.giaTriGiam.toLocaleString("vi-VN")}đ` : "—"}
-                  </td>
-                  <td className="py-3 px-4 font-medium text-espresso">
-                    {order.tongTien.toLocaleString("vi-VN")}đ
-                  </td>
-                  <td className="py-3 px-4 text-stone-500 text-xs">
-                    {new Date(order.thoiGian).toLocaleString("vi-VN")}
-                  </td>
-                  <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
-                    <select
-                      value={order.trangThai}
-                      onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                      disabled={updating === order.id}
-                      className={`text-xs font-medium px-3 py-1 border-0 cursor-pointer rounded ${
-                        STATUS_COLORS[order.trangThai] || "bg-stone-100 text-stone-600"
-                      }`}
-                    >
-                      <option value="Mới">Mới</option>
-                      <option value="Đang xử lý">Đang xử lý</option>
-                      <option value="Đã giao">Đã giao</option>
-                      <option value="Huỷ">Huỷ</option>
-                    </select>
-                  </td>
-                  <td className="py-3 px-4 text-stone-300 text-xs">
-                    {expanded === order.id ? "▲" : "▼"}
-                  </td>
-                </tr>
-                {expanded === order.id && (
-                  <tr key={`${order.id}-detail`} className="bg-cream/30">
-                    <td colSpan={10} className="px-6 py-4">
-                      <p className="text-xs text-stone-400 uppercase tracking-widest mb-2">Sản phẩm</p>
-                      <div className="space-y-2">
-                        {order.sanPham.map((sp, i) => (
-                          <div key={i} className="flex justify-between text-sm text-stone-600">
-                            <span>
-                              {sp.ten}
-                              {sp.sizeChon && <span className="ml-2 text-xs bg-blush text-espresso px-1.5 py-0.5">Size: {sp.sizeChon}</span>}
-                              <span className="ml-1">×{sp.soLuong}</span>
-                              {sp.phanTramGiam && sp.phanTramGiam > 0 && (
-                                <span className="ml-2 text-xs text-stone-400 line-through">
-                                  {sp.giaGoc.toLocaleString("vi-VN")}đ
-                                </span>
-                              )}
-                            </span>
-                            <span className="font-medium text-espresso">
-                              {(sp.giaHienThi * sp.soLuong).toLocaleString("vi-VN")}đ
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      <p className="text-xs text-stone-400 mt-3">Địa chỉ: {order.diaChi}</p>
-                    </td>
-                  </tr>
-                )}
-              </>
-            );
-          })}
+                    </div>
+                  ))}
+                  {order.maGiamGia && (
+                    <div className="text-[10px] text-stone-400 mt-0.5">
+                      Mã KM: <span className="font-mono text-espresso">{order.maGiamGia}</span>
+                      {order.giaTriGiam > 0 && (
+                        <span className="text-rose ml-1">
+                          −{order.giaTriGiam.toLocaleString("vi-VN")}đ
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </td>
+
+              {/* Tổng tiền */}
+              <td className="py-3 px-4 font-medium text-espresso whitespace-nowrap">
+                {order.tongTien.toLocaleString("vi-VN")}đ
+              </td>
+
+              {/* Ngày mua */}
+              <td className="py-3 px-4 text-xs text-stone-500 whitespace-nowrap">
+                {new Date(order.thoiGian).toLocaleDateString("vi-VN")}<br />
+                <span className="text-stone-400">
+                  {new Date(order.thoiGian).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </td>
+
+              {/* Trạng thái */}
+              <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                <select
+                  value={order.trangThai}
+                  onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                  disabled={updating === order.id}
+                  className={`text-xs font-medium px-3 py-1 border-0 cursor-pointer rounded ${
+                    STATUS_COLORS[order.trangThai] || "bg-stone-100 text-stone-600"
+                  }`}
+                >
+                  <option value="Mới">Mới</option>
+                  <option value="Đang xử lý">Đang xử lý</option>
+                  <option value="Đã giao">Đã giao</option>
+                  <option value="Huỷ">Huỷ</option>
+                </select>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

@@ -26,12 +26,7 @@ export default function AdminOrdersPage() {
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
 
   const loadOrders = useCallback((
-    p = 1,
-    tt = trangThai,
-    ten = searchTen,
-    sdt = searchSdt,
-    tu = tuNgay,
-    den = denNgay
+    p: number, tt: string, ten: string, sdt: string, tu: string, den: string
   ) => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(p), limit: String(LIMIT) });
@@ -52,32 +47,35 @@ export default function AdminOrdersPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [adminPassword, trangThai, searchTen, searchSdt, tuNgay, denNgay]);
+  }, [adminPassword]);
 
-  useEffect(() => { loadOrders(1); }, [loadOrders]);
+  useEffect(() => {
+    loadOrders(page, trangThai, searchTen, searchSdt, tuNgay, denNgay);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, trangThai, searchTen, searchSdt, tuNgay, denNgay]);
 
   const handleTrangThaiChange = (tt: string) => {
     setTrangThai(tt);
-    loadOrders(1, tt, searchTen, searchSdt, tuNgay, denNgay);
+    setPage(1);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSearchTen(searchTenInput);
     setSearchSdt(searchSdtInput);
-    loadOrders(1, trangThai, searchTenInput, searchSdtInput, tuNgay, denNgay);
+    setPage(1);
   };
 
   const handleDateChange = (tu: string, den: string) => {
     setTuNgay(tu);
     setDenNgay(den);
-    loadOrders(1, trangThai, searchTen, searchSdt, tu, den);
+    setPage(1);
   };
 
   const handleReset = () => {
     setTrangThai(""); setSearchTen(""); setSearchTenInput("");
     setSearchSdt(""); setSearchSdtInput(""); setTuNgay(""); setDenNgay("");
-    loadOrders(1, "", "", "", "", "");
+    setPage(1);
   };
 
   const hasFilters = trangThai || searchTen || searchSdt || tuNgay || denNgay;
@@ -87,7 +85,7 @@ export default function AdminOrdersPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-heading text-2xl font-light text-espresso">Quản lý đơn hàng</h1>
         <button
-          onClick={() => loadOrders(page)}
+          onClick={() => loadOrders(page, trangThai, searchTen, searchSdt, tuNgay, denNgay)}
           className="text-xs uppercase tracking-widest text-stone-400 hover:text-espresso transition-colors"
         >
           Làm mới
@@ -150,14 +148,14 @@ export default function AdminOrdersPage() {
         </div>
       ) : (
         <div className="bg-white border border-stone-300 rounded-xl shadow-md overflow-hidden">
-          <OrderTable orders={orders} onStatusChange={() => loadOrders(page)} />
+          <OrderTable orders={orders} onStatusChange={() => loadOrders(page, trangThai, searchTen, searchSdt, tuNgay, denNgay)} />
           <div className="px-4">
             <Pagination
               page={page}
               totalPages={totalPages}
               total={total}
               limit={LIMIT}
-              onPageChange={(p) => loadOrders(p)}
+              onPageChange={(p) => setPage(p)}
             />
           </div>
         </div>

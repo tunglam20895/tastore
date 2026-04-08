@@ -1,0 +1,57 @@
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { supabase } from '@/lib/supabase'
+import { verifyAdminPassword } from '@/lib/auth'
+import { hashPassword } from '@/lib/staff-auth'
+
+function isAdmin(request: NextRequest) {
+  const pw = request.headers.get('x-admin-password')
+  return pw && verifyAdminPassword(pw)
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  if (!isAdmin(request)) {
+    return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
+  }
+  try {
+    const body = await request.json()
+    const updates: Record<string, unknown> = {}
+
+    if (body.ten !== undefined) updates.ten = body.ten.trim()
+    if (body.quyen !== undefined) updates.quyen = body.quyen
+    if (body.conHoatDong !== undefined) updates.con_hoat_dong = body.conHoatDong
+    if (body.password) {
+      if (body.password.length < 6) {
+        return NextResponse.json({ success: false, error: 'Mật khẩu tối thiểu 6 ký tự' }, { status: 400 })
+      }
+      updates.password_hash = await hashPassword(body.password)
+    }
+
+    const { error } = await supabase.from('nhan_vien').update(updates).eq('id', params.id)
+    if (error) throw error
+    return NextResponse.json({ success: true })
+  } catch (e) {
+    console.error('PUT /api/nhan-vien/[id] error:', e)
+    return NextResponse.json({ success: false, error: 'Không thể cập nhật' }, { status: 500 })
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  if (!isAdmin(request)) {
+    return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
+  }
+  try {
+    const { error } = await supabase.from('nhan_vien').delete().eq('id', params.id)
+    if (error) throw error
+    return NextResponse.json({ success: true })
+  } catch (e) {
+    console.error('DELETE /api/nhan-vien/[id] error:', e)
+    return NextResponse.json({ success: false, error: 'Không thể xóa' }, { status: 500 })
+  }
+}

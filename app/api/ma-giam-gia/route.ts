@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { verifyAdminPassword } from '@/lib/auth'
+import { verifyAccess } from '@/lib/auth'
 import type { MaGiamGia } from '@/types'
 
 function mapRow(row: Record<string, unknown>): MaGiamGia {
@@ -22,8 +22,7 @@ function mapRow(row: Record<string, unknown>): MaGiamGia {
 
 export async function GET(request: NextRequest) {
   try {
-    const adminPassword = request.headers.get('x-admin-password')
-    if (!adminPassword || !verifyAdminPassword(adminPassword)) {
+    if (!await verifyAccess(request, 'ma-giam-gia')) {
       return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
     }
 
@@ -62,8 +61,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const adminPassword = request.headers.get('x-admin-password')
-    if (!adminPassword || !verifyAdminPassword(adminPassword)) {
+    if (!await verifyAccess(request, 'ma-giam-gia')) {
       return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
     }
 

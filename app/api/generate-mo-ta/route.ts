@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { generateMoTa } from '@/lib/openrouter'
-import { verifyAdminPassword } from '@/lib/auth'
+import { verifyAccess } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
-    const adminPassword = request.headers.get('x-admin-password')
-    if (!adminPassword || !verifyAdminPassword(adminPassword)) {
+    if (!await verifyAccess(request, 'san-pham')) {
       return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
     }
 
