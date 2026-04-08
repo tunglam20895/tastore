@@ -36,9 +36,10 @@ export type DonHang = {
   sanPham: CartItem[]
   tongTien: number
   thoiGian: string
-  trangThai: 'Mới' | 'Đang xử lý' | 'Đã giao' | 'Huỷ'
+  trangThai: 'Mới' | 'Chốt để lên đơn' | 'Đã lên đơn' | 'Đang xử lý' | 'Đã giao' | 'Huỷ'
   maGiamGia?: string
   giaTriGiam: number
+  nguoiXuLy: string
 }
 
 export type DanhMuc = {

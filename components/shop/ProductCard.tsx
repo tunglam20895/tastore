@@ -3,31 +3,30 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import type { SanPham, CartItem } from "@/types";
+import { useCart } from "@/contexts/CartContext";
+import type { SanPham } from "@/types";
 
 export default function ProductCard({ product, index = 0 }: { product: SanPham; index?: number }) {
+  const { addItem, triggerFly } = useCart();
+
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!product.conHang || product.soLuong === 0) return;
-    const cart: CartItem[] = JSON.parse(localStorage.getItem("cart") || "[]");
-    const existing = cart.find((item) => item.id === product.id);
-    if (existing) {
-      if (existing.soLuong < product.soLuong) existing.soLuong += 1;
-    } else {
-      cart.push({
-        id: product.id,
-        ten: product.ten,
-        giaGoc: product.giaGoc,
-        phanTramGiam: product.phanTramGiam,
-        giaHienThi: product.giaHienThi,
-        anhURL: product.anhURL,
-        soLuong: 1,
-        sizeChon: null,
-      });
-    }
-    localStorage.setItem("cart", JSON.stringify(cart));
-    window.dispatchEvent(new Event("cartUpdated"));
+
+    // Trigger fly animation từ vị trí click
+    triggerFly(e.clientX, e.clientY, product.anhURL);
+
+    addItem({
+      id: product.id,
+      ten: product.ten,
+      giaGoc: product.giaGoc,
+      phanTramGiam: product.phanTramGiam,
+      giaHienThi: product.giaHienThi,
+      anhURL: product.anhURL,
+      soLuong: 1,
+      sizeChon: null,
+    });
   };
 
   return (

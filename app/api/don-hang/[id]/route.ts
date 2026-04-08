@@ -2,7 +2,20 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyAccess } from '@/lib/auth'
+import { verifyStaffToken } from '@/lib/staff-auth'
 import type { DonHang } from '@/types'
+
+async function getNguoiXuLy(request: NextRequest): Promise<string> {
+  const pw = request.headers.get('x-admin-password')
+  const adminPw = process.env.ADMIN_PASSWORD
+  if (pw && adminPw && pw === adminPw) return 'Admin'
+  const token = request.cookies.get('staff-token')?.value
+  if (token) {
+    const session = await verifyStaffToken(token)
+    if (session) return session.ten
+  }
+  return 'Chưa có'
+}
 
 export async function GET(
   request: NextRequest,
@@ -33,6 +46,7 @@ export async function GET(
       trangThai: data.trang_thai,
       maGiamGia: data.ma_giam_gia ?? undefined,
       giaTriGiam: Number(data.gia_tri_giam ?? 0),
+      nguoiXuLy: data.nguoi_xu_ly || 'Chưa có',
     }
 
     return NextResponse.json({ success: true, data: order })
@@ -57,9 +71,11 @@ export async function PUT(
       return NextResponse.json({ success: false, error: 'Thiếu trạng thái' }, { status: 400 })
     }
 
+    const nguoiXuLy = await getNguoiXuLy(request)
+
     const { error } = await supabase
       .from('don_hang')
-      .update({ trang_thai: trangThai })
+      .update({ trang_thai: trangThai, nguoi_xu_ly: nguoiXuLy })
       .eq('id', params.id)
 
     if (error) throw error

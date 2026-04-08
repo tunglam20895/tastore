@@ -23,7 +23,7 @@ create table don_hang (
   san_pham jsonb not null,
   tong_tien numeric not null,
   thoi_gian timestamptz default now(),
-  trang_thai text default 'Mới' check (trang_thai in ('Mới','Đang xử lý','Đã giao','Huỷ'))
+  trang_thai text default 'Mới' check (trang_thai in ('Mới','Chốt để lên đơn','Đã lên đơn','Đang xử lý','Đã giao','Huỷ'))
 );
 
 create table cai_dat (

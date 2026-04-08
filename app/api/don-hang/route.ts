@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { appendDonHangToSheet } from '@/lib/google-sheets'
 import { sendOrderNotification } from '@/lib/telegram'
 import { verifyAccess } from '@/lib/auth'
+import { verifyStaffToken } from '@/lib/staff-auth'
 import type { DonHang } from '@/types'
 
 function mapRow(row: Record<string, unknown>): DonHang {
@@ -18,7 +19,25 @@ function mapRow(row: Record<string, unknown>): DonHang {
     trangThai: row.trang_thai as DonHang['trangThai'],
     maGiamGia: row.ma_giam_gia as string | undefined,
     giaTriGiam: Number(row.gia_tri_giam ?? 0),
+    nguoiXuLy: (row.nguoi_xu_ly as string) || 'Chưa có',
   }
+}
+
+/** Lấy tên người đang đăng nhập (admin hoặc nhân viên) từ request */
+async function getNguoiXuLy(request: NextRequest): Promise<string> {
+  // 1. Kiểm tra admin password header
+  const pw = request.headers.get('x-admin-password')
+  const adminPw = process.env.ADMIN_PASSWORD
+  if (pw && adminPw && pw === adminPw) return 'Admin'
+
+  // 2. Kiểm tra staff token cookie
+  const token = request.cookies.get('staff-token')?.value
+  if (token) {
+    const session = await verifyStaffToken(token)
+    if (session) return session.ten
+  }
+
+  return 'Chưa có'
 }
 
 export async function GET(request: NextRequest) {
@@ -74,6 +93,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    const nguoiXuLy = await getNguoiXuLy(request)
     let giaTriGiam = 0
     let maGiamGia: string | undefined
 
@@ -117,6 +137,7 @@ export async function POST(request: NextRequest) {
           tong_tien: tongTienSauGiam,
           ma_giam_gia: maGiamGia || null,
           gia_tri_giam: giaTriGiam,
+          nguoi_xu_ly: nguoiXuLy,
         })
         .select()
         .single()

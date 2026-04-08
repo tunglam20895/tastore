@@ -6,6 +6,8 @@ import { useToast } from "@/contexts/ToastContext";
 
 const STATUS_COLORS: Record<string, string> = {
   "Mới": "bg-blue-50 text-blue-700",
+  "Chốt để lên đơn": "bg-purple-50 text-purple-700",
+  "Đã lên đơn": "bg-teal-50 text-teal-700",
   "Đang xử lý": "bg-amber-50 text-amber-700",
   "Đã giao": "bg-green-50 text-green-700",
   "Huỷ": "bg-red-50 text-red-500",
@@ -99,11 +101,18 @@ export default function OrderDetailModal({ orderId, onClose, onStatusChange }: P
         ) : (
           <div className="px-6 py-5 space-y-5">
 
-            {/* Trạng thái + thời gian */}
+            {/* Trạng thái + thời gian + người xử lý */}
             <div className="flex items-center justify-between">
-              <span className={`text-xs font-medium px-3 py-1 ${STATUS_COLORS[order.trangThai] || "bg-stone-100 text-stone-600"}`}>
-                {order.trangThai}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-medium px-3 py-1 ${STATUS_COLORS[order.trangThai] || "bg-stone-100 text-stone-600"}`}>
+                  {order.trangThai}
+                </span>
+                {order.nguoiXuLy && order.nguoiXuLy !== 'Chưa có' ? (
+                  <span className="text-xs font-medium text-teal-600">👤 {order.nguoiXuLy}</span>
+                ) : (
+                  <span className="text-xs text-stone-400 italic">Chưa có người xử lý</span>
+                )}
+              </div>
               <span className="text-xs text-stone-400">{formatDateTime(order.thoiGian)}</span>
             </div>
 
@@ -159,7 +168,7 @@ export default function OrderDetailModal({ orderId, onClose, onStatusChange }: P
             <div className="border-t border-stone-100 pt-4">
               <p className="text-xs uppercase tracking-widest text-stone-400 mb-3">Cập nhật trạng thái</p>
               <div className="grid grid-cols-2 gap-2">
-                {(["Mới", "Đang xử lý", "Đã giao", "Huỷ"] as const).map((s) => (
+                {(["Mới", "Chốt để lên đơn", "Đã lên đơn", "Đang xử lý", "Đã giao", "Huỷ"] as const).map((s) => (
                   <button
                     key={s}
                     onClick={() => handleStatusChange(s)}

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import type { SanPham, CartItem as CartItemType, DanhMuc } from "@/types";
+import { useCart } from "@/contexts/CartContext";
+import type { SanPham, DanhMuc } from "@/types";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -41,6 +42,9 @@ export default function ProductDetailPage() {
 
   const maxQty = selectedSizeStock;
 
+  const { addItem, triggerFly } = useCart();
+  const addButtonRef = useRef<HTMLButtonElement>(null);
+
   const addToCart = useCallback(
     (buyNow = false) => {
       if (!product || product.soLuong === 0) return;
@@ -58,27 +62,22 @@ export default function ProductDetailPage() {
         if (sizeItem && sizeItem.soLuong === 0) return;
       }
 
-      const cart: CartItemType[] = JSON.parse(localStorage.getItem("cart") || "[]");
-      // Unique key: productId + sizeChon
-      const existing = cart.find(
-        (item) => item.id === product.id && item.sizeChon === sizeChon
-      );
-      if (existing) {
-        existing.soLuong = Math.min(existing.soLuong + qty, maxQty);
-      } else {
-        cart.push({
-          id: product.id,
-          ten: product.ten,
-          giaGoc: product.giaGoc,
-          phanTramGiam: product.phanTramGiam,
-          giaHienThi: product.giaHienThi,
-          anhURL: product.anhURL,
-          soLuong: qty,
-          sizeChon: sizeChon,
-        });
+      // Trigger fly animation từ vị trí nút thêm giỏ
+      if (addButtonRef.current) {
+        const rect = addButtonRef.current.getBoundingClientRect();
+        triggerFly(rect.left + rect.width / 2, rect.top + rect.height / 2, product.anhURL);
       }
-      localStorage.setItem("cart", JSON.stringify(cart));
-      window.dispatchEvent(new Event("cartUpdated"));
+
+      addItem({
+        id: product.id,
+        ten: product.ten,
+        giaGoc: product.giaGoc,
+        phanTramGiam: product.phanTramGiam,
+        giaHienThi: product.giaHienThi,
+        anhURL: product.anhURL,
+        soLuong: qty,
+        sizeChon: sizeChon,
+      });
 
       if (buyNow) {
         router.push("/dat-hang");
@@ -87,7 +86,7 @@ export default function ProductDetailPage() {
         setTimeout(() => setAdded(false), 2000);
       }
     },
-    [product, qty, sizeChon, maxQty, router]
+    [product, qty, sizeChon, router, addItem, triggerFly]
   );
 
   if (loading) {
@@ -295,6 +294,7 @@ export default function ProductDetailPage() {
 
               <div className="space-y-3">
                 <button
+                  ref={addButtonRef}
                   onClick={() => addToCart(false)}
                   className={`w-full py-4 text-xs uppercase tracking-widest font-medium transition-all duration-300 ${
                     added

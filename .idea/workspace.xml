@@ -4,40 +4,23 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9808f6dd-980e-420b-b86b-d604628d875d" name="Changes" comment="update dashboard">
+    <list default="true" id="9808f6dd-980e-420b-b86b-d604628d875d" name="Changes" comment="update nhân viên">
+      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CLAUDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/CLAUDE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/admin/cai-dat/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/cai-dat/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/admin/don-hang/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/don-hang/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/admin/khach-hang/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/khach-hang/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/admin/login/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/login/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/admin/ma-giam-gia/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/ma-giam-gia/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/admin/san-pham/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/san-pham/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/authenticate/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/authenticate/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/danh-muc/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/danh-muc/route.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/api/don-hang/[id]/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/don-hang/[id]/route.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/api/don-hang/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/don-hang/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/generate-mo-ta/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/generate-mo-ta/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/khach-hang/[sdt]/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/khach-hang/[sdt]/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/khach-hang/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/khach-hang/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/logout/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/logout/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/ma-giam-gia/[id]/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/ma-giam-gia/[id]/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/ma-giam-gia/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/ma-giam-gia/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/san-pham/[id]/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/san-pham/[id]/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/san-pham/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/san-pham/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/thong-ke/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/thong-ke/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/upload/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/upload/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/globals.css" beforeDir="false" afterPath="$PROJECT_DIR$/app/globals.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/admin/AdminNav.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/admin/AdminNav.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/admin/ImageUpload.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/admin/ImageUpload.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/admin/LogoUpload.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/admin/LogoUpload.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/dat-hang/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/dat-hang/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/gio-hang/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/gio-hang/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/san-pham/[id]/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/san-pham/[id]/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/admin/OrderDetailModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/admin/OrderDetailModal.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/admin/OrderTable.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/admin/OrderTable.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/admin/ProductForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/admin/ProductForm.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/layout/Header.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/layout/Header.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/shop/HeroSection.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/shop/HeroSection.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/auth.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/auth.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/middleware.ts" beforeDir="false" afterPath="$PROJECT_DIR$/middleware.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tailwind.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tailwind.config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/shop/ProductCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/shop/ProductCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/supabase/migrations/001_init.sql" beforeDir="false" afterPath="$PROJECT_DIR$/supabase/migrations/001_init.sql" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/types/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/types/index.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -48,12 +31,16 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory">{
-  &quot;lastFilter&quot;: {
-    &quot;state&quot;: &quot;OPEN&quot;,
-    &quot;assignee&quot;: &quot;tunglam20895&quot;
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "history": [
+    {
+      "assignee": "tunglam20895"
+    }
+  ],
+  "lastFilter": {
+    "assignee": "tunglam20895"
   }
-}</component>
+}]]></component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/tunglam20895/tastore.git&quot;,
@@ -146,7 +133,7 @@
       <workItem from="1775467593549" duration="4299000" />
       <workItem from="1775525809036" duration="73000" />
       <workItem from="1775525893096" duration="20022000" />
-      <workItem from="1775621492717" duration="6633000" />
+      <workItem from="1775621492717" duration="20083000" />
     </task>
     <task id="LOCAL-00001" summary="update">
       <option name="closed" value="true" />
@@ -196,7 +183,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775550753718</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="update nhân viên">
+      <option name="closed" value="true" />
+      <created>1775630806217</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1775630806217</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -216,7 +211,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="update" />
     <MESSAGE value="update dashboard" />
-    <option name="LAST_COMMIT_MESSAGE" value="update dashboard" />
+    <MESSAGE value="update nhân viên" />
+    <option name="LAST_COMMIT_MESSAGE" value="update nhân viên" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

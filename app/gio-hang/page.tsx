@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import type { CartItem as CartItemType } from "@/types";
+import { useCart } from "@/contexts/CartContext";
 import CartItem from "@/components/shop/CartItem";
 
 function EmptyBagIcon() {
@@ -17,33 +16,7 @@ function EmptyBagIcon() {
 
 export default function CartPage() {
   const router = useRouter();
-  const [cart, setCart] = useState<CartItemType[]>([]);
-
-  const loadCart = useCallback(() => {
-    try {
-      setCart(JSON.parse(localStorage.getItem("cart") || "[]"));
-    } catch {
-      setCart([]);
-    }
-  }, []);
-
-  useEffect(() => { loadCart(); }, [loadCart]);
-
-  const updateQuantity = useCallback((id: string, sizeChon: string | null, quantity: number) => {
-    const items: CartItemType[] = JSON.parse(localStorage.getItem("cart") || "[]");
-    const item = items.find((i) => i.id === id && i.sizeChon === sizeChon);
-    if (item) {
-      item.soLuong = quantity;
-      localStorage.setItem("cart", JSON.stringify(items));
-      loadCart();
-    }
-  }, [loadCart]);
-
-  const removeItem = useCallback((id: string, sizeChon: string | null) => {
-    const items: CartItemType[] = JSON.parse(localStorage.getItem("cart") || "[]");
-    localStorage.setItem("cart", JSON.stringify(items.filter((i) => !(i.id === id && i.sizeChon === sizeChon))));
-    loadCart();
-  }, [loadCart]);
+  const { cart, updateQuantity, removeItem } = useCart();
 
   const total = cart.reduce((sum, item) => sum + item.giaHienThi * item.soLuong, 0);
 

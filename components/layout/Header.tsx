@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useCart } from "@/contexts/CartContext";
 
 function BagIcon({ count }: { count: number }) {
   return (
-    <span className="relative inline-flex items-center">
+    <span data-bag-icon className="relative inline-flex items-center">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
         <line x1="3" y1="6" x2="21" y2="6" />
@@ -23,15 +24,8 @@ function BagIcon({ count }: { count: number }) {
 
 export default function Header() {
   const pathname = usePathname();
-  const [cartCount, setCartCount] = useState(0);
+  const { cartCount } = useCart();
   const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    try {
-      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-      setCartCount(cart.reduce((sum: number, item: { soLuong: number }) => sum + item.soLuong, 0));
-    } catch {}
-  }, [pathname]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);

@@ -4,8 +4,11 @@ import { useEffect, useState, useCallback } from "react";
 import OrderTable from "@/components/admin/OrderTable";
 import Pagination from "@/components/admin/Pagination";
 import type { DonHang } from "@/types";
+import { useToast } from "@/contexts/ToastContext";
 
 const LIMIT = 20;
+
+const ALL_STATUSES = ["", "Mới", "Chốt để lên đơn", "Đã lên đơn", "Đang xử lý", "Đã giao", "Huỷ"] as const;
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<DonHang[]>([]);
@@ -23,12 +26,19 @@ export default function AdminOrdersPage() {
   const [tuNgay, setTuNgay] = useState("");
   const [denNgay, setDenNgay] = useState("");
 
+  // Bulk select
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+
+  const { showToast } = useToast();
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
 
   const loadOrders = useCallback((
     p: number, tt: string, ten: string, sdt: string, tu: string, den: string
   ) => {
     setLoading(true);
+    setSelectedIds([]);
     const params = new URLSearchParams({ page: String(p), limit: String(LIMIT) });
     if (tt) params.set("trang_thai", tt);
     if (ten) params.set("search_ten", ten);
@@ -78,18 +88,114 @@ export default function AdminOrdersPage() {
     setPage(1);
   };
 
+  const handleBulkStatus = async (status: DonHang["trangThai"]) => {
+    if (!selectedIds.length) return;
+    setBulkLoading(true);
+    try {
+      const res = await fetch("/api/don-hang/bulk-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword || "" },
+        body: JSON.stringify({ ids: selectedIds, trangThai: status }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Đã cập nhật ${data.updated} đơn hàng`);
+        loadOrders(page, trangThai, searchTen, searchSdt, tuNgay, denNgay);
+      } else {
+        showToast(data.error || "Cập nhật thất bại");
+      }
+    } catch {
+      showToast("Không thể cập nhật hàng loạt");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const doExport = async (ids: string[]) => {
+    setExportLoading(true);
+    try {
+      const res = await fetch("/api/don-hang/export-excel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword || "" },
+        body: JSON.stringify({ ids }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        showToast(err.error || "Xuất file thất bại");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const date = new Date().toISOString().slice(0, 10);
+      a.download = `don-hang-${date}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(`Đã xuất ${ids.length} đơn và chuyển sang "Đã lên đơn"`);
+      loadOrders(page, trangThai, searchTen, searchSdt, tuNgay, denNgay);
+    } catch {
+      showToast("Không thể xuất file Excel");
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  // Xuất tất cả đơn "Chốt để lên đơn" (không cần tích chọn)
+  const handleExportChotDonHang = async () => {
+    setExportLoading(true);
+    try {
+      const res = await fetch(`/api/don-hang?trang_thai=${encodeURIComponent("Chốt để lên đơn")}`, {
+        headers: { "x-admin-password": adminPassword || "" },
+      });
+      const data = await res.json();
+      if (!data.success || !data.data?.length) {
+        showToast("Không có đơn nào ở trạng thái Chốt để lên đơn");
+        setExportLoading(false);
+        return;
+      }
+      const ids: string[] = data.data.map((o: { id: string }) => o.id);
+      await doExport(ids);
+    } catch {
+      showToast("Không thể tải danh sách đơn");
+      setExportLoading(false);
+    }
+  };
+
+  const handleExport = async () => {
+    if (!selectedIds.length) {
+      showToast("Vui lòng chọn đơn hàng cần xuất");
+      return;
+    }
+    await doExport(selectedIds);
+  };
+
   const hasFilters = trangThai || searchTen || searchSdt || tuNgay || denNgay;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-heading text-2xl font-light text-espresso">Quản lý đơn hàng</h1>
-        <button
-          onClick={() => loadOrders(page, trangThai, searchTen, searchSdt, tuNgay, denNgay)}
-          className="text-xs uppercase tracking-widest text-stone-400 hover:text-espresso transition-colors"
-        >
-          Làm mới
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleExportChotDonHang}
+            disabled={exportLoading}
+            className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white text-xs uppercase tracking-widest hover:bg-teal-700 disabled:opacity-50 transition-colors rounded"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+            </svg>
+            {exportLoading ? "Đang xuất..." : "Xuất Excel (Chốt)"}
+          </button>
+          <button
+            onClick={() => loadOrders(page, trangThai, searchTen, searchSdt, tuNgay, denNgay)}
+            className="text-xs uppercase tracking-widest text-stone-400 hover:text-espresso transition-colors"
+          >
+            Làm mới
+          </button>
+        </div>
       </div>
 
       {/* Filter bar */}
@@ -127,7 +233,7 @@ export default function AdminOrdersPage() {
 
       {/* Status filter */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {["", "Mới", "Đang xử lý", "Đã giao", "Huỷ"].map((status) => (
+        {ALL_STATUSES.map((status) => (
           <button
             key={status}
             onClick={() => handleTrangThaiChange(status)}
@@ -142,13 +248,60 @@ export default function AdminOrdersPage() {
         ))}
       </div>
 
+      {/* Bulk actions bar — chỉ hiện khi có đơn được chọn */}
+      {selectedIds.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 mb-4 px-4 py-3 bg-purple-50 border border-purple-200 rounded-lg">
+          <span className="text-xs font-medium text-purple-700">
+            Đã chọn {selectedIds.length} đơn
+          </span>
+          <div className="flex flex-wrap gap-2 ml-auto">
+            {/* Chuyển trạng thái hàng loạt */}
+            <select
+              onChange={(e) => { if (e.target.value) handleBulkStatus(e.target.value as DonHang["trangThai"]); e.target.value = ""; }}
+              disabled={bulkLoading}
+              defaultValue=""
+              className="px-3 py-1.5 border border-purple-300 rounded text-xs text-purple-700 bg-white focus:outline-none cursor-pointer disabled:opacity-50"
+            >
+              <option value="" disabled>Chuyển trạng thái...</option>
+              <option value="Mới">Mới</option>
+              <option value="Chốt để lên đơn">Chốt để lên đơn</option>
+              <option value="Đã lên đơn">Đã lên đơn</option>
+              <option value="Đang xử lý">Đang xử lý</option>
+              <option value="Đã giao">Đã giao</option>
+              <option value="Huỷ">Huỷ</option>
+            </select>
+
+            {/* Export Excel */}
+            <button
+              onClick={handleExport}
+              disabled={exportLoading}
+              className="px-4 py-1.5 bg-teal-600 text-white text-xs uppercase tracking-widest hover:bg-teal-700 disabled:opacity-50 transition-colors rounded"
+            >
+              {exportLoading ? "Đang xuất..." : "Xuất Excel"}
+            </button>
+
+            <button
+              onClick={() => setSelectedIds([])}
+              className="px-3 py-1.5 border border-stone-300 rounded text-xs text-stone-500 hover:text-espresso"
+            >
+              Bỏ chọn
+            </button>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex justify-center py-16">
           <div className="w-6 h-6 border border-espresso border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <div className="bg-white border border-stone-300 rounded-xl shadow-md overflow-hidden">
-          <OrderTable orders={orders} onStatusChange={() => loadOrders(page, trangThai, searchTen, searchSdt, tuNgay, denNgay)} />
+          <OrderTable
+            orders={orders}
+            selectedIds={selectedIds}
+            onSelectChange={setSelectedIds}
+            onStatusChange={() => loadOrders(page, trangThai, searchTen, searchSdt, tuNgay, denNgay)}
+          />
           <div className="px-4">
             <Pagination
               page={page}

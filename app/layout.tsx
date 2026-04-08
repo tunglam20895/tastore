@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SettingsProvider } from "@/contexts/SettingsContext";
+import { CartProvider } from "@/contexts/CartContext";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import TrackingPixel from "@/components/TrackingPixel";
+import FlyToCartAnimation from "@/components/FlyToCartAnimation";
 
 export const metadata: Metadata = {
   title: "TRANH ANH STORE - Thời Trang Nữ Cao Cấp",
@@ -19,10 +21,13 @@ export default function RootLayout({
     <html lang="vi">
       <body className="antialiased min-h-screen flex flex-col bg-cream">
         <SettingsProvider>
-          <TrackingPixel />
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <CartProvider>
+            <TrackingPixel />
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <FlyToCartAnimation />
+          </CartProvider>
         </SettingsProvider>
       </body>
     </html>

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import type { CartItem as CartItemType } from "@/types";
+import { useCart } from "@/contexts/CartContext";
 import OrderForm from "@/components/shop/OrderForm";
 
 type CouponResult = {
@@ -13,7 +13,8 @@ type CouponResult = {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const [cart, setCart] = useState<CartItemType[]>([]);
+  const { cart, clearCart } = useCart();
+  const [ready, setReady] = useState(false);
 
   // Coupon state
   const [couponCode, setCouponCode] = useState("");
@@ -22,19 +23,14 @@ export default function CheckoutPage() {
   const [couponLoading, setCouponLoading] = useState(false);
 
   useEffect(() => {
-    try {
-      const items = JSON.parse(localStorage.getItem("cart") || "[]");
-      if (items.length === 0) { router.push("/gio-hang"); return; }
-      setCart(items);
-    } catch {
-      router.push("/gio-hang");
-    }
-  }, [router]);
-
-  const clearCart = useCallback(() => { localStorage.removeItem("cart"); }, []);
+    if (cart.length === 0) { router.push("/gio-hang"); return; }
+    setReady(true);
+  }, [cart.length, router]);
 
   const tamTinh = cart.reduce((sum, item) => sum + item.giaHienThi * item.soLuong, 0);
   const tongTienSauGiam = Math.max(0, tamTinh - (coupon?.giaTriGiam ?? 0));
+
+  if (!ready) return null;
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -65,8 +61,6 @@ export default function CheckoutPage() {
     setCouponCode("");
     setCouponError("");
   };
-
-  if (cart.length === 0) return null;
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-12 pt-32">

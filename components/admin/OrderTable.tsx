@@ -6,6 +6,8 @@ import { useToast } from "@/contexts/ToastContext";
 
 const STATUS_COLORS: Record<string, string> = {
   "Mới": "bg-blue-50 text-blue-700",
+  "Chốt để lên đơn": "bg-purple-50 text-purple-700",
+  "Đã lên đơn": "bg-teal-50 text-teal-700",
   "Đang xử lý": "bg-amber-50 text-amber-700",
   "Đã giao": "bg-green-50 text-green-700",
   "Huỷ": "bg-red-50 text-red-500",
@@ -13,16 +15,21 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function OrderTable({
   orders,
+  selectedIds,
+  onSelectChange,
   onStatusChange,
 }: {
   orders: DonHang[];
+  selectedIds: string[];
+  onSelectChange: (ids: string[]) => void;
   onStatusChange: () => void;
 }) {
   const [updating, setUpdating] = useState<string | null>(null);
   const { showToast } = useToast();
 
+  const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
+
   const handleStatusChange = async (orderId: string, status: string) => {
-    const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
     setUpdating(orderId);
     try {
       const res = await fetch(`/api/don-hang/${orderId}`, {
@@ -40,6 +47,27 @@ export default function OrderTable({
     }
   };
 
+  const allChecked = orders.length > 0 && orders.every((o) => selectedIds.includes(o.id));
+  const someChecked = orders.some((o) => selectedIds.includes(o.id));
+
+  const toggleAll = () => {
+    if (allChecked) {
+      onSelectChange(selectedIds.filter((id) => !orders.find((o) => o.id === id)));
+    } else {
+      const combined = selectedIds.concat(orders.map((o) => o.id));
+      const newIds = combined.filter((id, i) => combined.indexOf(id) === i);
+      onSelectChange(newIds);
+    }
+  };
+
+  const toggleOne = (id: string) => {
+    if (selectedIds.includes(id)) {
+      onSelectChange(selectedIds.filter((x) => x !== id));
+    } else {
+      onSelectChange([...selectedIds, id]);
+    }
+  };
+
   if (orders.length === 0) {
     return <div className="text-center py-12 text-stone-400 text-sm">Chưa có đơn hàng nào</div>;
   }
@@ -49,12 +77,22 @@ export default function OrderTable({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-stone-200 bg-stone-100/50 text-xs uppercase tracking-widest text-stone-600 font-medium">
+            <th className="py-3 px-3 w-10">
+              <input
+                type="checkbox"
+                checked={allChecked}
+                ref={(el) => { if (el) el.indeterminate = someChecked && !allChecked; }}
+                onChange={toggleAll}
+                className="cursor-pointer accent-espresso"
+              />
+            </th>
             <th className="text-left py-3 px-4 whitespace-nowrap">Mã đơn</th>
             <th className="text-left py-3 px-4 whitespace-nowrap">Khách hàng</th>
             <th className="text-left py-3 px-4">Địa chỉ</th>
             <th className="text-left py-3 px-4">Sản phẩm</th>
             <th className="text-left py-3 px-4 whitespace-nowrap">Tổng tiền</th>
             <th className="text-left py-3 px-4 whitespace-nowrap">Ngày mua</th>
+            <th className="text-left py-3 px-4 whitespace-nowrap">Người xử lý</th>
             <th className="text-left py-3 px-4 whitespace-nowrap">Trạng thái</th>
           </tr>
         </thead>
@@ -62,8 +100,20 @@ export default function OrderTable({
           {orders.map((order) => (
             <tr
               key={order.id}
-              className="border-b border-stone-200 hover:bg-stone-50 transition-colors align-top"
+              className={`border-b border-stone-200 hover:bg-stone-50 transition-colors align-top ${
+                selectedIds.includes(order.id) ? "bg-purple-50/30" : ""
+              }`}
             >
+              {/* Checkbox */}
+              <td className="py-3 px-3 text-center">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(order.id)}
+                  onChange={() => toggleOne(order.id)}
+                  className="cursor-pointer accent-espresso"
+                />
+              </td>
+
               {/* Mã đơn */}
               <td className="py-3 px-4 font-mono text-xs text-rose whitespace-nowrap">
                 {order.id}
@@ -80,7 +130,7 @@ export default function OrderTable({
                 {order.diaChi}
               </td>
 
-              {/* Sản phẩm: tên + size + số lượng + giá */}
+              {/* Sản phẩm */}
               <td className="py-3 px-4 min-w-[200px]">
                 <div className="space-y-1">
                   {order.sanPham.map((sp, i) => (
@@ -128,6 +178,15 @@ export default function OrderTable({
                 </span>
               </td>
 
+              {/* Người xử lý */}
+              <td className="py-3 px-4 text-xs whitespace-nowrap">
+                {order.nguoiXuLy && order.nguoiXuLy !== 'Chưa có' ? (
+                  <span className="font-medium text-teal-600">{order.nguoiXuLy}</span>
+                ) : (
+                  <span className="text-stone-400 italic">Chưa có</span>
+                )}
+              </td>
+
               {/* Trạng thái */}
               <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                 <select
@@ -139,6 +198,8 @@ export default function OrderTable({
                   }`}
                 >
                   <option value="Mới">Mới</option>
+                  <option value="Chốt để lên đơn">Chốt để lên đơn</option>
+                  <option value="Đã lên đơn">Đã lên đơn</option>
                   <option value="Đang xử lý">Đang xử lý</option>
                   <option value="Đã giao">Đã giao</option>
                   <option value="Huỷ">Huỷ</option>
