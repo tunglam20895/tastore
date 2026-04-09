@@ -13,7 +13,7 @@ export default function LogoUpload({
 }) {
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { showToast } = useToast();
+  const { showSuccess, showError } = useToast();
 
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
 
@@ -34,10 +34,14 @@ export default function LogoUpload({
       });
 
       const data = await res.json();
-      if (data.success) onUpload(data.data.url);
-      else showToast(data.error || "Upload thất bại");
+      if (data.success) {
+        onUpload(data.data.url);
+        showSuccess("Upload logo thành công!");
+      } else {
+        showError(data.error || "Upload thất bại");
+      }
     } catch {
-      showToast("Không thể upload logo");
+      showError("Không thể upload logo");
     } finally {
       setUploading(false);
     }

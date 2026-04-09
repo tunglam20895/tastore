@@ -25,7 +25,7 @@ export default function OrderTable({
   onStatusChange: () => void;
 }) {
   const [updating, setUpdating] = useState<string | null>(null);
-  const { showToast } = useToast();
+  const { showSuccess, showError } = useToast();
 
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
 
@@ -38,10 +38,13 @@ export default function OrderTable({
         body: JSON.stringify({ trangThai: status }),
       });
       const data = await res.json();
-      if (data.success) onStatusChange();
-      else showToast(data.error || "Cập nhật thất bại");
+      if (data.success) {
+        showSuccess(`Đã chuyển trạng thái: ${status}`);
+        onStatusChange();
+      }
+      else showError(data.error || "Cập nhật thất bại");
     } catch {
-      showToast("Không thể cập nhật trạng thái");
+      showError("Không thể cập nhật trạng thái");
     } finally {
       setUpdating(null);
     }

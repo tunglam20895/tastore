@@ -33,7 +33,7 @@ create table cai_dat (
 
 insert into cai_dat values
   ('LogoURL', ''),
-  ('TenShop', 'TRANH ANH STORE'),
+  ('TenShop', 'TRANG ANH STORE'),
   ('SDT', ''),
   ('DiaChi', ''),
   ('Email', '');

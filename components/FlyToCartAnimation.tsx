@@ -12,29 +12,43 @@ import { useCart } from "@/contexts/CartContext";
 
 export default function FlyToCartAnimation() {
   const { flyTrigger, flyDone } = useCart();
+  const [mounted, setMounted] = useState(false);
   const [arrived, setArrived] = useState(false);
+  const [endPos, setEndPos] = useState<{ x: number; y: number } | null>(null);
 
+  // Đánh dấu đã mounted trên client (tránh hydration mismatch)
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Tính toán vị trí giỏ hàng
+  useEffect(() => {
+    if (!flyTrigger || !mounted) return;
+    const bagEl = document.querySelector("[data-bag-icon]") as HTMLElement | null;
+    if (bagEl) {
+      const rect = bagEl.getBoundingClientRect();
+      setEndPos({
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      });
+    } else {
+      flyDone();
+    }
+  }, [flyTrigger, flyDone, mounted]);
+
+  // Reset arrived khi flyTrigger thay đổi
   useEffect(() => {
     if (flyTrigger) {
       setArrived(false);
     }
   }, [flyTrigger]);
 
-  if (!flyTrigger) return null;
+  // Không render gì cho đến khi mounted trên client
+  if (!mounted) return null;
+  if (!flyTrigger || !endPos) return null;
 
   const { startX, startY, imageUrl, id } = flyTrigger;
-
-  // Vị trí giỏ hàng (tìm theo data attribute)
-  const bagEl = document.querySelector("[data-bag-icon]") as HTMLElement | null;
-  if (!bagEl) {
-    // fallback: góc phải trên
-    flyDone();
-    return null;
-  }
-  const rect = bagEl.getBoundingClientRect();
-  const endX = rect.left + rect.width / 2;
-  const endY = rect.top + rect.height / 2;
-
+  const { x: endX, y: endY } = endPos;
   const duration = 0.65;
 
   return (

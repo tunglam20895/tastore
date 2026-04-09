@@ -179,9 +179,14 @@ export default function OrderForm({
         <button
           type="submit"
           disabled={loading}
-          className="btn-primary w-full disabled:opacity-50"
+          className="btn-primary w-full disabled:opacity-50 flex items-center justify-center gap-2"
         >
-          {loading ? "Đang Xử Lý..." : `Xác Nhận Đặt Hàng — ${tongTienSauGiam.toLocaleString("vi-VN")}đ`}
+          {loading ? (
+            <>
+              <span className="inline-block w-4 h-4 border-2 border-cream/60 border-t-cream rounded-full animate-spin" />
+              Đang xử lý...
+            </>
+          ) : `Xác Nhận Đặt Hàng — ${tongTienSauGiam.toLocaleString("vi-VN")}đ`}
         </button>
       </div>
     </form>

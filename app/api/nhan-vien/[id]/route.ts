@@ -23,6 +23,7 @@ export async function PUT(
     if (body.ten !== undefined) updates.ten = body.ten.trim()
     if (body.quyen !== undefined) updates.quyen = body.quyen
     if (body.conHoatDong !== undefined) updates.con_hoat_dong = body.conHoatDong
+    if (body.luong !== undefined) updates.luong = body.luong
     if (body.password) {
       if (body.password.length < 6) {
         return NextResponse.json({ success: false, error: 'Mật khẩu tối thiểu 6 ký tự' }, { status: 400 })

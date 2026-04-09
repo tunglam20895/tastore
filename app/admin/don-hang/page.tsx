@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import OrderTable from "@/components/admin/OrderTable";
 import Pagination from "@/components/admin/Pagination";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import type { DonHang } from "@/types";
 import { useToast } from "@/contexts/ToastContext";
 
@@ -32,7 +33,7 @@ export default function AdminOrdersPage() {
   const [bulkLoading, setBulkLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
 
-  const { showToast } = useToast();
+  const { showSuccess, showError } = useToast();
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
 
   const loadOrders = useCallback((
@@ -101,13 +102,13 @@ export default function AdminOrdersPage() {
       });
       const data = await res.json();
       if (data.success) {
-        showToast(`Đã cập nhật ${data.updated} đơn hàng`);
+        showSuccess(`Đã cập nhật ${data.updated} đơn hàng`);
         loadOrders(page, trangThai, searchTen, searchSdt, tuNgay, denNgay);
       } else {
-        showToast(data.error || "Cập nhật thất bại");
+        showError(data.error || "Cập nhật thất bại");
       }
     } catch {
-      showToast("Không thể cập nhật hàng loạt");
+      showError("Không thể cập nhật hàng loạt");
     } finally {
       setBulkLoading(false);
     }
@@ -123,7 +124,7 @@ export default function AdminOrdersPage() {
       });
       if (!res.ok) {
         const err = await res.json();
-        showToast(err.error || "Xuất file thất bại");
+        showError(err.error || "Xuất file thất bại");
         return;
       }
       const blob = await res.blob();
@@ -136,10 +137,10 @@ export default function AdminOrdersPage() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      showToast(`Đã xuất ${ids.length} đơn và chuyển sang "Đã lên đơn"`);
+      showSuccess(`Đã xuất ${ids.length} đơn và chuyển sang "Đã lên đơn"`);
       loadOrders(page, trangThai, searchTen, searchSdt, tuNgay, denNgay);
     } catch {
-      showToast("Không thể xuất file Excel");
+      showError("Không thể xuất file Excel");
     } finally {
       setExportLoading(false);
     }
@@ -154,21 +155,21 @@ export default function AdminOrdersPage() {
       });
       const data = await res.json();
       if (!data.success || !data.data?.length) {
-        showToast("Không có đơn nào ở trạng thái Chốt để lên đơn");
+        showError("Không có đơn nào ở trạng thái Chốt để lên đơn");
         setExportLoading(false);
         return;
       }
       const ids: string[] = data.data.map((o: { id: string }) => o.id);
       await doExport(ids);
     } catch {
-      showToast("Không thể tải danh sách đơn");
+      showError("Không thể tải danh sách đơn");
       setExportLoading(false);
     }
   };
 
   const handleExport = async () => {
     if (!selectedIds.length) {
-      showToast("Vui lòng chọn đơn hàng cần xuất");
+      showError("Vui lòng chọn đơn hàng cần xuất");
       return;
     }
     await doExport(selectedIds);
@@ -294,7 +295,7 @@ export default function AdminOrdersPage() {
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <div className="w-6 h-6 border border-espresso border-t-transparent rounded-full animate-spin" />
+          <LoadingSpinner size="md" label="Đang tải..." />
         </div>
       ) : (
         <div className="bg-white border border-stone-300 rounded-xl shadow-md overflow-hidden">

@@ -11,7 +11,7 @@ export async function generateProductDescription(
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
       "HTTP-Referer": "https://tranh-anh-store.vercel.app",
-      "X-Title": "Tranh Anh Store",
+      "X-Title": "Trang Anh Store",
     },
     body: JSON.stringify({
       model: "qwen/qwen3.6-plus:free",

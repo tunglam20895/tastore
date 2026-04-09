@@ -1,9 +1,10 @@
 import { Suspense } from "react";
 import ProductGrid from "@/components/shop/ProductGrid";
 import HeroSection from "@/components/shop/HeroSection";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 export const metadata = {
-  title: "TRANH ANH STORE",
+  title: "TRANG ANH STORE",
 };
 
 export default function HomePage() {
@@ -22,7 +23,7 @@ export default function HomePage() {
         <Suspense
           fallback={
             <div className="flex justify-center py-24">
-              <div className="w-8 h-8 border border-espresso border-t-transparent rounded-full animate-spin" />
+              <LoadingSpinner size="lg" label="Đang tải sản phẩm..." />
             </div>
           }
         >

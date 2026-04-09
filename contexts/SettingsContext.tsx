@@ -7,13 +7,13 @@ const SettingsContext = createContext<{
   settings: CaiDat;
   refresh: () => Promise<void>;
 }>({
-  settings: { logoURL: "", tenShop: "TRANH ANH STORE", sdt: "", diaChi: "", email: "" },
+  settings: { logoURL: "", tenShop: "TRANG ANH STORE", sdt: "", diaChi: "", email: "" },
   refresh: async () => {},
 });
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<CaiDat>({
-    logoURL: "", tenShop: "TRANH ANH STORE", sdt: "", diaChi: "", email: "",
+    logoURL: "", tenShop: "TRANG ANH STORE", sdt: "", diaChi: "", email: "",
   });
 
   const fetchSettings = async () => {

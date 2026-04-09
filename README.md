@@ -1,4 +1,4 @@
-# TRANH ANH STORE
+# TRANG ANH STORE
 
 Website bán hàng cho shop tranh nghệ thuật.
 

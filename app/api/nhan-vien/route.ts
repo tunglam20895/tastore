@@ -12,6 +12,7 @@ function mapRow(row: Record<string, unknown>): NhanVien {
     username: row.username as string,
     quyen: (row.quyen as string[]) || [],
     conHoatDong: row.con_hoat_dong as boolean,
+    luong: Number(row.luong ?? 0),
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   }
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
   try {
     const { data, error } = await supabase
       .from('nhan_vien')
-      .select('id, ten, username, quyen, con_hoat_dong, created_at, updated_at')
+      .select('id, ten, username, quyen, con_hoat_dong, luong, created_at, updated_at')
       .order('created_at', { ascending: false })
     if (error) throw error
     return NextResponse.json({ success: true, data: (data || []).map(mapRow) })
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
   }
   try {
     const body = await request.json()
-    const { ten, username, password, quyen } = body
+    const { ten, username, password, quyen, luong } = body
 
     if (!ten?.trim() || !username?.trim() || !password?.trim()) {
       return NextResponse.json({ success: false, error: 'Thiếu thông tin bắt buộc' }, { status: 400 })
@@ -65,8 +66,14 @@ export async function POST(request: NextRequest) {
     const passwordHash = await hashPassword(password)
     const { data, error } = await supabase
       .from('nhan_vien')
-      .insert({ ten: ten.trim(), username: username.trim(), password_hash: passwordHash, quyen: quyen || [] })
-      .select('id, ten, username, quyen, con_hoat_dong, created_at, updated_at')
+      .insert({
+        ten: ten.trim(),
+        username: username.trim(),
+        password_hash: passwordHash,
+        quyen: quyen || [],
+        luong: luong ?? 0,
+      })
+      .select('id, ten, username, quyen, con_hoat_dong, luong, created_at, updated_at')
       .single()
 
     if (error) throw error

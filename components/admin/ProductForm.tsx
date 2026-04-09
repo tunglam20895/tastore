@@ -18,7 +18,7 @@ export default function ProductForm({
 }) {
   const isEditing = !!product;
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
-  const { showToast } = useToast();
+  const { showSuccess, showError } = useToast();
 
   const [ten, setTen] = useState(product?.ten || "");
   const [giaGoc, setGiaGoc] = useState(product?.giaGoc || 0);
@@ -71,7 +71,7 @@ export default function ProductForm({
   const removeRow = (i: number) => setSizeRows(sizeRows.filter((_, idx) => idx !== i));
 
   const handleGenerateDescription = async () => {
-    if (!ten) { showToast("Vui lòng nhập tên sản phẩm trước"); return; }
+    if (!ten) { showError("Vui lòng nhập tên sản phẩm trước"); return; }
     setGenerating(true);
     try {
       const res = await fetch("/api/generate-mo-ta", {
@@ -81,9 +81,9 @@ export default function ProductForm({
       });
       const data = await res.json();
       if (data.success) setMoTa(data.data);
-      else showToast(data.error || "Không thể tạo mô tả");
+      else showError(data.error || "Không thể tạo mô tả");
     } catch {
-      showToast("Lỗi khi gọi AI");
+      showError("Lỗi khi gọi AI");
     } finally {
       setGenerating(false);
     }
@@ -125,10 +125,14 @@ export default function ProductForm({
       });
 
       const data = await res.json();
-      if (data.success) onSave();
-      else setError(data.error || "Có lỗi xảy ra");
+      if (data.success) {
+        showSuccess(isEditing ? "Cập nhật sản phẩm thành công!" : "Thêm sản phẩm thành công!");
+        onSave();
+      } else {
+        showError(data.error || "Có lỗi xảy ra");
+      }
     } catch {
-      setError("Không thể lưu sản phẩm");
+      showError("Không thể lưu sản phẩm");
     } finally {
       setSaving(false);
     }

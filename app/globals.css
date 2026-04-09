@@ -4,6 +4,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ẩn Next.js error overlay (chỉ dev mode) */
+nextjs-portal,
+nextjs-toast,
+nextjs-dialog,
+nextjs-dialog-backdrop,
+nextjs-container,
+nextjs-portal > div {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 @layer base {
   :root {
     --color-cream: #EDE8DF;

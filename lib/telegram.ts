@@ -22,7 +22,7 @@ export async function sendOrderNotification(
     ? `\n📊 Trạng thái KH: ${khachHang.trangThai}\n🛒 Tổng đơn: ${khachHang.tongDon} đơn\n💰 Doanh thu từ KH: ${khachHang.tongDoanhThu.toLocaleString('vi-VN')}đ`
     : ''
 
-  const text = `🎨 *TRANH ANH STORE - ĐƠN HÀNG MỚI*
+  const text = `🎨 *TRANG ANH STORE - ĐƠN HÀNG MỚI*
 
 👤 Khách hàng: ${order.tenKH} | ${order.sdt}
 📍 Địa chỉ: ${order.diaChi}${khachHangInfo}

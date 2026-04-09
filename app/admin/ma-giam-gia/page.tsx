@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import type { MaGiamGia } from "@/types";
 import Pagination from "@/components/admin/Pagination";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { useToast } from "@/contexts/ToastContext";
 
 function generateCode(): string {
@@ -21,6 +23,7 @@ function CouponForm({
 }) {
   const isEditing = !!coupon;
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
+  const { showSuccess, showError } = useToast();
 
   const [ma, setMa] = useState(coupon?.ma || "");
   const [loai, setLoai] = useState<"phan_tram" | "so_tien">(coupon?.loai || "phan_tram");
@@ -62,10 +65,14 @@ function CouponForm({
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (data.success) onSave();
-      else setError(data.error || "Có lỗi xảy ra");
+      if (data.success) {
+        showSuccess(isEditing ? "Cập nhật mã giảm giá thành công!" : "Tạo mã giảm giá thành công!");
+        onSave();
+      } else {
+        showError(data.error || "Có lỗi xảy ra");
+      }
     } catch {
-      setError("Không thể lưu mã giảm giá");
+      showError("Không thể lưu mã giảm giá");
     } finally {
       setSaving(false);
     }
@@ -255,8 +262,9 @@ export default function AdminCouponsPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [limit, setLimit] = useState(20);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; ma: string } | null>(null);
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
-  const { showToast } = useToast();
+  const { showSuccess, showError } = useToast();
 
   const loadCoupons = useCallback((p = 1) => {
     setLoading(true);
@@ -276,21 +284,26 @@ export default function AdminCouponsPage() {
 
   useEffect(() => { loadCoupons(1); }, [loadCoupons]);
 
-  const handleDelete = async (id: string, ma: string) => {
-    if (!confirm(`Xóa mã ${ma}?`)) return;
-    setDeletingId(id);
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    setDeletingId(confirmDelete.id);
     try {
-      const res = await fetch(`/api/ma-giam-gia/${id}`, {
+      const res = await fetch(`/api/ma-giam-gia/${confirmDelete.id}`, {
         method: "DELETE",
         headers: { "x-admin-password": adminPassword || "" },
       });
       const data = await res.json();
-      if (data.success) loadCoupons(page);
-      else showToast(data.error || "Xóa thất bại");
+      if (data.success) {
+        showSuccess(`Đã xóa mã ${confirmDelete.ma}`);
+        loadCoupons(page);
+      } else {
+        showError(data.error || "Xóa thất bại");
+      }
     } catch {
-      showToast("Không thể xóa mã");
+      showError("Không thể xóa mã");
     } finally {
       setDeletingId(null);
+      setConfirmDelete(null);
     }
   };
 
@@ -347,7 +360,7 @@ export default function AdminCouponsPage() {
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <div className="w-6 h-6 border border-espresso border-t-transparent rounded-full animate-spin" />
+          <LoadingSpinner size="md" label="Đang tải..." />
         </div>
       ) : (
         <div className="bg-white border border-stone-100 overflow-x-auto">
@@ -420,7 +433,7 @@ export default function AdminCouponsPage() {
                         Sửa
                       </button>
                       <button
-                        onClick={() => handleDelete(c.id, c.ma)}
+                        onClick={() => setConfirmDelete({ id: c.id, ma: c.ma })}
                         disabled={deletingId === c.id}
                         className="text-xs uppercase tracking-widest text-stone-300 hover:text-rose transition-colors disabled:opacity-50"
                       >
@@ -442,6 +455,15 @@ export default function AdminCouponsPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={handleDelete}
+        title="Xóa mã giảm giá?"
+        message={`Bạn có chắc chắn muốn xóa mã "${confirmDelete?.ma}"? Hành động này không thể hoàn tác.`}
+        confirmText="Xóa"
+        isDanger
+      />
     </div>
   );
 }

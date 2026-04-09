@@ -53,7 +53,6 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Đóng menu khi resize lên desktop
   useEffect(() => {
     const onResize = () => {
       if (window.innerWidth >= 768) setMobileMenuOpen(false);
@@ -62,13 +61,16 @@ export default function Header() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // Đóng menu khi chuyển trang
   useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [pathname]);
+    const onResize = () => {
+      if (window.innerWidth >= 768) setMobileMenuOpen(false);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
-  if (pathname?.startsWith("/admin")) return null;
-
+  // Header chỉ render trong (shop)/layout.tsx → không cần check admin
+  // isHero: chỉ trên trang chủ "/" và chưa scroll
   const isHero = pathname === "/" && !scrolled;
   const navColor = isHero
     ? "text-cream hover:text-cream/70"
@@ -77,7 +79,6 @@ export default function Header() {
   const burgerColor = isHero ? "text-cream" : "text-espresso";
 
   return (
-    <>
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
@@ -87,7 +88,6 @@ export default function Header() {
     >
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         <div className="relative flex items-center justify-between">
-          {/* Hamburger — mobile only */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className={`md:hidden p-1 transition-colors ${burgerColor}`}
@@ -96,7 +96,6 @@ export default function Header() {
             {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
           </button>
 
-          {/* Nav trái — desktop only */}
           <nav className="hidden md:flex items-center gap-6 lg:gap-8 w-1/3">
             <Link href="/" className={`text-xs uppercase tracking-widest font-medium transition-colors ${navColor}`}>
               Trang Chủ
@@ -106,7 +105,6 @@ export default function Header() {
             </Link>
           </nav>
 
-          {/* Tên shop — căn giữa tuyệt đối */}
           <Link
             href="/"
             className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 group"
@@ -116,7 +114,7 @@ export default function Header() {
                 isHero ? "text-cream" : "text-espresso"
               }`}
             >
-              Tranh Anh
+              Trang Anh
             </span>
             <span
               className={`text-[8px] md:text-[9px] uppercase tracking-[0.35em] md:tracking-[0.45em] transition-colors duration-300 ${
@@ -127,7 +125,6 @@ export default function Header() {
             </span>
           </Link>
 
-          {/* Nav phải — desktop only */}
           <nav className="hidden md:flex items-center gap-6 lg:gap-8 w-1/3 justify-end">
             <Link href="/#san-pham" className={`text-xs uppercase tracking-widest font-medium transition-colors ${navColor}`}>
               Sale
@@ -141,7 +138,6 @@ export default function Header() {
             </Link>
           </nav>
 
-          {/* Giỏ hàng — mobile only */}
           <Link
             href="/gio-hang"
             className={`md:hidden transition-colors ${burgerColor}`}
@@ -151,7 +147,6 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile menu overlay */}
       {mobileMenuOpen && (
         <div className="md:hidden fixed inset-0 top-0 z-40 bg-cream/98 backdrop-blur-sm">
           <div className="flex flex-col items-center justify-center h-full gap-8">
@@ -159,7 +154,7 @@ export default function Header() {
               href="/"
               className={`font-heading text-2xl font-light tracking-[0.2em] uppercase text-espresso`}
             >
-              Tranh Anh
+              Trang Anh
             </Link>
             <div className="flex flex-col items-center gap-6 mt-4">
               <Link
@@ -192,6 +187,5 @@ export default function Header() {
         </div>
       )}
     </header>
-    </>
   );
 }

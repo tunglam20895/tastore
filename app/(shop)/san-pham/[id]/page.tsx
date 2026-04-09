@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/contexts/CartContext";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import type { SanPham, DanhMuc } from "@/types";
 
 export default function ProductDetailPage() {
@@ -93,7 +94,7 @@ export default function ProductDetailPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-16 md:py-24 pt-24 md:pt-32">
-        <div className="w-8 h-8 border border-espresso border-t-transparent rounded-full animate-spin" />
+        <LoadingSpinner size="lg" label="Đang tải sản phẩm..." />
       </div>
     );
   }

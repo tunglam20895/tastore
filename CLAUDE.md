@@ -1,7 +1,7 @@
-# CLAUDE.md — TRANH ANH STORE
+# CLAUDE.md — TRANG ANH STORE
 
 ## Tổng quan dự án
-Website bán hàng thời trang nữ cao cấp "TRANH ANH STORE".
+Website bán hàng thời trang nữ cao cấp "TRANG ANH STORE".
 **Stack**: Next.js 14.2.35 (App Router) + **Supabase PostgreSQL** + **Supabase Storage** + Google Sheets (append-only) + Telegram Bot + OpenRouter AI (`stepfun/step-3.5-flash:free` / `qwen/qwen3.6-plus:free`).
 **Deploy**: Vercel (free tier).
 
@@ -13,24 +13,26 @@ Website bán hàng thời trang nữ cao cấp "TRANH ANH STORE".
 tranh-anh-store/
 ├── app/
 │   ├── page.tsx                        # Trang chủ — HeroSection + ProductGrid (Suspense)
-│   ├── layout.tsx                      # Root layout — SettingsProvider + CartProvider + TrackingPixel + FlyToCartAnimation
+│   ├── layout.tsx                      # Root layout — SettingsProvider + CartProvider + ToastProvider + TrackingPixel + FlyToCartAnimation
 │   ├── globals.css                     # CSS variables + Tailwind layers + component classes
-│   ├── san-pham/
-│   │   └── [id]/page.tsx              # Chi tiết sản phẩm — size selector, qty, add-to-cart + fly animation, breadcrumb
-│   ├── gio-hang/page.tsx               # Giỏ hàng — CartItem list, order summary, empty state
-│   ├── dat-hang/page.tsx               # Checkout — coupon validation, order summary, OrderForm
+│   ├── (shop)/                         # Route group cho shop (không có prefix)
+│   │   ├── layout.tsx                  # Header + Footer wrapper
+│   │   ├── page.tsx                    # HomePage (redirect tới /)
+│   │   ├── san-pham/[id]/page.tsx      # Chi tiết sản phẩm — size selector, qty, add-to-cart
+│   │   ├── gio-hang/page.tsx           # Giỏ hàng — CartItem list, order summary, empty state
+│   │   └── dat-hang/page.tsx           # Checkout — coupon validation, order summary, OrderForm
 │   ├── admin/
-│   │   ├── layout.tsx                  # Bọc AdminNav (cung cấp ToastProvider)
-│   │   ├── login/page.tsx              # Đăng nhập — Admin/Staff tabs, hard redirect (window.location.replace)
-│   │   ├── dashboard/page.tsx          # Thống kê KPIs + 2 BarChart (7 ngày) + top SP/DM + kho overview
-│   │   ├── san-pham/page.tsx           # Quản lý SP — filter (search, DM, tồn kho, con_hang), server-side pagination, StockBadge, sizes display
-│   │   ├── don-hang/page.tsx           # Quản lý đơn — filter đa chiều, bulk select + bulk status, export Excel (template)
-│   │   ├── khach-hang/page.tsx         # CRM khách hàng — filter trạng thái, modal chi tiết + lịch sử đơn
-│   │   ├── ma-giam-gia/page.tsx        # Quản lý mã giảm giá — CRUD, toggle on/off, generate code ngẫu nhiên
-│   │   ├── nhan-vien/page.tsx          # Quản lý nhân viên — CRUD, phân quyền (ALL_QUYEN), password hash, active toggle
-│   │   └── cai-dat/page.tsx            # Cài đặt shop (logo, info) + quản lý trạng thái KH tùy chỉnh
+│   │   ├── layout.tsx                  # Bọc AdminNav + TrangThaiDHProvider
+│   │   ├── login/page.tsx              # Đăng nhập — Admin/Staff tabs, full-page SVG spinner loading
+│   │   ├── dashboard/page.tsx          # Thống kê KPIs + đơn theo NV/KH + lương nhân viên
+│   │   ├── san-pham/page.tsx           # Quản lý SP — filter, pagination, StockBadge, sizes
+│   │   ├── don-hang/page.tsx           # Quản lý đơn — filter, bulk select/status, export Excel
+│   │   ├── khach-hang/page.tsx         # CRM khách hàng — filter trạng thái, modal chi tiết
+│   │   ├── ma-giam-gia/page.tsx        # Quản lý mã giảm giá — CRUD, toggle, generate code
+│   │   ├── nhan-vien/page.tsx          # Quản lý nhân viên — CRUD, phân quyền, lương, password hash
+│   │   └── cai-dat/page.tsx            # 2-column layout: trái=shop info, phải=trạng thái ĐH+KH
 │   └── api/
-│       ├── authenticate/route.ts       # POST login — Admin (password) + Staff (username+password, JWT token)
+│       ├── authenticate/route.ts       # POST login — Admin (password) + Staff (username+password, JWT)
 │       ├── logout/route.ts             # POST logout — clear all auth cookies
 │       ├── cai-dat/route.ts            # GET settings, PUT settings (admin password)
 │       ├── danh-muc/route.ts           # GET categories, POST category (san-pham access)
@@ -39,7 +41,7 @@ tranh-anh-store/
 │       ├── don-hang/route.ts           # GET (pagination + filters), POST (public — đặt hàng)
 │       ├── don-hang/[id]/route.ts      # GET chi tiết, PUT trạng thái + nguoi_xu_ly
 │       ├── don-hang/bulk-status/route.ts # POST cập nhật trạng thái hàng loạt
-│       ├── don-hang/export-excel/route.ts # POST export Excel từ template → download, auto chuyển "Đã lên đơn"
+│       ├── don-hang/export-excel/route.ts # POST export Excel từ template → download
 │       ├── khach-hang/route.ts         # GET (pagination + search)
 │       ├── khach-hang/[sdt]/route.ts   # PUT (trạng thái + ghi chú)
 │       ├── ma-giam-gia/route.ts        # GET (pagination), POST
@@ -47,29 +49,32 @@ tranh-anh-store/
 │       ├── ma-giam-gia/kiem-tra/route.ts # POST kiểm tra mã giảm giá (public)
 │       ├── trang-thai-kh/route.ts      # GET danh sách trạng thái KH, POST tạo mới
 │       ├── trang-thai-kh/[id]/route.ts # DELETE (kiểm tra đang dùng bởi KH)
+│       ├── trang-thai-dh/route.ts      # GET/PUT/POST/DELETE trạng thái đơn hàng + màu (admin only)
 │       ├── nhan-vien/route.ts          # GET list, POST tạo (admin only)
 │       ├── nhan-vien/[id]/route.ts     # PUT, DELETE (admin only)
-│       ├── thong-ke/route.ts           # GET dashboard stats (doanh thu, đơn, tracking, top SP/DM)
+│       ├── thong-ke/route.ts           # GET dashboard stats (doanh thu, đơn, tracking, top SP/DM, đơn theo NV, KH, lương)
+│       ├── thong-bao/route.ts          # GET lịch sử thông báo, PUT đánh dấu đã đọc (dashboard access)
 │       ├── tracking/route.ts           # POST ghi lượt truy cập (fire-and-forget)
 │       ├── upload/route.ts             # POST upload ảnh → Supabase Storage
 │       ├── generate-mo-ta/route.ts     # POST generate mô tả AI (OpenRouter)
 │       ├── gemini/route.ts             # Deprecated — re-export từ generate-mo-ta
-│       └── telegram/route.ts           # POST webhook Telegram (xử lý /start, /help)
+│       └── telegram/route.ts           # POST webhook Telegram
 ├── components/
+│   ├── LoadingSpinner.tsx              # SVG logo "TA" xoay 360° — sm/md/lg/full
 │   ├── FlyToCartAnimation.tsx          # Animation parabolic bay từ click → giỏ hàng (framer-motion)
 │   ├── TrackingPixel.tsx               # Client component ghi lượt xem mỗi page (skip /admin, /api)
 │   ├── layout/
-│   │   ├── Header.tsx                  # Sticky header — transparent trên hero, solid khi scroll, centered shop name
+│   │   ├── Header.tsx                  # Sticky header — transparent trên hero, solid khi scroll
 │   │   └── Footer.tsx                  # bg-espresso, text-cream, 3 cột info
 │   ├── shop/
 │   │   ├── HeroSection.tsx             # Fullscreen hero + framer-motion text animations
-│   │   ├── ProductCard.tsx             # Card portrait 3:4, quick-add on hover, discount badge, low-stock indicator
+│   │   ├── ProductCard.tsx             # Card portrait 3:4, quick-add on hover, discount badge
 │   │   ├── ProductGrid.tsx             # Lưới + search + filter danh mục + PaginationShop
 │   │   ├── PaginationShop.tsx          # Phân trang shop (circular buttons)
 │   │   ├── CartItem.tsx                # Item giỏ hàng — image, size, qty control, remove
 │   │   └── OrderForm.tsx               # Form đặt hàng — floating labels, submit order
 │   └── admin/
-│       ├── AdminNav.tsx                # Navbar admin — permission-based nav items, bell notification dropdown, logout
+│       ├── AdminNav.tsx                # Redesigned bell icon, notification dropdown với màu theo trạng thái
 │       ├── ProductForm.tsx             # Form thêm/sửa SP — quick-pick sizes, AI mô tả, image upload
 │       ├── OrderTable.tsx              # Bảng đơn hàng — checkboxes, inline status select, bulk actions
 │       ├── OrderDetailModal.tsx        # Popup chi tiết đơn — status update buttons, customer info
@@ -77,11 +82,12 @@ tranh-anh-store/
 │       ├── LogoUpload.tsx              # Upload logo → Supabase shop-assets bucket
 │       └── ImageUpload.tsx             # Upload ảnh SP → Supabase san-pham-images bucket
 ├── contexts/
-│   ├── CartContext.tsx                 # Cart state (localStorage), fly animation trigger, CRUD operations
-│   ├── SettingsContext.tsx             # Global shop settings (fetch từ /api/cai-dat), refresh via custom event
-│   └── ToastContext.tsx                # Toast notifications (error/success, 4s auto-dismiss, bottom-right)
+│   ├── CartContext.tsx                 # Cart state (localStorage), fly animation trigger, CRUD
+│   ├── SettingsContext.tsx             # Global shop settings (fetch từ /api/cai-dat)
+│   ├── ToastContext.tsx                # Toast notifications (error/success/info, 3.5s auto-dismiss, bottom-right)
+│   └── TrangThaiDHContext.tsx          # Order status colors — fetch từ DB, fallback defaults, helpers
 ├── hooks/
-│   └── useOrderNotifications.ts        # Bell icon: Supabase Realtime INSERT + polling 60s, unread tracking
+│   └── useOrderNotifications.ts        # Realtime don_hang INSERT/UPDATE + polling 60s, unread tracking
 ├── lib/
 │   ├── supabase.ts                     # Server client (service role key, cache: no-store)
 │   ├── supabase-client.ts              # Browser client (anon key, dùng cho Realtime)
@@ -92,7 +98,7 @@ tranh-anh-store/
 │   ├── gemini.ts                       # Deprecated — gọi OpenRouter thay vì Gemini
 │   ├── cloudinary.ts                   # Legacy — không dùng chính
 │   ├── auth.ts                         # verifyAdminPassword() + verifyAccess() (admin OR staff token)
-│   └── staff-auth.ts                   # hashPassword (PBKDF2), verifyPassword, createStaffToken/verifyStaffToken (HMAC-SHA256, Web Crypto)
+│   └── staff-auth.ts                   # hashPassword (PBKDF2), verifyPassword, createStaffToken/verifyStaffToken (HMAC-SHA256)
 ├── types/index.ts                      # TypeScript types + ALL_QUYEN constant
 ├── middleware.ts                       # Bảo vệ /admin/* — admin cookie OR staff-token với route-level permission
 ├── tailwind.config.ts                  # Design tokens (màu sắc, font)
@@ -102,11 +108,14 @@ tranh-anh-store/
     ├── 001_init.sql                    # Base tables: danh_muc, san_pham, don_hang, cai_dat
     ├── 002_add_nguoi_xu_ly.sql         # Adds nguoi_xu_ly column to don_hang
     ├── 002_nhan_vien.sql               # nhan_vien table + updated_at trigger
-    ├── 002_so_luong_ma_giam_gia.sql    # so_luong on san_pham, ma_giam_gia table, decrement_so_luong RPC
+    ├── 002_so_luong_ma_giam_gia.sql    # so_luong on san_pham, ma_giam_gia table
     ├── 003_khach_hang_crm.sql          # khach_hang + trang_thai_kh + upsert_khach_hang RPC
     ├── 004_sizes.sql                   # Adds sizes TEXT[] to san_pham
     ├── 005_sizes_jsonb.sql             # Converts sizes → JSONB + decrement_size_so_luong RPC
-    └── 006_luot_truy_cap.sql           # luot_truy_cap table + indexes
+    ├── 006_luot_truy_cap.sql           # luot_truy_cap table + indexes
+    ├── 007_luong_nhan_vien.sql         # Adds luong numeric to nhan_vien
+    ├── 008_thong_bao.sql               # thong_bao table + triggers (don_moi + status change)
+    └── 009_trang_thai_don_hang.sql     # trang_thai_don_hang table + seed 6 default statuses
 ```
 
 ---
@@ -216,6 +225,7 @@ ADMIN_PASSWORD=                 # Dùng cho admin login + HMAC signing staff tok
 | password_hash | text | Bcrypt hash |
 | quyen | text[] | Array quyền: dashboard, san-pham, don-hang, khach-hang, ma-giam-gia |
 | con_hoat_dong | boolean | |
+| luong | numeric | Lương tháng (VNĐ) |
 | created_at | timestamptz | Auto |
 | updated_at | timestamptz | Auto |
 
@@ -230,9 +240,37 @@ ADMIN_PASSWORD=                 # Dùng cho admin login + HMAC signing staff tok
 | ref | text | Referrer |
 | thoi_gian | timestamptz | Auto |
 
+### Bảng `thong_bao` (mới)
+| Cột | Kiểu | Mô tả |
+|-----|------|-------|
+| id | uuid PK | Auto |
+| loai | text | 'don_moi' \| 'chuyen_trang_thai' |
+| don_hang_id | text | FK tự nhiên → don_hang.id |
+| ten_kh | text | Tên khách hàng |
+| san_pham_tom_tat | text | Tóm tắt SP trong đơn |
+| tong_tien | numeric | Tổng tiền |
+| trang_thai_cu | text | Trạng thái cũ (cho chuyen_trang_thai) |
+| trang_thai_moi | text | Trạng thái mới |
+| nguoi_xu_ly | text | Người thực hiện |
+| da_doc | boolean | |
+| thoi_gian | timestamptz | Auto |
+
+### Bảng `trang_thai_don_hang` (mới)
+| Cột | Kiểu | Mô tả |
+|-----|------|-------|
+| key | text PK | Key định danh (VD: "Mới") |
+| ten | text | Tên hiển thị |
+| mau | text | Mã màu hex |
+| thu_tu | int | Thứ tự hiển thị |
+
 ### Supabase Storage buckets
 - `san-pham-images` — ảnh sản phẩm (public)
 - `shop-assets` — logo shop (public)
+
+### Supabase Triggers
+- `trg_notify_don_moi` — Auto INSERT vào `thong_bao` khi `don_hang` INSERT
+- `trg_don_hang_status_change` — Auto INSERT vào `thong_bao` khi `don_hang.trang_thai` UPDATE
+- `trg_don_hang_insert` — (cũ, có thể bỏ) Auto INSERT thong_bao don_moi
 
 ### Supabase RPC functions
 - `upsert_khach_hang(p_sdt, p_ten, p_doanh_thu)` — tạo/cập nhật khách hàng khi có đơn
@@ -258,6 +296,7 @@ type CartItem = {
   id: string; ten: string; giaGoc: number
   phanTramGiam: number | null; giaHienThi: number
   anhURL: string; soLuong: number; sizeChon: string | null
+  sizes?: SizeItem[]
 }
 
 type DonHang = {
@@ -288,7 +327,17 @@ type TrangThaiKH = { id: string; ten: string; mau: string }
 type NhanVien = {
   id: string; ten: string; username: string
   quyen: string[]; conHoatDong: boolean
-  createdAt: string; updatedAt: string
+  luong: number; createdAt: string; updatedAt: string
+}
+
+type TrangThaiDH = { key: string; ten: string; mau: string; thuTu?: number }
+
+type OrderNotif = {
+  id: string; loai: 'don_moi' | 'chuyen_trang_thai'
+  donHangId: string; tenKH: string; tenSP: string
+  tongTien?: number; nguoiXuLy?: string
+  trangThaiCu?: string; trangThaiMoi: string
+  daDoc: boolean; thoiGian: string
 }
 
 type PaginatedResponse<T> = { data: T[]; total: number; page: number; limit: number; totalPages: number }
@@ -355,16 +404,16 @@ colors: {
 
 ### 1. Admin
 - **Cách đăng nhập**: Nhập `ADMIN_PASSWORD` env → verify trong `/api/authenticate`
-- **Session**: Cookie `admin-auth` (httpOnly, value="true") + `admin-role` (client-readable, value="true")
+- **Session**: Cookie `admin-auth` (httpOnly, value="true") + `admin-role` (client-readable)
 - **Password lưu trữ**: localStorage `admin-password` (để gửi header `x-admin-password`)
 - **Quyền**: Full access tất cả routes
 
 ### 2. Staff (Nhân viên)
 - **Cách đăng nhập**: Username + password → bcrypt verify → tạo JWT token
-- **Token**: HMAC-SHA256 signed (Web Crypto), payload chứa `{id, ten, username, quyen[], exp: 24h}`
+- **Token**: HMAC-SHA256 signed (Web Crypto), payload `{id, ten, username, quyen[], exp: 24h}`
 - **Cookies**: `staff-token` (httpOnly), `staff-quyen` (comma-separated), `staff-ten`
 - **Phân quyền**: Granular per-route dựa trên `ALL_QUYEN`
-- **Middleware**: Kiểm tra permission theo route segment, redirect về route đầu tiên được phép nếu không có quyền
+- **Middleware**: Kiểm tra permission theo route segment, redirect về route đầu tiên được phép
 - **Routes admin-only** (staff không vào được): `/admin/nhan-vien`, `/admin/cai-dat`
 
 ### `verifyAccess(request, requiredQuyen)` flow:
@@ -376,16 +425,16 @@ colors: {
 
 ## Luồng hoàn chỉnh
 
-1. **Khách truy cập** → TrackingPixel ghi `luot_truy_cap` (fire-and-forget, skip /admin & /api)
+1. **Khách truy cập** → TrackingPixel ghi `luot_truy_cap` (fire-and-forget)
 2. **Admin thêm sản phẩm** → `giaGoc` + `phanTramGiam` + sizes → Supabase, ảnh → Supabase Storage
-3. **Khách xem sản phẩm** → badge giảm giá, giá gạch ngang, chọn size (nếu có), quick-add từ hover
+3. **Khách xem sản phẩm** → badge giảm giá, giá gạch ngang, chọn size, quick-add từ hover
 4. **Fly-to-cart animation** → Parabolic motion từ vị trí click → icon giỏ hàng (framer-motion)
 5. **Giỏ hàng** → `giaHienThi` lưu tại thời điểm add-to-cart, tăng/giảm số lượng, xóa
-6. **Đặt hàng** → form floating label → nhập mã giảm giá (kiểm tra `/api/ma-giam-gia/kiem-tra`) → submit
+6. **Đặt hàng** → form floating label → nhập mã giảm giá → submit
 7. **Backend xử lý đơn** (fire-and-forget):
    - Lưu đơn hàng vào Supabase
    - Increment `da_dung` trên `ma_giam_gia`
-   - Decrement tồn kho qua RPC (`decrement_so_luong` hoặc `decrement_size_so_luong`)
+   - Decrement tồn kho qua RPC
    - Upsert `khach_hang` qua RPC `upsert_khach_hang`
    - Gửi thông báo Telegram
    - Append vào Google Sheets
@@ -415,9 +464,11 @@ colors: {
 | `/api/ma-giam-gia/kiem-tra` | POST | None (public) | `ma_giam_gia` |
 | `/api/trang-thai-kh` | GET, POST | POST: admin password | `trang_thai_kh` |
 | `/api/trang-thai-kh/[id]` | DELETE | admin password | `trang_thai_kh`, `khach_hang` |
+| `/api/trang-thai-dh` | GET, PUT, POST, DELETE | PUT/POST/DELETE: admin password | `trang_thai_don_hang` |
 | `/api/nhan-vien` | GET, POST | **Admin only** | `nhan_vien` |
 | `/api/nhan-vien/[id]` | PUT, DELETE | **Admin only** | `nhan_vien` |
-| `/api/thong-ke` | GET | `dashboard` access | `don_hang`, `san_pham`, `luot_truy_cap`, `danh_muc` |
+| `/api/thong-ke` | GET | `dashboard` access | `don_hang`, `san_pham`, `luot_truy_cap`, `danh_muc`, `nhan_vien`, `khach_hang` |
+| `/api/thong-bao` | GET, PUT | `dashboard` access | `thong_bao` |
 | `/api/tracking` | POST | None (public) | `luot_truy_cap` |
 | `/api/upload` | POST | `san-pham` access | Supabase Storage |
 | `/api/generate-mo-ta` | POST | `san-pham` access | None |
@@ -439,8 +490,6 @@ Tất cả list trong admin dùng cùng pattern:
 ```tsx
 const loadData = useCallback((p, ...filters) => { /* fetch với range */ }, []); // deps rỗng
 useEffect(() => { loadData(page, ...filters); }, [page, ...filterStates, refreshKey]);
-// Handler chỉ setState, không gọi loadData trực tiếp
-// refreshKey++ để trigger reload sau delete/save
 ```
 
 ### Error handling
@@ -448,65 +497,80 @@ useEffect(() => { loadData(page, ...filters); }, [page, ...filterStates, refresh
 - Client: dùng `useToast()` → `showToast(message, 'error'|'success')` thay vì `alert()`
 - Google Sheets + Telegram: fire-and-forget, không block response
 - Tracking: luôn trả 200, không block
+- **API silent fail**: `/api/trang-thai-dh`, `/api/trang-thai-kh`, `/api/thong-bao` trả default data thay vì 500 khi bảng chưa tồn tại
 
 ### Security
 - Middleware bảo vệ `/admin/*` bằng cookie `admin-auth` OR `staff-token`
 - Routes POST/PUT/DELETE trong admin verify header `x-admin-password` hoặc staff token
-- Đăng nhập dùng `window.location.replace()` (hard navigation để middleware nhận cookie mới)
+- Đăng nhập dùng `window.location.replace()` (hard navigation)
 - Không expose API keys ra client component
 - Staff token: HMAC-SHA256 (Web Crypto), PBKDF2 password hashing, 24h expiry
 
 ### Notifications
-- `useToast()` — hook từ `ToastContext`, available trong toàn bộ admin (ToastProvider trong AdminNav)
-- `useOrderNotifications()` — hook Supabase Realtime + polling 60s, dùng trong AdminNav
+- `useToast()` — hook từ `ToastContext`, available tại root layout
+- `useOrderNotifications()` — hook Supabase Realtime (lắng nghe trực tiếp `don_hang` INSERT/UPDATE) + polling 60s
+- **Realtime ưu tiên**: Lắng nghe `don_hang` trực tiếp thay vì qua trigger `thong_bao` → nhận thông báo NGAY LẬP TỨC (~50-150ms)
+- **Bảng `thong_bao`**: Lưu lịch sử thông báo, trạng thái đã đọc, dùng cho sync polling
+
+### Loading States
+- `LoadingSpinner` component — SVG logo "TA" xoay 360°, 4 kích thước (sm/md/lg/full)
+- Login page: full-page spinner khi đang chờ authenticate
+- Dashboard: full-page spinner khi initial load, skeleton cho refresh
+- ProductGrid/ProductDetail: spinner section + label "Đang tải sản phẩm..."
+- Admin pages: spinner section + label "Đang tải..."
+- Button-level: spinner nhỏ inline cho các action (xóa, toggle, export)
+
+### Route Groups
+- `(shop)/` — Shop pages với Header + Footer (không có prefix URL)
+- `admin/` — Admin pages với AdminNav + ToastProvider + TrangThaiDHProvider
 
 ---
 
 ## Chức năng chính
 
 ### Shop (khách hàng)
-- **Hero**: Fullscreen banner với framer-motion text animations ("Nhẹ Nhàng. Thanh Lịch. Tự Do.")
+- **Hero**: Fullscreen banner với framer-motion text animations
 - **ProductGrid**: Tìm kiếm, filter danh mục, server-side pagination, chỉ hiện `con_hang=true`
 - **ProductCard**: Ảnh portrait 3:4, badge giảm giá, low-stock indicator, quick-add on hover
 - **Product Detail**: Sticky image, size selector (out-of-stock gạch chéo), qty control, "Thêm giỏ" + "Mua ngay"
 - **Giỏ hàng**: CartItem với image, size, qty control, remove, order summary
-- **Checkout**: Floating label form, coupon validation (real-time), order summary, fire-and-forget order placement
+- **Checkout**: Floating label form, coupon validation (real-time), order summary
 - **Fly-to-cart**: Parabolic animation từ vị trí click → giỏ hàng (framer-motion + flash effect)
-- **Tracking**: Ghi lượt truy cập mỗi page (fire-and-forget, skip /admin & /api)
+- **Tracking**: Ghi lượt truy cập mỗi page (fire-and-forget)
 
 ### Admin
 - **Dashboard**:
   - 4 KPI lớn: Doanh thu tháng, Đơn hôm nay, Lượt truy cập hôm nay, Sản phẩm đang bán
-  - 8 stat nhỏ: Doanh thu hôm nay/tháng trước/tăng trưởng/tổng, Đơn đang xử lý/mới/đã giao/huỷ
+  - 8 stat nhỏ: Doanh thu hôm nay/tháng trước/tăng trưởng/tổng, Đơn mới/Chốt lên đơn/Đang xử lý/Huỷ
+  - **Đơn hàng theo trạng thái**: Progress bars 6 trạng thái với màu riêng
+  - **Đơn hàng theo nhân viên**: Avatar + progress bar + số đơn + doanh thu mỗi người
+  - **Khách hàng & Doanh thu từ KH**: Tổng KH, tổng doanh thu, top 5 KH theo doanh thu
+  - **Nhân viên & Chi phí lương**: Tổng NV, tổng lương chi trả, tỉ lệ hoạt động, lợi nhuận ước tính
   - 2 BarChart (recharts): Lượt truy cập 7 ngày + Đơn hàng 7 ngày
   - Top sản phẩm bán chạy + Top danh mục bán chạy
   - Tổng quan kho hàng (progress bars)
   - Auto-refresh mỗi 60s
 
-- **Sản phẩm**: CRUD, upload ảnh, quick-pick sizes (XS-XXL, 36-42), generate mô tả AI, filter (search, DM, tồn kho, con_hang), server-side pagination, StockBadge (4 levels)
-- **Đơn hàng**: Filter đa chiều (status, tên, SĐT, date range), bulk select + bulk status change, export Excel từ template (auto chuyển "Đã lên đơn"), OrderDetailModal
-- **Khách hàng**: CRM tự động từ đơn hàng, filter trạng thái, modal chi tiết (edit trạng thái/ghi chú, lịch sử đơn)
-- **Mã giảm giá**: CRUD, toggle on/off, generate code ngẫu nhiên, kiểm tra hết hạn/hết lượt, loại % hoặc số tiền
-- **Nhân viên**: CRUD, phân quyền (checkbox ALL_QUYEN), password hash (bcrypt), active/inactive toggle
-- **Cài đặt**: Logo upload, thông tin shop (tên, SĐT, địa chỉ, email), quản lý trạng thái KH tùy chỉnh (tên + màu)
-- **Bell notification**: Supabase Realtime INSERT + polling 60s, badge đếm đơn mới chưa đọc, dropdown chi tiết, click → OrderDetailModal
+- **Sản phẩm**: CRUD, upload ảnh, quick-pick sizes (XS-XXL, 36-42), generate mô tả AI, filter, server-side pagination
+- **Đơn hàng**: Filter đa chiều, bulk select + bulk status, export Excel từ template
+- **Khách hàng**: CRM tự động từ đơn hàng, filter trạng thái, modal chi tiết + lịch sử đơn
+- **Mã giảm giá**: CRUD, toggle on/off, generate code ngẫu nhiên
+- **Nhân viên**: CRUD, phân quyền, **lương** (VNĐ/tháng), password hash, active toggle
+- **Cài đặt**: **2-column layout** — trái=thông tin shop (logo+tên+SĐT+địa chỉ+email), phải=trạng thái đơn hàng (grid 3 cột, đổi màu)+trạng thái khách hàng (pills)
+- **Bell notification**: Redesigned — bell icon đẹp hơn với shake animation, dropdown phân loại màu theo trạng thái, hiển thị chi tiết:
+  - 📦 Đơn mới: nền xanh nhạt, tên KH, mã đơn, tổng tiền
+  - 🔄 Chuyển trạng thái: nền màu theo trạng thái, badge cũ→mới, tên nhân viên xử lý
+  - Realtime từ `don_hang` INSERT/UPDATE → nhận thông báo NGAY LẬP TỨC
 
 ---
 
-## Lưu ý quan trọng
+## Migration Checklist (cần chạy trên Supabase)
 
-1. **Supabase Storage**: buckets phải set public policy để ảnh hiển thị không cần auth
-2. **GOOGLE_PRIVATE_KEY**: Khi paste vào Vercel env giữ nguyên `\n`
-3. **Google Sheets** chỉ là sao lưu — không dùng làm database chính
-4. **giaHienThi** tính và lưu vào CartItem tại thời điểm add-to-cart, không tính lại khi đặt
-5. **Admin auth**: Cookie httpOnly 24h + localStorage cho header `x-admin-password`
-6. **stone color scale** đã được customize — không dùng Tailwind mặc định
-7. **Hero image**: `/public/hero.jpg` — ảnh tĩnh local
-8. **Sizes**: JSONB `[{ten, so_luong}]` — empty array nếu không quản lý theo size, total so_luong = sum của sizes
-9. **Excel export**: Dùng template `template/ExcelTemplateVi.xlsx`, copy formatting từ header row
-10. **AI models**: `stepfun/step-3.5-flash:free` (generateMoTa) và `qwen/qwen3.6-plus:free` (ai.ts)
-11. **Staff token**: HMAC-SHA256 với Web Crypto, PBKDF2 hashing — hoạt động trên Edge runtime
-12. **predev/prebuild**: Tự động xóa `.next` folder trước khi dev/build
+1. **`007_luong_nhan_vien.sql`** — Thêm cột `luong` vào `nhan_vien`
+2. **`008_thong_bao.sql`** — Tạo bảng `thong_bao` + triggers auto notification
+3. **`009_trang_thai_don_hang.sql`** — Tạo bảng `trang_thai_don_hang` + seed 6 trạng thái
+
+**Bật Realtime cho bảng `don_hang`**: Database → Replication → bật toggle Realtime (INSERT + UPDATE)
 
 ---
 
@@ -535,3 +599,23 @@ useEffect(() => { loadData(page, ...filters); }, [page, ...filterStates, refresh
 | `postcss` | ^8 |
 | `@types/node` | ^20 |
 | `@types/react` / `@types/react-dom` | ^18 |
+
+---
+
+## Ghi chú quan trọng
+
+1. **Supabase Storage**: buckets phải set public policy để ảnh hiển thị không cần auth
+2. **GOOGLE_PRIVATE_KEY**: Khi paste vào Vercel env giữ nguyên `\n`
+3. **Google Sheets** chỉ là sao lưu — không dùng làm database chính
+4. **giaHienThi** tính và lưu vào CartItem tại thời điểm add-to-cart, không tính lại khi đặt
+5. **Admin auth**: Cookie httpOnly 24h + localStorage cho header `x-admin-password`
+6. **stone color scale** đã được customize — không dùng Tailwind mặc định
+7. **Hero image**: `/public/hero.jpg` — ảnh tĩnh local
+8. **Sizes**: JSONB `[{ten, so_luong}]` — empty array nếu không quản lý theo size
+9. **Excel export**: Dùng template `template/ExcelTemplateVi.xlsx`, copy formatting từ header row
+10. **AI models**: `stepfun/step-3.5-flash:free` (generateMoTa) và `qwen/qwen3.6-plus:free` (ai.ts)
+11. **Staff token**: HMAC-SHA256 với Web Crypto, PBKDF2 hashing
+12. **predev/prebuild**: Tự động xóa `.next` folder trước khi dev/build
+13. **Notification realtime**: Lắng nghe trực tiếp `don_hang` INSERT/UPDATE → không chờ trigger `thong_bao` → nhận thông báo trong ~50-150ms
+14. **ToastProvider** đã chuyển từ AdminNav lên root layout → có thể dùng ở mọi nơi
+15. **API silent fail**: Các API có bảng mới (`thong_bao`, `trang_thai_don_hang`, `trang_thai_kh`) trả default data thay vì 500 khi bảng chưa tồn tại

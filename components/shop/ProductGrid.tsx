@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import type { SanPham, DanhMuc } from "@/types";
 import ProductCard from "./ProductCard";
 import PaginationShop from "./PaginationShop";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const LIMIT = 12;
 
@@ -114,7 +115,7 @@ export default function ProductGrid() {
 
       {loading ? (
         <div className="flex justify-center py-24">
-          <div className="w-8 h-8 border border-espresso border-t-transparent rounded-full animate-spin" />
+          <LoadingSpinner size="lg" label="Đang tải sản phẩm..." />
         </div>
       ) : products.length === 0 ? (
         <div className="text-center py-24 px-4">

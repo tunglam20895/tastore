@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import type { SanPham, DanhMuc } from "@/types";
 import ProductForm from "@/components/admin/ProductForm";
 import Pagination from "@/components/admin/Pagination";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { useToast } from "@/contexts/ToastContext";
 
 const LIMIT_DEFAULT = 20;
@@ -22,6 +24,7 @@ export default function AdminProductsPage() {
   const [creating, setCreating] = useState(false);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; ten: string } | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -36,7 +39,7 @@ export default function AdminProductsPage() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
-  const { showToast } = useToast();
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     fetch("/api/danh-muc").then((r) => r.json()).then((d) => { if (d.success) setCategories(d.data); }).catch(() => {});
@@ -80,21 +83,26 @@ export default function AdminProductsPage() {
     setPage(1);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Bạn chắc chắn muốn xóa sản phẩm này?")) return;
-    setDeletingId(id);
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    setDeletingId(confirmDelete.id);
     try {
-      const res = await fetch(`/api/san-pham/${id}`, {
+      const res = await fetch(`/api/san-pham/${confirmDelete.id}`, {
         method: "DELETE",
         headers: { "x-admin-password": adminPassword || "" },
       });
       const data = await res.json();
-      if (data.success) setRefreshKey((k) => k + 1);
-      else showToast(data.error || "Không thể xóa sản phẩm");
+      if (data.success) {
+        showSuccess(`Đã xóa sản phẩm "${confirmDelete.ten}"`);
+        setRefreshKey((k) => k + 1);
+      } else {
+        showError(data.error || "Không thể xóa sản phẩm");
+      }
     } catch {
-      showToast("Không thể xóa sản phẩm");
+      showError("Không thể xóa sản phẩm");
     } finally {
       setDeletingId(null);
+      setConfirmDelete(null);
     }
   };
 
@@ -183,7 +191,7 @@ export default function AdminProductsPage() {
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <div className="w-6 h-6 border border-espresso border-t-transparent rounded-full animate-spin" />
+          <LoadingSpinner size="md" label="Đang tải..." />
         </div>
       ) : (
         <div className="bg-white border border-stone-300 rounded-xl shadow-md overflow-x-auto">
@@ -252,7 +260,7 @@ export default function AdminProductsPage() {
                       Sửa
                     </button>
                     <button
-                      onClick={() => handleDelete(p.id)}
+                      onClick={() => setConfirmDelete({ id: p.id, ten: p.ten })}
                       disabled={deletingId === p.id}
                       className="text-xs uppercase tracking-widest text-stone-300 hover:text-rose transition-colors disabled:opacity-50"
                     >
@@ -270,6 +278,15 @@ export default function AdminProductsPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={handleDelete}
+        title="Xóa sản phẩm?"
+        message={`Bạn có chắc chắn muốn xóa "${confirmDelete?.ten}"? Hành động này không thể hoàn tác.`}
+        confirmText="Xóa"
+        isDanger
+      />
     </div>
   );
 }

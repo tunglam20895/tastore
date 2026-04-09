@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import type { NhanVien } from "@/types";
 import { ALL_QUYEN } from "@/types";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { useToast } from "@/contexts/ToastContext";
 
 const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : "";
@@ -14,10 +16,11 @@ type FormState = {
   password: string;
   quyen: string[];
   conHoatDong: boolean;
+  luong: number;
 };
 
 const emptyForm = (): FormState => ({
-  ten: "", username: "", password: "", quyen: [], conHoatDong: true,
+  ten: "", username: "", password: "", quyen: [], conHoatDong: true, luong: 0,
 });
 
 export default function AdminNhanVienPage() {
@@ -28,7 +31,8 @@ export default function AdminNhanVienPage() {
   const [form, setForm] = useState<FormState>(emptyForm());
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const { showToast } = useToast();
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; ten: string } | null>(null);
+  const { showSuccess, showError } = useToast();
 
   const load = useCallback(() => {
     setLoading(true);
@@ -48,20 +52,20 @@ export default function AdminNhanVienPage() {
   };
 
   const openEdit = (nv: NhanVien) => {
-    setForm({ ten: nv.ten, username: nv.username, password: "", quyen: nv.quyen, conHoatDong: nv.conHoatDong });
+    setForm({ ten: nv.ten, username: nv.username, password: "", quyen: nv.quyen, conHoatDong: nv.conHoatDong, luong: nv.luong ?? 0 });
     setEditing(nv);
     setCreating(false);
   };
 
   const handleSave = async () => {
     if (!form.ten.trim() || !form.username.trim()) {
-      showToast("Vui lòng nhập tên và tên đăng nhập"); return;
+      showError("Vui lòng nhập tên và tên đăng nhập"); return;
     }
     if (creating && form.password.length < 6) {
-      showToast("Mật khẩu tối thiểu 6 ký tự"); return;
+      showError("Mật khẩu tối thiểu 6 ký tự"); return;
     }
     if (!creating && form.password && form.password.length < 6) {
-      showToast("Mật khẩu mới tối thiểu 6 ký tự"); return;
+      showError("Mật khẩu mới tối thiểu 6 ký tự"); return;
     }
 
     setSaving(true);
@@ -73,6 +77,7 @@ export default function AdminNhanVienPage() {
         username: form.username.trim(),
         quyen: form.quyen,
         conHoatDong: form.conHoatDong,
+        luong: form.luong,
       };
       if (creating || form.password) body.password = form.password;
 
@@ -81,24 +86,29 @@ export default function AdminNhanVienPage() {
       if (d.success) {
         setCreating(false); setEditing(null);
         load();
-        showToast(creating ? "Tạo nhân viên thành công" : "Cập nhật thành công", "success");
+        showSuccess(creating ? "Tạo nhân viên thành công!" : "Cập nhật nhân viên thành công!");
       } else {
-        showToast(d.error || "Lưu thất bại");
+        showError(d.error || "Lưu thất bại");
       }
-    } catch { showToast("Không thể lưu"); }
+    } catch { showError("Không thể lưu"); }
     setSaving(false);
   };
 
-  const handleDelete = async (nv: NhanVien) => {
-    if (!confirm(`Xóa nhân viên "${nv.ten}"?`)) return;
-    setDeletingId(nv.id);
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    setDeletingId(confirmDelete.id);
     try {
-      const res = await fetch(`/api/nhan-vien/${nv.id}`, { method: "DELETE", headers: headers() });
+      const res = await fetch(`/api/nhan-vien/${confirmDelete.id}`, { method: "DELETE", headers: headers() });
       const d = await res.json();
-      if (d.success) { load(); showToast("Đã xóa nhân viên", "success"); }
-      else showToast(d.error || "Xóa thất bại");
-    } catch { showToast("Không thể xóa"); }
+      if (d.success) {
+        load();
+        showSuccess(`Đã xóa nhân viên "${confirmDelete.ten}"`);
+      } else {
+        showError(d.error || "Xóa thất bại");
+      }
+    } catch { showError("Không thể xóa"); }
     setDeletingId(null);
+    setConfirmDelete(null);
   };
 
   const toggleQuyen = (q: string) => {
@@ -115,7 +125,9 @@ export default function AdminNhanVienPage() {
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6 sm:mb-8">
         <div>
           <h1 className="font-heading text-xl sm:text-2xl font-light text-espresso">Nhân viên</h1>
-          <p className="text-xs text-stone-400 mt-1">{list.length} tài khoản</p>
+          <p className="text-xs text-stone-400 mt-1">
+            {list.length} tài khoản · Tổng lương: {list.reduce((s, nv) => s + (nv.luong ?? 0), 0).toLocaleString("vi-VN")}đ/tháng
+          </p>
         </div>
         {!isFormOpen && (
           <button onClick={openCreate}
@@ -150,6 +162,17 @@ export default function AdminNhanVienPage() {
               </label>
               <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })}
                 className="admin-input" placeholder="Tối thiểu 6 ký tự" />
+            </div>
+            <div>
+              <label className="admin-label">Lương (VNĐ/tháng)</label>
+              <input
+                type="number"
+                value={form.luong}
+                onChange={(e) => setForm({ ...form, luong: Math.max(0, Number(e.target.value)) })}
+                className="admin-input"
+                placeholder="10000000"
+                min={0}
+              />
             </div>
             {!!editing && (
               <div className="flex items-center gap-3 pt-6">
@@ -206,7 +229,7 @@ export default function AdminNhanVienPage() {
       {/* Danh sách */}
       {loading ? (
         <div className="flex justify-center py-16">
-          <div className="w-6 h-6 border border-espresso border-t-transparent rounded-full animate-spin" />
+          <LoadingSpinner size="md" label="Đang tải..." />
         </div>
       ) : list.length === 0 ? (
         <div className="text-center py-12 sm:py-16 text-stone-400 text-sm">Chưa có nhân viên nào</div>
@@ -217,6 +240,7 @@ export default function AdminNhanVienPage() {
               <tr className="border-b border-stone-100 text-xs uppercase tracking-widest text-stone-400">
                 <th className="text-left py-3 px-4">Tên</th>
                 <th className="text-left py-3 px-4">Đăng nhập</th>
+                <th className="text-left py-3 px-4">Lương</th>
                 <th className="text-left py-3 px-4">Chức năng</th>
                 <th className="text-left py-3 px-4">Trạng thái</th>
                 <th className="py-3 px-4"></th>
@@ -227,6 +251,7 @@ export default function AdminNhanVienPage() {
                 <tr key={nv.id} className="border-b border-stone-50 hover:bg-cream/40 transition-colors">
                   <td className="py-3 px-4 font-medium text-espresso">{nv.ten}</td>
                   <td className="py-3 px-4 font-mono text-xs text-stone-500">{nv.username}</td>
+                  <td className="py-3 px-4 text-sm tabular-nums text-espresso">{(nv.luong ?? 0).toLocaleString("vi-VN")}đ</td>
                   <td className="py-3 px-4">
                     <div className="flex flex-wrap gap-1">
                       {nv.quyen.length === 0 ? (
@@ -251,7 +276,7 @@ export default function AdminNhanVienPage() {
                       className="text-xs uppercase tracking-widest text-stone-400 hover:text-espresso transition-colors mr-4">
                       Sửa
                     </button>
-                    <button onClick={() => handleDelete(nv)}
+                    <button onClick={() => setConfirmDelete({ id: nv.id, ten: nv.ten })}
                       disabled={deletingId === nv.id}
                       className="text-xs uppercase tracking-widest text-stone-300 hover:text-rose transition-colors disabled:opacity-50">
                       {deletingId === nv.id ? (
@@ -265,6 +290,15 @@ export default function AdminNhanVienPage() {
           </table>
         </div>
       )}
+      <ConfirmDialog
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={handleDelete}
+        title="Xóa nhân viên?"
+        message={`Bạn có chắc chắn muốn xóa nhân viên "${confirmDelete?.ten}"? Hành động này không thể hoàn tác.`}
+        confirmText="Xóa"
+        isDanger
+      />
     </div>
   );
 }

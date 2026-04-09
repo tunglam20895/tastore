@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { DonHang } from "@/types";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { useToast } from "@/contexts/ToastContext";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -33,7 +34,7 @@ export default function OrderDetailModal({ orderId, onClose, onStatusChange }: P
   const [order, setOrder] = useState<DonHang | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const { showToast } = useToast();
+  const { showSuccess, showError } = useToast();
 
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : "";
 
@@ -59,13 +60,14 @@ export default function OrderDetailModal({ orderId, onClose, onStatusChange }: P
       });
       const d = await res.json();
       if (d.success) {
+        showSuccess("Cập nhật trạng thái đơn hàng thành công!");
         setOrder((o) => o ? { ...o, trangThai: status as DonHang["trangThai"] } : o);
         onStatusChange?.();
       } else {
-        showToast(d.error || "Cập nhật thất bại");
+        showError(d.error || "Cập nhật thất bại");
       }
     } catch {
-      showToast("Không thể cập nhật trạng thái");
+      showError("Không thể cập nhật trạng thái");
     }
     setUpdating(false);
   };
@@ -94,7 +96,7 @@ export default function OrderDetailModal({ orderId, onClose, onStatusChange }: P
 
         {loading ? (
           <div className="flex justify-center py-16">
-            <div className="w-6 h-6 border border-espresso border-t-transparent rounded-full animate-spin" />
+            <LoadingSpinner size="md" label="Đang tải..." />
           </div>
         ) : !order ? (
           <div className="py-16 text-center text-stone-400 text-sm">Không tìm thấy đơn hàng</div>

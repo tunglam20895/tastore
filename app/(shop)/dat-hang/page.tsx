@@ -138,9 +138,14 @@ export default function CheckoutPage() {
                   <button
                     onClick={handleApplyCoupon}
                     disabled={couponLoading || !couponCode.trim()}
-                    className="text-xs uppercase tracking-widest text-espresso border border-espresso/30 px-4 py-2 hover:bg-espresso hover:text-cream transition-all disabled:opacity-40 sm:py-1.5"
+                    className="text-xs uppercase tracking-widest text-espresso border border-espresso/30 px-4 py-2 hover:bg-espresso hover:text-cream transition-all disabled:opacity-40 sm:py-1.5 flex items-center gap-1.5"
                   >
-                    {couponLoading ? "..." : "Áp Dụng"}
+                    {couponLoading ? (
+                      <>
+                        <span className="inline-block w-3 h-3 border border-espresso border-t-transparent rounded-full animate-spin" />
+                        Đang kiểm tra
+                      </>
+                    ) : "Áp Dụng"}
                   </button>
                 </div>
               )}

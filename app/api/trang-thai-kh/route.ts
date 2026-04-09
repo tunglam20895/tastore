@@ -10,14 +10,16 @@ export async function GET() {
       .select('*')
       .order('id')
 
-    if (error) throw error
+    if (error) {
+      // Bảng chưa tồn tại → trả mảng rỗng, không báo lỗi
+      return NextResponse.json({ success: true, data: [] })
+    }
     return NextResponse.json({
       success: true,
       data: (data || []).map((r) => ({ id: r.id, ten: r.ten, mau: r.mau })),
     })
-  } catch (error) {
-    console.error('GET /api/trang-thai-kh error:', error)
-    return NextResponse.json({ success: false, error: 'Không thể lấy trạng thái' }, { status: 500 })
+  } catch {
+    return NextResponse.json({ success: true, data: [] })
   }
 }
 

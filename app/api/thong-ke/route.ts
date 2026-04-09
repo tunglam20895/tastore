@@ -50,20 +50,22 @@ export async function GET(request: NextRequest) {
       trackingThang,
       trackingTotal,
       trackingTheoNgay,
+      khachHangRes,
+      nhanVienRes,
     ] = await Promise.all([
       // Tất cả đơn hàng (để tính tổng + bán chạy + danh mục)
-      supabase.from('don_hang').select('tong_tien, trang_thai, san_pham, thoi_gian'),
+      supabase.from('don_hang').select('tong_tien, trang_thai, san_pham, thoi_gian, nguoi_xu_ly'),
       // Đơn hôm nay
-      supabase.from('don_hang').select('tong_tien, trang_thai')
+      supabase.from('don_hang').select('tong_tien, trang_thai, nguoi_xu_ly')
         .gte('thoi_gian', todayStart).lte('thoi_gian', todayEnd),
       // Đơn tháng này
-      supabase.from('don_hang').select('tong_tien, trang_thai')
+      supabase.from('don_hang').select('tong_tien, trang_thai, nguoi_xu_ly')
         .gte('thoi_gian', monthStart),
       // Đơn tháng trước
-      supabase.from('don_hang').select('tong_tien, trang_thai')
+      supabase.from('don_hang').select('tong_tien, trang_thai, nguoi_xu_ly')
         .gte('thoi_gian', prevMonthStart).lte('thoi_gian', prevMonthEnd),
       // Đơn hàng 7 ngày (group JS-side)
-      supabase.from('don_hang').select('thoi_gian, trang_thai')
+      supabase.from('don_hang').select('thoi_gian, trang_thai, nguoi_xu_ly')
         .gte('thoi_gian', sevenDaysAgo.toISOString()),
       // SP đang bán
       supabase.from('san_pham').select('id', { count: 'exact', head: true }).eq('con_hang', true),
@@ -80,6 +82,10 @@ export async function GET(request: NextRequest) {
       // Tracking 7 ngày theo ngày (lấy raw rồi group JS-side)
       supabase.from('luot_truy_cap').select('thoi_gian')
         .gte('thoi_gian', sevenDaysAgo.toISOString()),
+      // Khách hàng
+      supabase.from('khach_hang').select('sdt, ten, tong_don, tong_doanh_thu'),
+      // Nhân viên (bao gồm lương)
+      supabase.from('nhan_vien').select('id, ten, luong, con_hoat_dong'),
     ])
 
     // --- Doanh thu ---
@@ -107,6 +113,8 @@ export async function GET(request: NextRequest) {
     const donHomNay = todayOrders.length
     const trangThaiCount = (orders: typeof allOrders) => ({
       moiChua: orders.filter(o => o.trang_thai === 'Mới').length,
+      choTotLenDon: orders.filter(o => o.trang_thai === 'Chốt để lên đơn').length,
+      daLenDon: orders.filter(o => o.trang_thai === 'Đã lên đơn').length,
       dangXuLy: orders.filter(o => o.trang_thai === 'Đang xử lý').length,
       daGiao: orders.filter(o => o.trang_thai === 'Đã giao').length,
       huy: orders.filter(o => o.trang_thai === 'Huỷ').length,
@@ -114,6 +122,37 @@ export async function GET(request: NextRequest) {
     const ttAll = trangThaiCount(allOrders)
     const tiLeHuy = allOrders.length === 0 ? 0
       : Math.round((ttAll.huy / allOrders.length) * 100)
+
+    // --- Đơn hàng theo nhân viên xử lý ---
+    const donTheoNhanVien: Record<string, { ten: string; soDon: number; doanhThu: number }> = {}
+    for (const order of notCancelled) {
+      const nv = (order.nguoi_xu_ly as string) || 'Chưa có'
+      if (!donTheoNhanVien[nv]) donTheoNhanVien[nv] = { ten: nv, soDon: 0, doanhThu: 0 }
+      donTheoNhanVien[nv].soDon += 1
+      donTheoNhanVien[nv].doanhThu += Number(order.tong_tien)
+    }
+    const donTheoNVArr = Object.values(donTheoNhanVien)
+      .sort((a, b) => b.soDon - a.soDon)
+
+    // --- Khách hàng ---
+    const khachHangData = khachHangRes.data || []
+    const tongKhachHang = khachHangData.length
+    const tongDoanhThuKH = khachHangData.reduce((s, kh) => s + Number(kh.tong_doanh_thu), 0)
+    const topKhachHang = [...khachHangData]
+      .sort((a, b) => Number(b.tong_doanh_thu) - Number(a.tong_doanh_thu))
+      .slice(0, 5)
+      .map(kh => ({
+        ten: kh.ten,
+        sdt: kh.sdt,
+        tongDon: Number(kh.tong_don),
+        tongDoanhThu: Number(kh.tong_doanh_thu),
+      }))
+
+    // --- Nhân viên & Tổng lương ---
+    const nhanVienData = nhanVienRes.data || []
+    const tongNhanVien = nhanVienData.length
+    const tongLuongChiTra = nhanVienData.reduce((s, nv) => s + Number(nv.luong ?? 0), 0)
+    const nhanVienConHoatDong = nhanVienData.filter(nv => nv.con_hoat_dong).length
 
     // --- Sản phẩm bán chạy (top 5) ---
     const sanPhamCount: Record<string, { ten: string; soLuong: number }> = {}
@@ -130,24 +169,10 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.soLuong - a.soLuong)
       .slice(0, 5)
 
-    // --- Danh mục bán chạy (top 3, group by danh_muc trong san_pham JSONB) ---
-    const danhMucCount: Record<string, number> = {}
-    for (const order of allOrders) {
-      if (order.trang_thai === 'Huỷ') continue
-      const items = order.san_pham as Array<{ id: string }> || []
-      for (const item of items) {
-        // Tên danh mục không có trong đơn hàng, chỉ có id sản phẩm
-        // Bỏ qua hoặc dùng id sản phẩm làm group
-        const key = item.id?.split('_')[0] || 'unknown'
-        danhMucCount[key] = (danhMucCount[key] || 0) + 1
-      }
-    }
-
-    // Query riêng tên danh mục từ bảng danh_muc
+    // --- Danh mục bán chạy (top 3) ---
     const { data: danhMucData } = await supabase.from('danh_muc').select('id, ten_danh_muc')
     const { data: spData } = await supabase.from('san_pham').select('id, danh_muc')
 
-    // Map productId → danhMucId → tenDanhMuc
     const spToDm: Record<string, string> = {}
     for (const sp of spData || []) {
       spToDm[sp.id as string] = sp.danh_muc as string
@@ -213,10 +238,23 @@ export async function GET(request: NextRequest) {
           tongCong: allOrders.length,
           homNay: donHomNay,
           moiChua: ttAll.moiChua,
+          choTotLenDon: ttAll.choTotLenDon,
+          daLenDon: ttAll.daLenDon,
           dangXuLy: ttAll.dangXuLy,
           daGiao: ttAll.daGiao,
           huy: ttAll.huy,
           tiLeHuy,
+        },
+        donTheoNhanVien: donTheoNVArr,
+        khachHang: {
+          tongSo: tongKhachHang,
+          tongDoanhThu: tongDoanhThuKH,
+          topKhachHang,
+        },
+        nhanVien: {
+          tongSo: tongNhanVien,
+          conHoatDong: nhanVienConHoatDong,
+          tongLuongChiTra,
         },
         sanPham: {
           dangBan: sanPhamDangBan.count ?? 0,

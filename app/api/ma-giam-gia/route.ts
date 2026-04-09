@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from('ma_giam_gia')
       .insert({
+        id: crypto.randomUUID(),
         ma: (body.ma as string).toUpperCase().trim(),
         loai: body.loai,
         gia_tri: Number(body.giaTri),

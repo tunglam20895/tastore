@@ -1,16 +1,11 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useSettings } from "@/contexts/SettingsContext";
 
 export default function Footer() {
-  const pathname = usePathname();
   const { settings } = useSettings();
-
-  if (pathname.startsWith("/admin")) return null;
-
-  const tenShop = settings?.tenShop || "TRANH ANH STORE";
+  const tenShop = settings?.tenShop || "TRANG ANH STORE";
 
   return (
     <footer className="bg-espresso text-cream">

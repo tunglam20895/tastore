@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import type { KhachHang, TrangThaiKH, DonHang } from "@/types";
 import Pagination from "@/components/admin/Pagination";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { useToast } from "@/contexts/ToastContext";
 
 const LIMIT_DEFAULT = 20;
@@ -34,7 +35,7 @@ export default function AdminKhachHangPage() {
   const [editGhiChu, setEditGhiChu] = useState("");
   const [editTrangThai, setEditTrangThai] = useState("");
   const [saving, setSaving] = useState(false);
-  const { showToast } = useToast();
+  const { showSuccess, showError } = useToast();
 
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : "";
 
@@ -105,9 +106,9 @@ export default function AdminKhachHangPage() {
         setSelectedKH(null);
         loadCustomers(page, filterTT, search);
       } else {
-        showToast(d.error || "Lưu thất bại");
+        showSuccess("Cập nhật thông tin khách hàng thành công!");
       }
-    } catch { showToast("Không thể lưu"); }
+    } catch { showError("Không thể lưu thông tin khách hàng"); }
     setSaving(false);
   };
 
@@ -166,7 +167,7 @@ export default function AdminKhachHangPage() {
       {/* Table */}
       {loading ? (
         <div className="flex justify-center py-16">
-          <div className="w-6 h-6 border border-espresso border-t-transparent rounded-full animate-spin" />
+          <LoadingSpinner size="md" label="Đang tải..." />
         </div>
       ) : (
         <div className="bg-white border border-stone-100 overflow-x-auto">

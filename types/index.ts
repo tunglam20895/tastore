@@ -107,6 +107,7 @@ export type NhanVien = {
   username: string
   quyen: string[]
   conHoatDong: boolean
+  luong: number
   createdAt: string
   updatedAt: string
 }

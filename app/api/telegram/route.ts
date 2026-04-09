@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
       // Simple bot responses
       if (text === "/start") {
-        await sendTelegramMessage(chatId, "🎨 Chào mừng đến TRANH ANH STORE!\nBạn cần hỗ trợ gì?");
+        await sendTelegramMessage(chatId, "🎨 Chào mừng đến TRANG ANH STORE!\nBạn cần hỗ trợ gì?");
       } else if (text === "/help") {
         await sendTelegramMessage(chatId, "Các lệnh:\n/start - Bắt đầu\n/help - Trợ giúp");
       }
