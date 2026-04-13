@@ -4,24 +4,20 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9808f6dd-980e-420b-b86b-d604628d875d" name="Changes" comment="update nhân viên">
+    <list default="true" id="9808f6dd-980e-420b-b86b-d604628d875d" name="Changes" comment="update chức năng 0904">
       <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/.env.example" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CLAUDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/CLAUDE.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/admin/dashboard/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/dashboard/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/admin/don-hang/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/don-hang/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/don-hang/[id]/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/don-hang/[id]/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/don-hang/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/don-hang/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/dat-hang/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/dat-hang/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/gio-hang/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/gio-hang/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/san-pham/[id]/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/san-pham/[id]/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/admin/OrderDetailModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/admin/OrderDetailModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/admin/OrderTable.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/admin/OrderTable.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/layout/Header.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/layout/Header.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/shop/ProductCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/shop/ProductCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/supabase/migrations/001_init.sql" beforeDir="false" afterPath="$PROJECT_DIR$/supabase/migrations/001_init.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/types/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/types/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/admin/khach-hang/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/khach-hang/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/admin/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/admin/san-pham/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/san-pham/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/ai.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/ai.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/gemini.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/gemini.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/openrouter.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/openrouter.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -31,16 +27,16 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "history": [
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;history&quot;: [
     {
-      "assignee": "tunglam20895"
+      &quot;assignee&quot;: &quot;tunglam20895&quot;
     }
   ],
-  "lastFilter": {
-    "assignee": "tunglam20895"
+  &quot;lastFilter&quot;: {
+    &quot;assignee&quot;: &quot;tunglam20895&quot;
   }
-}]]></component>
+}</component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/tunglam20895/tastore.git&quot;,
@@ -67,6 +63,7 @@
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;js.debugger.nextJs.config.created.client&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
@@ -75,6 +72,7 @@
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;npm.build.executor&quot;: &quot;Run&quot;,
     &quot;npm.dev.executor&quot;: &quot;Run&quot;,
+    &quot;npm.start.executor&quot;: &quot;Run&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;,
     &quot;ts.external.directory.path&quot;: &quot;G:\\TA_STORE\\node_modules\\typescript\\lib&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
@@ -109,10 +107,21 @@
       <envs />
       <method v="2" />
     </configuration>
+    <configuration name="start" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/tranh-anh-admin-app/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="start" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
         <item itemvalue="npm.build" />
         <item itemvalue="npm.dev" />
+        <item itemvalue="npm.start" />
       </list>
     </recent_temporary>
   </component>
@@ -133,7 +142,11 @@
       <workItem from="1775467593549" duration="4299000" />
       <workItem from="1775525809036" duration="73000" />
       <workItem from="1775525893096" duration="20022000" />
-      <workItem from="1775621492717" duration="20083000" />
+      <workItem from="1775621492717" duration="20309000" />
+      <workItem from="1775710747717" duration="16292000" />
+      <workItem from="1775784876565" duration="19994000" />
+      <workItem from="1776044558424" duration="9000000" />
+      <workItem from="1776063963315" duration="12563000" />
     </task>
     <task id="LOCAL-00001" summary="update">
       <option name="closed" value="true" />
@@ -191,7 +204,23 @@
       <option name="project" value="LOCAL" />
       <updated>1775630806217</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="update chức năng">
+      <option name="closed" value="true" />
+      <created>1775644866616</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1775644866616</updated>
+    </task>
+    <task id="LOCAL-00009" summary="update chức năng 0904">
+      <option name="closed" value="true" />
+      <created>1775730082834</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1775730082834</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -212,7 +241,9 @@
     <MESSAGE value="update" />
     <MESSAGE value="update dashboard" />
     <MESSAGE value="update nhân viên" />
-    <option name="LAST_COMMIT_MESSAGE" value="update nhân viên" />
+    <MESSAGE value="update chức năng" />
+    <MESSAGE value="update chức năng 0904" />
+    <option name="LAST_COMMIT_MESSAGE" value="update chức năng 0904" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

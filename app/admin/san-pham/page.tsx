@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useAdminChat } from "@/contexts/AdminChatContext";
 import type { SanPham, DanhMuc } from "@/types";
 import ProductForm from "@/components/admin/ProductForm";
 import Pagination from "@/components/admin/Pagination";
@@ -111,6 +112,46 @@ export default function AdminProductsPage() {
     setCreating(false);
     setRefreshKey((k) => k + 1);
   };
+
+  // ─── Push data to AdminChat context ────────────────────────────────────────
+  const { setScreenData } = useAdminChat();
+
+  useEffect(() => {
+    if (products.length > 0 && !loading && !creating && !editing) {
+      const filters: string[] = [];
+      if (search) filters.push(`Tìm kiếm: "${search}"`);
+      if (danhMuc) {
+        const dm = categories.find(c => c.id === danhMuc);
+        filters.push(`Danh mục: ${dm?.tenDanhMuc || danhMuc}`);
+      }
+      if (tonKho) {
+        const map: Record<string, string> = { it: 'Sắp hết (5-30)', trung_binh: 'Trung bình (30-100)', nhieu: 'Còn nhiều (>100)' };
+        filters.push(`Tồn kho: ${map[tonKho] || tonKho}`);
+      }
+      if (conHang) filters.push(conHang === 'true' ? 'Còn hàng' : 'Hết hàng');
+
+      const fmtNum = (n: number) => new Intl.NumberFormat('vi-VN').format(n);
+
+      setScreenData({
+        page: 'san-pham',
+        title: 'Quản lý sản phẩm',
+        summary: `Đang hiển thị ${products.length} sản phẩm (trang ${page}/${totalPages}). Tổng ${total} sản phẩm.`,
+        filters,
+        stats: { 'Tổng sản phẩm': total, 'Đang hiển thị': products.length },
+        items: products.map(p =>
+          `${p.ten} | Giá: ${fmtNum(p.giaHienThi)}đ${p.phanTramGiam ? ` (GIẢM ${p.phanTramGiam}%)` : ''} | Tồn: ${p.soLuong}${p.sizes?.length ? ` | Sizes: ${p.sizes.map(s => `${s.ten}(${s.soLuong})`).join(', ')}` : ''}`
+        ),
+      });
+    } else if (!loading && !creating && !editing && products.length === 0) {
+      setScreenData({
+        page: 'san-pham',
+        title: 'Quản lý sản phẩm',
+        summary: 'Chưa có sản phẩm nào.',
+        items: [],
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products, search, danhMuc, tonKho, conHang, page, totalPages, total, loading, creating, editing, categories]);
 
   if (creating || editing) {
     return (

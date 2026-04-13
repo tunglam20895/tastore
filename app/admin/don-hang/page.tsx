@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useAdminChat } from "@/contexts/AdminChatContext";
 import OrderTable from "@/components/admin/OrderTable";
 import Pagination from "@/components/admin/Pagination";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -176,6 +177,34 @@ export default function AdminOrdersPage() {
   };
 
   const hasFilters = trangThai || searchTen || searchSdt || tuNgay || denNgay;
+
+  // ─── Push data to AdminChat context ────────────────────────────────────────
+  const { setScreenData } = useAdminChat();
+
+  useEffect(() => {
+    if (!loading && orders.length >= 0) {
+      const filters: string[] = [];
+      if (trangThai) filters.push(`Trạng thái: ${trangThai}`);
+      if (searchTen) filters.push(`Tìm tên: "${searchTen}"`);
+      if (searchSdt) filters.push(`Tìm SĐT: "${searchSdt}"`);
+      if (tuNgay) filters.push(`Từ ngày: ${tuNgay}`);
+      if (denNgay) filters.push(`Đến ngày: ${denNgay}`);
+
+      const fmtNum = (n: number) => new Intl.NumberFormat('vi-VN').format(n);
+
+      setScreenData({
+        page: 'don-hang',
+        title: 'Quản lý đơn hàng',
+        summary: `Đang hiển thị ${orders.length} đơn (trang ${page}/${totalPages}). Tổng ${total} đơn.`,
+        filters,
+        stats: { 'Tổng đơn': total, 'Đang hiển thị': orders.length, 'Đã chọn': selectedIds.length },
+        items: orders.map(o =>
+          `[${o.trangThai}] ${o.tenKH} (${o.sdt}) | ${fmtNum(o.sanPham.length)} sp | ${o.tongTien.toLocaleString('vi-VN')}đ | NV: ${o.nguoiXuLy} | ${new Date(o.thoiGian).toLocaleDateString('vi-VN')}`
+        ),
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orders, trangThai, searchTen, searchSdt, tuNgay, denNgay, page, totalPages, total, loading, selectedIds]);
 
   return (
     <div>

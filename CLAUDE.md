@@ -2,7 +2,7 @@
 
 ## Tổng quan dự án
 Website bán hàng thời trang nữ cao cấp "TRANG ANH STORE".
-**Stack**: Next.js 14.2.35 (App Router) + **Supabase PostgreSQL** + **Supabase Storage** + Google Sheets (append-only) + Telegram Bot + OpenRouter AI (`stepfun/step-3.5-flash:free` / `qwen/qwen3.6-plus:free`).
+**Stack**: Next.js 14.2.35 (App Router) + **Supabase PostgreSQL** + **Supabase Storage** + Google Sheets (append-only) + Telegram Bot + **Qwen AI (DashScope)** (`qwen-plus`).
 **Deploy**: Vercel (free tier).
 
 ---
@@ -56,7 +56,7 @@ tranh-anh-store/
 │       ├── thong-bao/route.ts          # GET lịch sử thông báo, PUT đánh dấu đã đọc (dashboard access)
 │       ├── tracking/route.ts           # POST ghi lượt truy cập (fire-and-forget)
 │       ├── upload/route.ts             # POST upload ảnh → Supabase Storage
-│       ├── generate-mo-ta/route.ts     # POST generate mô tả AI (OpenRouter)
+│       ├── generate-mo-ta/route.ts     # POST generate mô tả AI (Qwen)
 │       ├── gemini/route.ts             # Deprecated — re-export từ generate-mo-ta
 │       └── telegram/route.ts           # POST webhook Telegram
 ├── components/
@@ -93,9 +93,9 @@ tranh-anh-store/
 │   ├── supabase-client.ts              # Browser client (anon key, dùng cho Realtime)
 │   ├── google-sheets.ts                # appendDonHangToSheet() — fire-and-forget
 │   ├── telegram.ts                     # sendOrderNotification() — với customer info
-│   ├── openrouter.ts                   # generateMoTa() — stepfun/step-3.5-flash:free
-│   ├── ai.ts                           # generateProductDescription() — qwen/qwen3.6-plus:free
-│   ├── gemini.ts                       # Deprecated — gọi OpenRouter thay vì Gemini
+│   ├── openrouter.ts                   # generateMoTa() — Qwen DashScope (qwen-plus)
+│   ├── ai.ts                           # generateProductDescription() — Qwen DashScope (qwen-plus)
+│   ├── gemini.ts                       # Deprecated — Qwen DashScope (qwen-plus)
 │   ├── cloudinary.ts                   # Legacy — không dùng chính
 │   ├── auth.ts                         # verifyAdminPassword() + verifyAccess() (admin OR staff token)
 │   └── staff-auth.ts                   # hashPassword (PBKDF2), verifyPassword, createStaffToken/verifyStaffToken (HMAC-SHA256)
@@ -137,8 +137,8 @@ GOOGLE_PRIVATE_KEY=             # Giữ nguyên \n khi paste vào Vercel
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
 
-# OpenRouter AI
-OPENROUTER_API_KEY=
+# Qwen AI (DashScope)
+QWEN_API_KEY=
 
 # Admin
 ADMIN_PASSWORD=                 # Dùng cho admin login + HMAC signing staff tokens
@@ -613,7 +613,7 @@ useEffect(() => { loadData(page, ...filters); }, [page, ...filterStates, refresh
 7. **Hero image**: `/public/hero.jpg` — ảnh tĩnh local
 8. **Sizes**: JSONB `[{ten, so_luong}]` — empty array nếu không quản lý theo size
 9. **Excel export**: Dùng template `template/ExcelTemplateVi.xlsx`, copy formatting từ header row
-10. **AI models**: `stepfun/step-3.5-flash:free` (generateMoTa) và `qwen/qwen3.6-plus:free` (ai.ts)
+10. **AI models**: `qwen-plus` (DashScope) cho generateMoTa và generateProductDescription
 11. **Staff token**: HMAC-SHA256 với Web Crypto, PBKDF2 hashing
 12. **predev/prebuild**: Tự động xóa `.next` folder trước khi dev/build
 13. **Notification realtime**: Lắng nghe trực tiếp `don_hang` INSERT/UPDATE → không chờ trigger `thong_bao` → nhận thông báo trong ~50-150ms

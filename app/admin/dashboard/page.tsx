@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useAdminChat } from "@/contexts/AdminChatContext";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
@@ -164,6 +165,34 @@ export default function DashboardPage() {
   }, []);
 
   const d = data;
+
+  // ─── Push data to AdminChat context ────────────────────────────────────────
+  const { setScreenData } = useAdminChat();
+
+  useEffect(() => {
+    if (data && !loading) {
+      setScreenData({
+        page: 'dashboard',
+        title: 'Dashboard — Thống kê tổng quan',
+        summary: 'Trang dashboard hiển thị thống kê doanh thu, đơn hàng, khách hàng, nhân viên và tồn kho của shop.',
+        stats: {
+          'Doanh thu hôm nay': data.doanhThu.homNay,
+          'Doanh thu tháng này': data.doanhThu.thangNay,
+          'Doanh thu tháng trước': data.doanhThu.thangTruoc,
+          'Tăng trưởng': data.doanhThu.phanTramTangTruong !== null ? `${data.doanhThu.phanTramTangTruong > 0 ? '+' : ''}${data.doanhThu.phanTramTangTruong}%` : 'N/A',
+          'Đơn hôm nay': data.donHang.homNay,
+          'Lượt truy cập hôm nay': data.tracking.homNay,
+          'Tổng khách hàng': data.khachHang.tongSo,
+          'Tổng nhân viên': data.nhanVien.tongSo,
+          'Sản phẩm đang bán': data.sanPham.dangBan,
+          'Sản phẩm hết hàng': data.sanPham.hetHang,
+        },
+        items: data.donTheoNhanVien.map(nv => `${nv.ten}: ${nv.soDon} đơn (${fmt(nv.doanhThu)})`),
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.doanhThu, data?.donHang, data?.khachHang, data?.nhanVien, data?.sanPham, data?.tracking, data?.donTheoNhanVien, loading]);
+
   const tong = (d?.sanPham.dangBan ?? 0) + (d?.sanPham.hetHang ?? 0);
   const pctDangBan = tong === 0 ? 0 : Math.round(((d?.sanPham.dangBan ?? 0) / tong) * 100);
 

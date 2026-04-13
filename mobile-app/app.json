@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "TRANG ANH Store",
+    "slug": "trang-anh-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "scheme": "tranh-anh",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#EDE8DF"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tranhanh.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#EDE8DF"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.tranhanh.mobile",
+      "permissions": [
+        "NOTIFICATIONS",
+        "VIBRATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font",
+      "expo-notifications"
+    ],
+    "extra": {
+      "apiUrl": "https://tastore.vercel.app",
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    }
+  }
+}

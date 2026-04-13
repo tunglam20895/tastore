@@ -12,6 +12,7 @@
 # next.js
 /.next/
 /out/
+/trang-anh-mobile
 
 # production
 /build

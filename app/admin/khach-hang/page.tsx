@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useAdminChat } from "@/contexts/AdminChatContext";
 import type { KhachHang, TrangThaiKH, DonHang } from "@/types";
 import Pagination from "@/components/admin/Pagination";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -115,6 +116,29 @@ export default function AdminKhachHangPage() {
   const getTrangThaiColor = (ten: string) => {
     return trangThaiList.find((t) => t.ten === ten)?.mau || "#8C7B72";
   };
+
+  // ─── Push data to AdminChat context ────────────────────────────────────────
+  const { setScreenData } = useAdminChat();
+
+  useEffect(() => {
+    if (!loading && customers.length >= 0) {
+      const filters: string[] = [];
+      if (filterTT) filters.push(`Trạng thái: ${filterTT}`);
+      if (search) filters.push(`Tìm kiếm: "${search}"`);
+
+      setScreenData({
+        page: 'khach-hang',
+        title: 'Quản lý khách hàng',
+        summary: `Đang hiển thị ${customers.length} khách hàng (trang ${page}/${totalPages}). Tổng ${total} khách hàng.`,
+        filters,
+        stats: { 'Tổng KH': total, 'Đang hiển thị': customers.length },
+        items: customers.map(kh =>
+          `"${kh.ten}" (${kh.sdt}) | ${kh.tongDon} đơn | ${formatMoney(kh.tongDoanhThu)} | TT: ${kh.trangThai}${kh.ghiChu ? ` | Ghi chú: ${kh.ghiChu}` : ''}`
+        ),
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customers, filterTT, search, page, totalPages, total, loading]);
 
   return (
     <div>
