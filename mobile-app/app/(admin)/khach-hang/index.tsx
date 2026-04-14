@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, RefreshC
 import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCustomers, getTrangThaiKH, updateCustomer } from "@/src/api/khach-hang";
+import { useAuthStore } from "@/src/store/authStore";
 import { colors } from "@/src/theme";
 import { LIMIT_DEFAULT } from "@/src/utils/constants";
 import { formatMoney, formatNumber } from "@/src/utils/format";

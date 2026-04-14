@@ -37,6 +37,7 @@ export default function Footer() {
               Hỗ Trợ
             </h4>
             <ul className="space-y-3">
+              <li><Link href="/tra-cuu-don-hang" className="text-xs text-cream/70 hover:text-cream transition-colors uppercase tracking-wider">Tra Cứu Đơn Hàng</Link></li>
               <li><span className="text-xs text-cream/70 uppercase tracking-wider">Hướng Dẫn Mua Hàng</span></li>
               <li><span className="text-xs text-cream/70 uppercase tracking-wider">Đổi Trả Hàng</span></li>
               <li><span className="text-xs text-cream/70 uppercase tracking-wider">Ship COD Toàn Quốc</span></li>

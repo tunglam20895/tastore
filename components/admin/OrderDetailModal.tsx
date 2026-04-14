@@ -4,15 +4,7 @@ import { useEffect, useState } from "react";
 import type { DonHang } from "@/types";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useToast } from "@/contexts/ToastContext";
-
-const STATUS_COLORS: Record<string, string> = {
-  "Mới": "bg-blue-50 text-blue-700",
-  "Chốt để lên đơn": "bg-purple-50 text-purple-700",
-  "Đã lên đơn": "bg-teal-50 text-teal-700",
-  "Đang xử lý": "bg-amber-50 text-amber-700",
-  "Đã giao": "bg-green-50 text-green-700",
-  "Huỷ": "bg-red-50 text-red-500",
-};
+import { getTrangThaiMau, getStatusBadgeStyle, useTrangThaiDH } from "@/contexts/TrangThaiDHContext";
 
 function formatMoney(n: number) {
   return new Intl.NumberFormat("vi-VN").format(n) + "đ";
@@ -35,18 +27,22 @@ export default function OrderDetailModal({ orderId, onClose, onStatusChange }: P
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const { showSuccess, showError } = useToast();
+  const { trangThais } = useTrangThaiDH();
 
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : "";
 
   useEffect(() => {
+    const controller = new AbortController();
     setLoading(true);
     fetch(`/api/don-hang/${orderId}`, {
       headers: { "x-admin-password": adminPassword || "" },
+      signal: controller.signal,
     })
       .then((r) => r.json())
       .then((d) => { if (d.success) setOrder(d.data); })
-      .catch(() => {})
+      .catch((err) => { if (err.name !== "AbortError") {} })
       .finally(() => setLoading(false));
+    return () => controller.abort();
   }, [orderId, adminPassword]);
 
   const handleStatusChange = async (status: string) => {
@@ -106,7 +102,10 @@ export default function OrderDetailModal({ orderId, onClose, onStatusChange }: P
             {/* Trạng thái + thời gian + người xử lý */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className={`text-xs font-medium px-3 py-1 ${STATUS_COLORS[order.trangThai] || "bg-stone-100 text-stone-600"}`}>
+                <span
+                  className="text-xs font-medium px-3 py-1"
+                  style={getStatusBadgeStyle(getTrangThaiMau(trangThais, order.trangThai))}
+                >
                   {order.trangThai}
                 </span>
                 {order.nguoiXuLy && order.nguoiXuLy !== 'Chưa có' ? (
@@ -170,18 +169,18 @@ export default function OrderDetailModal({ orderId, onClose, onStatusChange }: P
             <div className="border-t border-stone-100 pt-4">
               <p className="text-xs uppercase tracking-widest text-stone-400 mb-3">Cập nhật trạng thái</p>
               <div className="grid grid-cols-2 gap-2">
-                {(["Mới", "Chốt để lên đơn", "Đã lên đơn", "Đang xử lý", "Đã giao", "Huỷ"] as const).map((s) => (
+                {trangThais.map((tt) => (
                   <button
-                    key={s}
-                    onClick={() => handleStatusChange(s)}
-                    disabled={updating || order.trangThai === s}
+                    key={tt.key}
+                    onClick={() => handleStatusChange(tt.key)}
+                    disabled={updating || order.trangThai === tt.key}
                     className={`py-2 text-xs uppercase tracking-widest transition-all border ${
-                      order.trangThai === s
+                      order.trangThai === tt.key
                         ? "bg-espresso text-cream border-espresso"
                         : "text-stone-600 border-stone-200 hover:border-espresso hover:text-espresso"
                     } disabled:opacity-50`}
                   >
-                    {s}
+                    {tt.ten}
                   </button>
                 ))}
               </div>

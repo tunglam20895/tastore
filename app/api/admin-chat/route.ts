@@ -5,6 +5,32 @@ import { streamChatWithAI } from '@/lib/qwen';
 
 export const dynamic = 'force-dynamic';
 
+/** Common types for API response data (avoid `any`) */
+type DoanhThuData = Record<string, number | null>;
+type DonHangData = Record<string, number>;
+type SanPhamData = Record<string, number>;
+type KhachHangData = Record<string, number | string>;
+type NhanVienData = Record<string, number>;
+type TrackingData = Record<string, number>;
+type TopKhachHang = { ten: string; tongDoanhThu: number };
+type DonTheoNhanVien = { ten: string; soDon: number; doanhThu: number };
+type TopBanChay = { ten: string; soLuong: number };
+type TopDanhMuc = { ten: string; soLuong: number };
+type ThongKeData = {
+  doanhThu?: DoanhThuData;
+  donHang?: DonHangData;
+  khachHang?: KhachHangData & { topKhachHang?: TopKhachHang[]; tongDoanhThu?: number };
+  nhanVien?: NhanVienData & { tongLuongChiTra?: number; conHoatDong?: number };
+  sanPham?: SanPhamData & { topBanChay?: TopBanChay[]; topDanhMuc?: TopDanhMuc[] };
+  tracking?: TrackingData;
+  donTheoNhanVien?: DonTheoNhanVien[];
+};
+type SPItem = { ten: string; giaHienThi: number; phanTramGiam?: number; soLuong: number; conHang: boolean; giaGoc?: number };
+type DHItem = { trangThai: string; tenKH: string; sdt: string; tongTien: number; sanPham?: unknown[]; nguoiXuLy: string; thoiGian: string };
+type KHItem = { ten: string; sdt: string; tongDon: number; tongDoanhThu: number; trangThai: string; ghiChu?: string; updatedAt: string };
+type NVItem = { ten: string; conHoatDong: boolean; luong: number; quyen: string[] };
+type DHChiTiet = { id: string; tenKH: string; sdt: string; diaChi: string; trangThai: string; nguoiXuLy: string; tongTien: number; thoiGian: string; sanPham?: Array<{ ten: string; sizeChon?: string; soLuong: number; giaHienThi: number }> };
+
 /** Headers cho gọi internal API routes của dự án */
 function apiHeaders() {
   const pw = process.env.ADMIN_PASSWORD || '';
@@ -12,7 +38,7 @@ function apiHeaders() {
 }
 
 /** Gọi internal API route → trả JSON (có log debug) */
-async function callInternalAPI(path: string): Promise<any> {
+async function callInternalAPI(path: string): Promise<Record<string, unknown> | null> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
     const fullUrl = `${baseUrl}${path}`;
@@ -63,15 +89,17 @@ export async function GET(request: NextRequest) {
     // Gọi /api/thong-ke cho dashboard
     const statsRes = await callInternalAPI('/api/thong-ke');
     if (statsRes?.success) {
-      const d = statsRes.data;
+      const d = statsRes.data as ThongKeData;
+      const dt = d.doanhThu || {};
+      const pt = dt.phanTramTangTruong ?? null;
       contextData = `
 === THỐNG KÊ TỔNG QUAN ===
 💰 Doanh thu:
-   - Hôm nay: ${formatMoney(d.doanhThu?.homNay || 0)}
-   - Tháng này: ${formatMoney(d.doanhThu?.thangNay || 0)}
-   - Tháng trước: ${formatMoney(d.doanhThu?.thangTruoc || 0)}
-   - Tổng cộng: ${formatMoney(d.doanhThu?.tongCong || 0)}
-   - Tăng trưởng: ${d.doanhThu?.phanTramTangTruong !== null ? (d.doanhThu.phanTramTangTruong > 0 ? '+' : '') + d.doanhThu.phanTramTangTruong + '%' : 'N/A'}
+   - Hôm nay: ${formatMoney(dt.homNay || 0)}
+   - Tháng này: ${formatMoney(dt.thangNay || 0)}
+   - Tháng trước: ${formatMoney(dt.thangTruoc || 0)}
+   - Tổng cộng: ${formatMoney(dt.tongCong || 0)}
+   - Tăng trưởng: ${pt !== null ? (pt > 0 ? '+' : '') + pt + '%' : 'N/A'}
 
 📦 Đơn hàng (tổng ${d.donHang?.tongCong || 0} đơn):
    - Hôm nay: ${d.donHang?.homNay || 0}
@@ -79,16 +107,16 @@ export async function GET(request: NextRequest) {
    - Đã lên đơn: ${d.donHang?.daLenDon || 0} | Đang xử lý: ${d.donHang?.dangXuLy || 0}
    - Đã giao: ${d.donHang?.daGiao || 0} | Huỷ: ${d.donHang?.huy || 0}
 
-👥 Khách hàng: ${d.khachHang?.tongSo || 0} KH | Tổng DT từ KH: ${formatMoney(d.khachHang?.tongDoanhThu || 0)}
-${d.khachHang?.topKhachHang?.length ? `   Top KH: ${d.khachHang.topKhachHang.map((k: any) => k.ten + ' (' + formatMoney(k.tongDoanhThu) + ')').join(' | ')}` : ''}
+👥 Khách hàng: ${d.khachHang?.tongSo || 0} KH | Tổng DT từ KH: ${formatMoney(Number(d.khachHang?.tongDoanhThu) || 0)}
+${d.khachHang?.topKhachHang?.length ? `   Top KH: ${d.khachHang.topKhachHang.map((k) => k.ten + ' (' + formatMoney(k.tongDoanhThu) + ')').join(' | ')}` : ''}
 
 👥 Nhân viên: ${d.nhanVien?.tongSo || 0} NV | Đang hoạt động: ${d.nhanVien?.conHoatDong || 0}
    - Tổng lương chi trả/tháng: ${formatMoney(d.nhanVien?.tongLuongChiTra || 0)}
-${d.donTheoNhanVien?.length ? `   - Đơn theo NV: ${d.donTheoNhanVien.map((n: any) => n.ten + ': ' + n.soDon + ' đơn').join(' | ')}` : ''}
+${d.donTheoNhanVien?.length ? `   - Đơn theo NV: ${d.donTheoNhanVien.map((n) => n.ten + ': ' + n.soDon + ' đơn').join(' | ')}` : ''}
 
 📦 Sản phẩm: Đang bán ${d.sanPham?.dangBan || 0} | Hết hàng ${d.sanPham?.hetHang || 0}
-${d.sanPham?.topBanChay?.length ? `   Top SP bán chạy: ${d.sanPham.topBanChay.map((s: any) => s.ten + ' (' + s.soLuong + ')').join(' | ')}` : ''}
-${d.sanPham?.topDanhMuc?.length ? `   Top danh mục: ${d.sanPham.topDanhMuc.map((dm: any) => dm.ten + ' (' + dm.soLuong + ')').join(' | ')}` : ''}
+${d.sanPham?.topBanChay?.length ? `   Top SP bán chạy: ${d.sanPham.topBanChay.map((s) => s.ten + ' (' + s.soLuong + ')').join(' | ')}` : ''}
+${d.sanPham?.topDanhMuc?.length ? `   Top danh mục: ${d.sanPham.topDanhMuc.map((dm) => dm.ten + ' (' + dm.soLuong + ')').join(' | ')}` : ''}
 
 📈 Lượt truy cập: Hôm nay ${d.tracking?.homNay || 0} | Tháng ${d.tracking?.thangNay || 0} | Tổng ${d.tracking?.tongCong || 0}
 `.trim();
@@ -99,7 +127,7 @@ ${d.sanPham?.topDanhMuc?.length ? `   Top danh mục: ${d.sanPham.topDanhMuc.map
       const spRes = await callInternalAPI('/api/san-pham?page=1&limit=20');
       if (spRes?.success) {
         contextData += `\n\n=== SẢN PHẨM (trang ${spRes.page}/${spRes.totalPages}, tổng ${spRes.total} SP) ===\n`;
-        contextData += (spRes.data || []).map((s: any) =>
+        contextData += (spRes.data as SPItem[] || []).map((s) =>
           `• "${s.ten}" | Giá ${formatMoney(s.giaHienThi)}${s.phanTramGiam ? ` (GIẢM ${s.phanTramGiam}%)` : ''} | Tồn ${s.soLuong} | ${s.conHang ? '✅ Còn' : '❌ Hết'}`
         ).join('\n');
       }
@@ -109,8 +137,8 @@ ${d.sanPham?.topDanhMuc?.length ? `   Top danh mục: ${d.sanPham.topDanhMuc.map
       const dhRes = await callInternalAPI('/api/don-hang?page=1&limit=15');
       if (dhRes?.success) {
         contextData += `\n\n=== ĐƠN HÀNG (trang ${dhRes.page}/${dhRes.totalPages}, tổng ${dhRes.total} đơn) ===\n`;
-        contextData += (dhRes.data || []).map((o: any) =>
-          `[${o.trangThai}] ${o.tenKH} (${o.sdt}) | ${formatMoney(o.tongTien)} | ${o.sanPham?.length || 0} SP | NV ${o.nguoiXuLy} | ${new Date(o.thoiGian).toLocaleDateString('vi-VN')}`
+        contextData += (dhRes.data as DHItem[] || []).map((o) =>
+          `[${o.trangThai}] ${o.tenKH} (${o.sdt}) | ${formatMoney(o.tongTien)} | ${(o.sanPham || []).length} SP | NV ${o.nguoiXuLy} | ${new Date(o.thoiGian).toLocaleDateString('vi-VN')}`
         ).join('\n');
       }
     }
@@ -119,7 +147,7 @@ ${d.sanPham?.topDanhMuc?.length ? `   Top danh mục: ${d.sanPham.topDanhMuc.map
       const khRes = await callInternalAPI('/api/khach-hang?page=1&limit=15');
       if (khRes?.success) {
         contextData += `\n\n=== KHÁCH HÀNG (trang ${khRes.page}/${khRes.totalPages}, tổng ${khRes.total} KH) ===\n`;
-        contextData += (khRes.data || []).map((k: any) =>
+        contextData += (khRes.data as KHItem[] || []).map((k) =>
           `"${k.ten}" (${k.sdt}) | ${k.tongDon} đơn | ${formatMoney(k.tongDoanhThu)} | ${k.trangThai}${k.ghiChu ? ` | "${k.ghiChu}"` : ''}`
         ).join('\n');
       }
@@ -128,8 +156,8 @@ ${d.sanPham?.topDanhMuc?.length ? `   Top danh mục: ${d.sanPham.topDanhMuc.map
     if (page === 'nhan-vien') {
       const nvRes = await callInternalAPI('/api/nhan-vien');
       if (nvRes?.success) {
-        contextData += `\n\n=== NHÂN VIÊN (tổng ${(nvRes.data || []).length} NV) ===\n`;
-        contextData += (nvRes.data || []).map((n: any) =>
+        contextData += `\n\n=== NHÂN VIÊN (tổng ${(nvRes.data as NVItem[] || []).length} NV) ===\n`;
+        contextData += (nvRes.data as NVItem[] || []).map((n) =>
           `"${n.ten}" | ${n.conHoatDong ? '✅' : '❌'} | Lương ${formatMoney(n.luong || 0)} | Quyền ${(n.quyen || []).join(', ')}`
         ).join('\n');
       }
@@ -212,15 +240,17 @@ async function fetchFreshData(intent: ReturnType<typeof analyzeIntent>) {
       const res = await callInternalAPI('/api/thong-ke');
       console.log(`📊 [AdminChat] /api/thong-ke response:`, res ? `success=${res.success}` : 'null');
       if (res?.success) {
-        const d = res.data;
+        const d = res.data as ThongKeData;
         console.log(`📊 [AdminChat] Thong ke data doanhThu:`, JSON.stringify(d.doanhThu));
+        const dt = d.doanhThu || {};
+        const pt = dt.phanTramTangTruong ?? null;
         results.push(`[THONG_KE]
 [DOANH_THU]
-  hom_nay: ${formatMoney(d.doanhThu?.homNay || 0)}
-  thang_nay: ${formatMoney(d.doanhThu?.thangNay || 0)}
-  thang_truoc: ${formatMoney(d.doanhThu?.thangTruoc || 0)}
-  tong_tat_ca: ${formatMoney(d.doanhThu?.tongCong || 0)}
-  tang_truong: ${d.doanhThu?.phanTramTangTruong !== null ? (d.doanhThu.phanTramTangTruong > 0 ? '+' : '') + d.doanhThu.phanTramTangTruong + '%' : 'N/A'}
+  hom_nay: ${formatMoney(dt.homNay || 0)}
+  thang_nay: ${formatMoney(dt.thangNay || 0)}
+  thang_truoc: ${formatMoney(dt.thangTruoc || 0)}
+  tong_tat_ca: ${formatMoney(dt.tongCong || 0)}
+  tang_truong: ${pt !== null ? (pt > 0 ? '+' : '') + pt + '%' : 'N/A'}
 [/DOANH_THU]
 [DON_HANG]
   tong: ${d.donHang?.tongCong || 0}
@@ -246,7 +276,7 @@ async function fetchFreshData(intent: ReturnType<typeof analyzeIntent>) {
       if (res?.success) {
         results.push(`📦 ĐƠN HÀNG (từ /api/don-hang):
    • TỔNG: ${res.total || 0} đơn | Trang ${res.page}/${res.totalPages}
-${(res.data || []).map((o: any) => `   • [${o.trangThai}] ${o.tenKH} (${o.sdt}) | ${formatMoney(o.tongTien)} | ${(o.sanPham || []).length} SP | NV ${o.nguoiXuLy} | ${new Date(o.thoiGian).toLocaleDateString('vi-VN')}`).join('\n')}`);
+${(res.data as DHItem[] || []).map((o) => `   • [${o.trangThai}] ${o.tenKH} (${o.sdt}) | ${formatMoney(o.tongTien)} | ${(o.sanPham || []).length} SP | NV ${o.nguoiXuLy} | ${new Date(o.thoiGian).toLocaleDateString('vi-VN')}`).join('\n')}`);
       }
     })());
   }
@@ -258,14 +288,14 @@ ${(res.data || []).map((o: any) => `   • [${o.trangThai}] ${o.tenKH} (${o.sdt}
       const res = await callInternalAPI('/api/san-pham?page=1&limit=30');
       console.log(`📦 [AdminChat] /api/san-pham response:`, res ? `success=${res.success}, total=${res.total}` : 'null');
       if (res?.success) {
-        const data = res.data || [];
-        const dangBan = data.filter((s: any) => s.conHang).length;
-        const hetHang = data.filter((s: any) => !s.conHang).length;
+        const data = res.data as SPItem[] || [];
+        const dangBan = data.filter((s) => s.conHang).length;
+        const hetHang = data.filter((s) => !s.conHang).length;
         results.push(`📦 SẢN PHẨM (từ /api/san-pham):
    • TỔNG SỐ SẢN PHẨM: ${res.total || 0}
    • Đang bán: ${dangBan} | Hết hàng: ${hetHang}
    • Trang ${res.page}/${res.totalPages} (limit ${res.limit || 20})
-${data.slice(0, 15).map((s: any) => `   • "${s.ten}" | ${formatMoney(s.giaHienThi)}${s.phanTramGiam ? ` (GIẢM ${s.phanTramGiam}%)` : ''} | Tồn ${s.soLuong} | ${s.conHang ? '✅' : '❌'}`).join('\n')}${data.length > 15 ? `\n   ... và ${data.length - 15} SP khác` : ''}`);
+${data.slice(0, 15).map((s) => `   • "${s.ten}" | ${formatMoney(s.giaHienThi)}${s.phanTramGiam ? ` (GIẢM ${s.phanTramGiam}%)` : ''} | Tồn ${s.soLuong} | ${s.conHang ? '✅' : '❌'}`).join('\n')}${data.length > 15 ? `\n   ... và ${data.length - 15} SP khác` : ''}`);
       }
     })());
   }
@@ -279,7 +309,7 @@ ${data.slice(0, 15).map((s: any) => `   • "${s.ten}" | ${formatMoney(s.giaHien
       if (res?.success) {
         results.push(`👥 KHÁCH HÀNG (từ /api/khach-hang):
    • TỔNG: ${res.total || 0} khách hàng | Trang ${res.page}/${res.totalPages}
-${(res.data || []).map((k: any) => `   • "${k.ten}" (${k.sdt}) | ${k.tongDon} đơn | ${formatMoney(k.tongDoanhThu)} | ${k.trangThai}${k.ghiChu ? ` | "${k.ghiChu}"` : ''}`).join('\n')}`);
+${(res.data as KHItem[] || []).map((k) => `   • "${k.ten}" (${k.sdt}) | ${k.tongDon} đơn | ${formatMoney(k.tongDoanhThu)} | ${k.trangThai}${k.ghiChu ? ` | "${k.ghiChu}"` : ''}`).join('\n')}`);
       }
     })());
   }
@@ -289,14 +319,14 @@ ${(res.data || []).map((k: any) => `   • "${k.ten}" (${k.sdt}) | ${k.tongDon} 
     console.log(`👥 [AdminChat] Gọi /api/nhan-vien cho intent needsNhanVien`);
     promises.push((async () => {
       const res = await callInternalAPI('/api/nhan-vien');
-      console.log(`👥 [AdminChat] /api/nhan-vien response:`, res ? `success=${res.success}, count=${(res.data || []).length}` : 'null');
+      console.log(`👥 [AdminChat] /api/nhan-vien response:`, res ? `success=${res.success}, count=${Array.isArray(res.data) ? res.data.length : 0}` : 'null');
       if (res?.success) {
-        const nvList = res.data || [];
-        const tongLuong = nvList.reduce((s: number, n: any) => s + (n.luong || 0), 0);
+        const nvList = Array.isArray(res.data) ? res.data as NVItem[] : [];
+        const tongLuong = nvList.reduce((s: number, n) => s + (n.luong || 0), 0);
         results.push(`👥 NHÂN VIÊN (từ /api/nhan-vien):
    • TỔNG: ${nvList.length} NHÂN VIÊN
    • Tổng lương chi trả/tháng: ${formatMoney(tongLuong)}
-${nvList.map((n: any) => `   • "${n.ten}" | ${n.conHoatDong ? '✅ Đang HĐ' : '❌ Nghỉ'} | Lương ${formatMoney(n.luong || 0)} | Quyền ${(n.quyen || []).join(', ')}`).join('\n')}`);
+${nvList.map((n) => `   • "${n.ten}" | ${n.conHoatDong ? '✅ Đang HĐ' : '❌ Nghỉ'} | Lương ${formatMoney(n.luong || 0)} | Quyền ${(n.quyen || []).join(', ')}`).join('\n')}`);
       }
     })());
   }
@@ -308,8 +338,8 @@ ${nvList.map((n: any) => `   • "${n.ten}" | ${n.conHoatDong ? '✅ Đang HĐ' 
       const res = await callInternalAPI(`/api/don-hang/${intent.needsSpecificDonHang}`);
       console.log(`📋 [AdminChat] /api/don-hang/[id] response:`, res ? `success=${res.success}` : 'null');
       if (res?.success) {
-        const o = res.data;
-        const spDetail = (o.sanPham || []).map((s: any) => `   - ${s.ten}${s.sizeChon ? ` (Size: ${s.sizeChon})` : ''} x${s.soLuong} = ${formatMoney(s.giaHienThi * s.soLuong)}`).join('\n');
+        const o = res.data as DHChiTiet;
+        const spDetail = (o.sanPham || []).map((s) => `   - ${s.ten}${s.sizeChon ? ` (Size: ${s.sizeChon})` : ''} x${s.soLuong} = ${formatMoney(s.giaHienThi * s.soLuong)}`).join('\n');
         results.push(`📋 CHI TIẾT ĐƠN HÀNG ${o.id} (từ /api/don-hang/[id]):
    - Khách: ${o.tenKH} (${o.sdt})
    - Địa chỉ: ${o.diaChi}
@@ -328,9 +358,10 @@ ${nvList.map((n: any) => `   • "${n.ten}" | ${n.conHoatDong ? '✅ Đang HĐ' 
     console.log(`👤 [AdminChat] Gọi /api/khach-hang?search=${intent.needsSpecificKhachHang}`);
     promises.push((async () => {
       const res = await callInternalAPI(`/api/khach-hang?search=${encodeURIComponent(intent.needsSpecificKhachHang!)}&limit=5`);
-      console.log(`👤 [AdminChat] /api/khach-hang search response:`, res ? `success=${res.success}, dataLen=${res.data?.length}` : 'null');
-      if (res?.success && res.data?.length > 0) {
-        const k = res.data[0];
+      const dataLen = Array.isArray(res?.data) ? res.data.length : 0;
+      console.log(`👤 [AdminChat] /api/khach-hang search response:`, res ? `success=${res.success}, dataLen=${dataLen}` : 'null');
+      if (res?.success && dataLen > 0) {
+        const k = (res.data as KHItem[])[0];
         results.push(`👤 KHÁCH HÀNG ${intent.needsSpecificKhachHang} (từ /api/khach-hang):
    - Tên: ${k.ten}
    - Đơn: ${k.tongDon} | Doanh thu: ${formatMoney(k.tongDoanhThu)}

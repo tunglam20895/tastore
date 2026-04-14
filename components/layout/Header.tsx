@@ -130,6 +130,12 @@ export default function Header() {
               Sale
             </Link>
             <Link
+              href="/tra-cuu-don-hang"
+              className={`text-xs uppercase tracking-widest font-medium transition-colors ${navColor}`}
+            >
+              Tra Cứu Đơn Hàng
+            </Link>
+            <Link
               href="/gio-hang"
               className={`text-xs uppercase tracking-widest font-medium transition-colors flex items-center gap-1.5 ${navColor}`}
             >
@@ -174,6 +180,12 @@ export default function Header() {
                 className="text-sm uppercase tracking-widest font-medium text-espresso hover:text-stone transition-colors"
               >
                 Sale
+              </Link>
+              <Link
+                href="/tra-cuu-don-hang"
+                className="text-sm uppercase tracking-widest font-medium text-espresso hover:text-stone transition-colors"
+              >
+                Tra Cứu Đơn Hàng
               </Link>
               <Link
                 href="/gio-hang"

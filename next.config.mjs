@@ -1,10 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: false,
   webpack: (config, { dev }) => {
     if (dev) {
       config.cache = false;
       config.watchOptions = { poll: 500, aggregateTimeout: 200 };
     }
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'mobile-app': false,
+    };
     return config;
   },
   images: {

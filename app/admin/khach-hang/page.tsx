@@ -40,19 +40,19 @@ export default function AdminKhachHangPage() {
 
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : "";
 
-  const loadTrangThai = useCallback(() => {
-    fetch("/api/trang-thai-kh")
+  const loadTrangThai = useCallback((signal?: AbortSignal) => {
+    fetch("/api/trang-thai-kh", { signal })
       .then((r) => r.json())
       .then((d) => { if (d.success) setTrangThaiList(d.data); })
-      .catch(() => {});
+      .catch((err) => { if (err.name !== "AbortError") {} });
   }, []);
 
-  const loadCustomers = useCallback((p = 1, tt = "", s = "") => {
+  const loadCustomers = useCallback((p = 1, tt = "", s = "", signal?: AbortSignal) => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(p), limit: String(limit) });
     if (tt) params.set("trang_thai", tt);
     if (s) params.set("search", s);
-    fetch(`/api/khach-hang?${params}`, { headers: { "x-admin-password": adminPassword || "" } })
+    fetch(`/api/khach-hang?${params}`, { headers: { "x-admin-password": adminPassword || "" }, signal })
       .then((r) => r.json())
       .then((d) => {
         if (d.success) {
@@ -62,12 +62,21 @@ export default function AdminKhachHangPage() {
           setPage(p);
         }
       })
-      .catch(() => {})
+      .catch((err) => { if (err.name !== "AbortError") {} })
       .finally(() => setLoading(false));
   }, [adminPassword, limit]);
 
-  useEffect(() => { loadTrangThai(); }, [loadTrangThai]);
-  useEffect(() => { loadCustomers(1, filterTT, search); }, [loadCustomers, filterTT, search]);
+  useEffect(() => {
+    const controller = new AbortController();
+    loadTrangThai(controller.signal);
+    return () => controller.abort();
+  }, [loadTrangThai]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    loadCustomers(1, filterTT, search, controller.signal);
+    return () => controller.abort();
+  }, [loadCustomers, filterTT, search]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

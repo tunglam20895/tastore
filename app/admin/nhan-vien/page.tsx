@@ -34,16 +34,20 @@ export default function AdminNhanVienPage() {
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; ten: string } | null>(null);
   const { showSuccess, showError } = useToast();
 
-  const load = useCallback(() => {
+  const load = useCallback((signal?: AbortSignal) => {
     setLoading(true);
-    fetch("/api/nhan-vien", { headers: headers() })
+    fetch("/api/nhan-vien", { headers: headers(), signal })
       .then((r) => r.json())
       .then((d) => { if (d.success) setList(d.data); })
-      .catch(() => {})
+      .catch((err) => { if (err.name !== "AbortError") {} })
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    const controller = new AbortController();
+    load(controller.signal);
+    return () => controller.abort();
+  }, [load]);
 
   const openCreate = () => {
     setForm(emptyForm());

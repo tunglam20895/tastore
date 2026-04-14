@@ -266,9 +266,9 @@ export default function AdminCouponsPage() {
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
   const { showSuccess, showError } = useToast();
 
-  const loadCoupons = useCallback((p = 1) => {
+  const loadCoupons = useCallback((p = 1, signal?: AbortSignal) => {
     setLoading(true);
-    fetch(`/api/ma-giam-gia?page=${p}&limit=${limit}`, { headers: { "x-admin-password": adminPassword || "" } })
+    fetch(`/api/ma-giam-gia?page=${p}&limit=${limit}`, { headers: { "x-admin-password": adminPassword || "" }, signal })
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -278,11 +278,15 @@ export default function AdminCouponsPage() {
           setPage(p);
         }
       })
-      .catch(() => {})
+      .catch((err) => { if (err.name !== "AbortError") {} })
       .finally(() => setLoading(false));
   }, [adminPassword, limit]);
 
-  useEffect(() => { loadCoupons(1); }, [loadCoupons]);
+  useEffect(() => {
+    const controller = new AbortController();
+    loadCoupons(1, controller.signal);
+    return () => controller.abort();
+  }, [loadCoupons]);
 
   const handleDelete = async () => {
     if (!confirmDelete) return;

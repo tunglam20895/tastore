@@ -43,17 +43,22 @@ export default function AdminProductsPage() {
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
-    fetch("/api/danh-muc").then((r) => r.json()).then((d) => { if (d.success) setCategories(d.data); }).catch(() => {});
+    const controller = new AbortController();
+    fetch("/api/danh-muc", { signal: controller.signal })
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setCategories(d.data); })
+      .catch((err) => { if (err.name !== "AbortError") {} });
+    return () => controller.abort();
   }, []);
 
-  const loadProducts = useCallback((p: number, s: string, dm: string, tk: string, ch: string) => {
+  const loadProducts = useCallback((p: number, s: string, dm: string, tk: string, ch: string, signal?: AbortSignal) => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(p), limit: String(limit) });
     if (s) params.set("search", s);
     if (dm) params.set("danh_muc", dm);
     if (tk) params.set("ton_kho", tk);
     if (ch) params.set("con_hang", ch);
-    fetch(`/api/san-pham?${params}`)
+    fetch(`/api/san-pham?${params}`, { signal })
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -63,12 +68,14 @@ export default function AdminProductsPage() {
           setPage(p);
         }
       })
-      .catch(() => {})
+      .catch((err) => { if (err.name !== "AbortError") {} })
       .finally(() => setLoading(false));
   }, [limit]);
 
   useEffect(() => {
-    loadProducts(page, search, danhMuc, tonKho, conHang);
+    const controller = new AbortController();
+    loadProducts(page, search, danhMuc, tonKho, conHang, controller.signal);
+    return () => controller.abort();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, search, danhMuc, tonKho, conHang, refreshKey, limit]);
 

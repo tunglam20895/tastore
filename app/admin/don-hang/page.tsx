@@ -7,10 +7,9 @@ import Pagination from "@/components/admin/Pagination";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import type { DonHang } from "@/types";
 import { useToast } from "@/contexts/ToastContext";
+import { useTrangThaiDH } from "@/contexts/TrangThaiDHContext";
 
 const LIMIT_DEFAULT = 20;
-
-const ALL_STATUSES = ["", "Mới", "Chốt để lên đơn", "Đã lên đơn", "Đang xử lý", "Đã giao", "Huỷ"] as const;
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<DonHang[]>([]);
@@ -35,10 +34,11 @@ export default function AdminOrdersPage() {
   const [exportLoading, setExportLoading] = useState(false);
 
   const { showSuccess, showError } = useToast();
+  const { trangThais } = useTrangThaiDH();
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
 
   const loadOrders = useCallback((
-    p: number, tt: string, ten: string, sdt: string, tu: string, den: string, lim?: number
+    p: number, tt: string, ten: string, sdt: string, tu: string, den: string, signal?: AbortSignal, lim?: number
   ) => {
     setLoading(true);
     setSelectedIds([]);
@@ -49,7 +49,7 @@ export default function AdminOrdersPage() {
     if (sdt) params.set("search_sdt", sdt);
     if (tu) params.set("tu_ngay", tu);
     if (den) params.set("den_ngay", den);
-    fetch(`/api/don-hang?${params}`, { headers: { "x-admin-password": adminPassword || "" } })
+    fetch(`/api/don-hang?${params}`, { headers: { "x-admin-password": adminPassword || "" }, signal })
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -59,12 +59,14 @@ export default function AdminOrdersPage() {
           setPage(p);
         }
       })
-      .catch(() => {})
+      .catch((err) => { if (err.name !== "AbortError") {} })
       .finally(() => setLoading(false));
   }, [adminPassword, limit]);
 
   useEffect(() => {
-    loadOrders(page, trangThai, searchTen, searchSdt, tuNgay, denNgay);
+    const controller = new AbortController();
+    loadOrders(page, trangThai, searchTen, searchSdt, tuNgay, denNgay, controller.signal);
+    return () => controller.abort();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, trangThai, searchTen, searchSdt, tuNgay, denNgay, limit]);
 
@@ -265,17 +267,29 @@ export default function AdminOrdersPage() {
 
       {/* Status filter */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {ALL_STATUSES.map((status) => (
+        {/* "Tất cả" */}
+        <button
+          onClick={() => handleTrangThaiChange("")}
+          className={`px-4 py-1.5 text-xs uppercase tracking-widest transition-all border ${
+            trangThai === ""
+              ? "bg-espresso text-cream border-espresso"
+              : "bg-transparent text-stone-600 border-stone-300 hover:border-espresso hover:text-espresso"
+          }`}
+        >
+          Tất cả
+        </button>
+        {trangThais.map((tt) => (
           <button
-            key={status}
-            onClick={() => handleTrangThaiChange(status)}
+            key={tt.key}
+            onClick={() => handleTrangThaiChange(tt.key)}
             className={`px-4 py-1.5 text-xs uppercase tracking-widest transition-all border ${
-              trangThai === status
-                ? "bg-espresso text-cream border-espresso"
+              trangThai === tt.key
+                ? "text-white border-transparent"
                 : "bg-transparent text-stone-600 border-stone-300 hover:border-espresso hover:text-espresso"
             }`}
+            style={trangThai === tt.key ? { backgroundColor: tt.mau, borderColor: tt.mau } : {}}
           >
-            {status || "Tất cả"}
+            {tt.ten}
           </button>
         ))}
       </div>
@@ -295,12 +309,9 @@ export default function AdminOrdersPage() {
               className="px-3 py-1.5 border border-purple-300 rounded text-xs text-purple-700 bg-white focus:outline-none cursor-pointer disabled:opacity-50"
             >
               <option value="" disabled>Chuyển trạng thái...</option>
-              <option value="Mới">Mới</option>
-              <option value="Chốt để lên đơn">Chốt để lên đơn</option>
-              <option value="Đã lên đơn">Đã lên đơn</option>
-              <option value="Đang xử lý">Đang xử lý</option>
-              <option value="Đã giao">Đã giao</option>
-              <option value="Huỷ">Huỷ</option>
+              {trangThais.map((tt) => (
+                <option key={tt.key} value={tt.key}>{tt.ten}</option>
+              ))}
             </select>
 
             {/* Export Excel */}

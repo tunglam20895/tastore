@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuthStore } from "@/src/store/authStore";
+import { useNotifications } from "@/src/hooks/useNotifications";
 import { colors } from "@/src/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { logout } from "@/src/api/auth";
@@ -11,11 +12,13 @@ const menuItems = [
   { icon: "pricetags", label: "Mã giảm giá", route: "/(admin)/ma-giam-gia", quyen: "ma-giam-gia" },
   { icon: "people", label: "Nhân viên", route: "/(admin)/nhan-vien", quyen: null },
   { icon: "settings", label: "Cài đặt", route: "/(admin)/cai-dat", quyen: null },
+  { icon: "sparkles", label: "Trợ lý AI", route: "/(admin)/ai-chat", quyen: "dashboard" },
 ];
 
 export default function MoreScreen() {
   const router = useRouter();
   const { role, staffQuyen, logout: logoutStore } = useAuthStore();
+  const { unreadCount } = useNotifications();
   const isAdmin = role === "admin";
 
   const handleLogout = async () => {
@@ -34,6 +37,9 @@ export default function MoreScreen() {
             onPress={() => router.push(item.route as any)}>
             <Ionicons name={item.icon as any} size={22} color={colors.espresso} />
             <Text style={styles.menuLabel}>{item.label}</Text>
+            {item.label === "Trợ lý AI" && (
+              <Ionicons name="sparkles" size={16} color={colors.blush} />
+            )}
             <Ionicons name="chevron-forward" size={18} color={colors.stone[300]} />
           </TouchableOpacity>
         );
@@ -41,6 +47,7 @@ export default function MoreScreen() {
 
       <View style={styles.divider} />
 
+      {/* Navigation to main tabs */}
       <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/(admin)/dashboard")}>
         <Ionicons name="stats-chart" size={22} color={colors.espresso} />
         <Text style={styles.menuLabel}>Dashboard</Text>
@@ -54,6 +61,11 @@ export default function MoreScreen() {
       <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/(admin)/don-hang")}>
         <Ionicons name="receipt" size={22} color={colors.espresso} />
         <Text style={styles.menuLabel}>Đơn hàng</Text>
+        {unreadCount > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+          </View>
+        )}
         <Ionicons name="chevron-forward" size={18} color={colors.stone[300]} />
       </TouchableOpacity>
 
@@ -75,4 +87,6 @@ const styles = StyleSheet.create({
   divider: { height: 12, backgroundColor: colors.cream },
   logoutBtn: { flexDirection: "row", alignItems: "center", gap: 16, paddingVertical: 16, paddingHorizontal: 16 },
   logoutText: { fontSize: 16, color: "#DC2626", fontWeight: "600" },
+  badge: { backgroundColor: '#DC2626', borderRadius: 10, minWidth: 20, height: 20, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4, marginRight: 8 },
+  badgeText: { fontSize: 10, fontWeight: '700', color: colors.white },
 });

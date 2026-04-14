@@ -23,7 +23,7 @@ export default function AdminChatForLayout() {
   // Clear screen data when navigating between pages
   useEffect(() => {
     setScreenData(null);
-  }, [pathname]);
+  }, [pathname, setScreenData]);
 
   return <AdminChat currentPage={currentPage} />;
 }

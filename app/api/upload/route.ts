@@ -9,13 +9,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
     }
 
-    const formData = await request.formData()
-    const file = formData.get('file') as File
+    const formData = await request.formData() as unknown as FormData
+    const file = formData.get('file') as File | null
     if (!file) {
       return NextResponse.json({ success: false, error: 'Không có file' }, { status: 400 })
     }
 
-    const bucket = formData.get('bucket') as string || 'san-pham-images'
+    const bucket = (formData.get('bucket') as string | null) || 'san-pham-images'
     const ext = file.name.split('.').pop() || 'jpg'
     const fileName = `${Date.now()}.${ext}`
     const buffer = await file.arrayBuffer()

@@ -46,12 +46,14 @@ export default function ProductForm({
       : giaGoc;
 
   useEffect(() => {
-    fetch("/api/danh-muc")
+    const controller = new AbortController();
+    fetch("/api/danh-muc", { signal: controller.signal })
       .then((res) => res.json())
       .then((data) => {
         if (data.success) setCategories(data.data);
       })
-      .catch(() => {});
+      .catch((err) => { if (err.name !== "AbortError") {} });
+    return () => controller.abort();
   }, []);
 
   // Thêm size từ quick-pick (nếu chưa có)

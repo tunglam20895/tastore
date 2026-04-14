@@ -5,6 +5,10 @@ Website bán hàng thời trang nữ cao cấp "TRANG ANH STORE".
 **Stack**: Next.js 14.2.35 (App Router) + **Supabase PostgreSQL** + **Supabase Storage** + Google Sheets (append-only) + Telegram Bot + **Qwen AI (DashScope)** (`qwen-plus`).
 **Deploy**: Vercel (free tier).
 
+**Mobile App**: React Native (Expo SDK 54) + **expo-router** + **Zustand** + **React Query** + **Axios** + **expo-notifications** + **react-native-gifted-charts**.
+**Mobile Stack**: React Native 0.81.5 (new arch) + expo-router 6 + zustand 5 + @tanstack/react-query 5 + react-native-gifted-charts.
+**Mobile Features**: Admin-only (không có trang bán hàng). Hỗ trợ Admin + Staff login với phân quyền.
+
 ---
 
 ## Cấu trúc thư mục
@@ -16,11 +20,12 @@ tranh-anh-store/
 │   ├── layout.tsx                      # Root layout — SettingsProvider + CartProvider + ToastProvider + TrackingPixel + FlyToCartAnimation
 │   ├── globals.css                     # CSS variables + Tailwind layers + component classes
 │   ├── (shop)/                         # Route group cho shop (không có prefix)
-│   │   ├── layout.tsx                  # Header + Footer wrapper
+│   │   ├── layout.tsx                  # Header + Footer + TrangThaiDHProvider wrapper
 │   │   ├── page.tsx                    # HomePage (redirect tới /)
 │   │   ├── san-pham/[id]/page.tsx      # Chi tiết sản phẩm — size selector, qty, add-to-cart
 │   │   ├── gio-hang/page.tsx           # Giỏ hàng — CartItem list, order summary, empty state
-│   │   └── dat-hang/page.tsx           # Checkout — coupon validation, order summary, OrderForm
+│   │   ├── dat-hang/page.tsx           # Checkout — coupon validation, order summary, OrderForm
+│   │   └── tra-cuu-don-hang/page.tsx   # Tra cứu đơn hàng — nhập SĐT, xem lịch sử đơn (public)
 │   ├── admin/
 │   │   ├── layout.tsx                  # Bọc AdminNav + TrangThaiDHProvider
 │   │   ├── login/page.tsx              # Đăng nhập — Admin/Staff tabs, full-page SVG spinner loading
@@ -58,7 +63,9 @@ tranh-anh-store/
 │       ├── upload/route.ts             # POST upload ảnh → Supabase Storage
 │       ├── generate-mo-ta/route.ts     # POST generate mô tả AI (Qwen)
 │       ├── gemini/route.ts             # Deprecated — re-export từ generate-mo-ta
-│       └── telegram/route.ts           # POST webhook Telegram
+│       ├── telegram/route.ts           # POST webhook Telegram
+│       ├── admin-chat/route.ts         # GET context + POST SSE streaming AI chat (Qwen, dashboard access)
+│       └── tra-cuu-don-hang/route.ts   # POST tra cứu đơn hàng theo SĐT (public)
 ├── components/
 │   ├── LoadingSpinner.tsx              # SVG logo "TA" xoay 360° — sm/md/lg/full
 │   ├── FlyToCartAnimation.tsx          # Animation parabolic bay từ click → giỏ hàng (framer-motion)
@@ -72,7 +79,8 @@ tranh-anh-store/
 │   │   ├── ProductGrid.tsx             # Lưới + search + filter danh mục + PaginationShop
 │   │   ├── PaginationShop.tsx          # Phân trang shop (circular buttons)
 │   │   ├── CartItem.tsx                # Item giỏ hàng — image, size, qty control, remove
-│   │   └── OrderForm.tsx               # Form đặt hàng — floating labels, submit order
+│   │   ├── OrderForm.tsx               # Form đặt hàng — floating labels, submit order
+│   │   └── OrderLookupResult.tsx       # Hiển thị kết quả tra cứu đơn hàng — status badges, product thumbnails
 │   └── admin/
 │       ├── AdminNav.tsx                # Redesigned bell icon, notification dropdown với màu theo trạng thái
 │       ├── ProductForm.tsx             # Form thêm/sửa SP — quick-pick sizes, AI mô tả, image upload
@@ -80,12 +88,17 @@ tranh-anh-store/
 │       ├── OrderDetailModal.tsx        # Popup chi tiết đơn — status update buttons, customer info
 │       ├── Pagination.tsx              # Phân trang admin (with total count)
 │       ├── LogoUpload.tsx              # Upload logo → Supabase shop-assets bucket
-│       └── ImageUpload.tsx             # Upload ảnh SP → Supabase san-pham-images bucket
+│       ├── ImageUpload.tsx             # Upload ảnh SP → Supabase san-pham-images bucket
+│       ├── AdminChat.tsx               # Floating AI chat panel — SSE streaming, intent analysis, auto-fetch data
+│       ├── AdminChatForLayout.tsx      # Layout wrapper — maps URL to page, clears screen data on nav
+│       ├── AdminChatWrapper.tsx        # Standalone wrapper with own AdminChatProvider
+│       └── ConfirmDialog.tsx           # Reusable confirmation dialog — framer-motion, danger mode
 ├── contexts/
 │   ├── CartContext.tsx                 # Cart state (localStorage), fly animation trigger, CRUD
 │   ├── SettingsContext.tsx             # Global shop settings (fetch từ /api/cai-dat)
 │   ├── ToastContext.tsx                # Toast notifications (error/success/info, 3.5s auto-dismiss, bottom-right)
-│   └── TrangThaiDHContext.tsx          # Order status colors — fetch từ DB, fallback defaults, helpers
+│   ├── TrangThaiDHContext.tsx          # Order status colors — fetch từ DB, fallback defaults, helpers
+│   └── AdminChatContext.tsx            # Screen data sharing for AI chat — page, filters, stats, items
 ├── hooks/
 │   └── useOrderNotifications.ts        # Realtime don_hang INSERT/UPDATE + polling 60s, unread tracking
 ├── lib/
@@ -96,6 +109,7 @@ tranh-anh-store/
 │   ├── openrouter.ts                   # generateMoTa() — Qwen DashScope (qwen-plus)
 │   ├── ai.ts                           # generateProductDescription() — Qwen DashScope (qwen-plus)
 │   ├── gemini.ts                       # Deprecated — Qwen DashScope (qwen-plus)
+│   ├── qwen.ts                         # NEW: Qwen DashScope client with streaming + fallback (qwen-plus → qwen3.5-flash → qwen3.5-plus)
 │   ├── cloudinary.ts                   # Legacy — không dùng chính
 │   ├── auth.ts                         # verifyAdminPassword() + verifyAccess() (admin OR staff token)
 │   └── staff-auth.ts                   # hashPassword (PBKDF2), verifyPassword, createStaffToken/verifyStaffToken (HMAC-SHA256)
@@ -142,6 +156,14 @@ QWEN_API_KEY=
 
 # Admin
 ADMIN_PASSWORD=                 # Dùng cho admin login + HMAC signing staff tokens
+
+# Site URL (cho admin-chat internal API calls)
+NEXT_PUBLIC_SITE_URL=           # VD: https://tastore.vercel.app
+
+# GHTK Shipping (env đã set, chưa có implementation)
+GHTK_TOKEN=
+GHTK_OPEN_API_STAGING=
+GHTK_OPEN_API_PRODUCT=
 ```
 
 ---
@@ -340,6 +362,22 @@ type OrderNotif = {
   daDoc: boolean; thoiGian: string
 }
 
+type TrangThaiDH = { key: string; ten: string; mau: string; thuTu?: number }
+
+type OrderNotif = {
+  id: string; loai: 'don_moi' | 'chuyen_trang_thai'
+  donHangId: string; tenKH: string; tenSP: string
+  tongTien?: number; nguoiXuLy?: string
+  trangThaiCu?: string; trangThaiMoi: string
+  daDoc: boolean; thoiGian: string
+}
+
+type AdminChatScreenData = {
+  page: string; title: string; summary: string
+  filters?: string[]; items?: string[]
+  stats?: Record<string, string | number>
+}
+
 type PaginatedResponse<T> = { data: T[]; total: number; page: number; limit: number; totalPages: number }
 type ApiResponse<T> = { success: boolean; data?: T; error?: string }
 
@@ -473,6 +511,8 @@ colors: {
 | `/api/upload` | POST | `san-pham` access | Supabase Storage |
 | `/api/generate-mo-ta` | POST | `san-pham` access | None |
 | `/api/telegram` | POST | None (webhook) | None |
+| `/api/admin-chat` | GET, POST | `dashboard` access | Internal API calls (thong-ke, don-hang, san-pham, etc.) |
+| `/api/tra-cuu-don-hang` | POST | None (public) | `don_hang` |
 
 ---
 
@@ -537,6 +577,7 @@ useEffect(() => { loadData(page, ...filters); }, [page, ...filterStates, refresh
 - **Checkout**: Floating label form, coupon validation (real-time), order summary
 - **Fly-to-cart**: Parabolic animation từ vị trí click → giỏ hàng (framer-motion + flash effect)
 - **Tracking**: Ghi lượt truy cập mỗi page (fire-and-forget)
+- **Tra cứu đơn hàng** (mới): `/tra-cuu-don-hang` — khách nhập SĐT → xem lịch sử đơn hàng, status badges, sản phẩm, tổng tiền (public, không cần đăng nhập)
 
 ### Admin
 - **Dashboard**:
@@ -561,6 +602,14 @@ useEffect(() => { loadData(page, ...filters); }, [page, ...filterStates, refresh
   - 📦 Đơn mới: nền xanh nhạt, tên KH, mã đơn, tổng tiền
   - 🔄 Chuyển trạng thái: nền màu theo trạng thái, badge cũ→mới, tên nhân viên xử lý
   - Realtime từ `don_hang` INSERT/UPDATE → nhận thông báo NGAY LẬP TỨC
+- **🤖 AI Chat Assistant** (mới):
+  - Floating button (bottom-right, espresso) → slide-in side panel (420px)
+  - SSE streaming từ Qwen AI (`qwen-plus` → fallback `qwen3.5-flash` → `qwen3.5-plus`)
+  - Intent analysis: tự động phát hiện query về doanh thu, đơn hàng, sản phẩm, KH, NV
+  - Auto-fetch fresh data từ internal APIs trước khi trả lời
+  - Kết hợp dữ liệu API + screen context (filter, stats, items đang hiển thị)
+  - Context fetch cho từng trang (dashboard, san-pham, don-hang, khach-hang, nhan-vien)
+  - Hỗ trợ tìm đơn/cụ thể theo ID (`dh_*`) hoặc SĐT khách hàng
 
 ---
 
@@ -582,9 +631,10 @@ useEffect(() => { loadData(page, ...filters); }, [page, ...filterStates, refresh
 | `next` | 14.2.35 | Framework |
 | `react` / `react-dom` | ^18 | UI library |
 | `@supabase/supabase-js` | ^2.101.1 | Database client |
-| `framer-motion` | ^12.38.0 | Animations (hero, fly-to-cart) |
+| `framer-motion` | ^12.38.0 | Animations (hero, fly-to-cart, confirm dialog) |
 | `recharts` | ^3.8.1 | Dashboard charts |
 | `exceljs` | ^4.4.0 | Excel export |
+| `@types/exceljs` | ^0.5.3 | Excel types |
 | `googleapis` | ^144.0.0 | Google Sheets append |
 | `xlsx` | ^0.18.5 | Excel utilities |
 | `cloudinary` | ^2.5.0 | Legacy (không dùng chính) |
@@ -613,9 +663,15 @@ useEffect(() => { loadData(page, ...filters); }, [page, ...filterStates, refresh
 7. **Hero image**: `/public/hero.jpg` — ảnh tĩnh local
 8. **Sizes**: JSONB `[{ten, so_luong}]` — empty array nếu không quản lý theo size
 9. **Excel export**: Dùng template `template/ExcelTemplateVi.xlsx`, copy formatting từ header row
-10. **AI models**: `qwen-plus` (DashScope) cho generateMoTa và generateProductDescription
+10. **AI models**: `qwen-plus` (DashScope) cho generateMoTa và generateProductDescription; `lib/qwen.ts` có model fallback chain: `qwen-plus` → `qwen3.5-flash` → `qwen3.5-plus`
 11. **Staff token**: HMAC-SHA256 với Web Crypto, PBKDF2 hashing
 12. **predev/prebuild**: Tự động xóa `.next` folder trước khi dev/build
 13. **Notification realtime**: Lắng nghe trực tiếp `don_hang` INSERT/UPDATE → không chờ trigger `thong_bao` → nhận thông báo trong ~50-150ms
 14. **ToastProvider** đã chuyển từ AdminNav lên root layout → có thể dùng ở mọi nơi
 15. **API silent fail**: Các API có bảng mới (`thong_bao`, `trang_thai_don_hang`, `trang_thai_kh`) trả default data thay vì 500 khi bảng chưa tồn tại
+16. **Admin AI Chat**: Sử dụng internal API calls (fetch với `x-admin-password` header) thay vì query Supabase trực tiếp → đảm bảo data consistency
+17. **Admin AI Chat**: SSE streaming pattern với `__META__:fetching_data` signal và `[DONE]` terminator
+18. **Admin layout**: `TrangThaiDHProvider → AdminChatProvider → AdminNav → children + AdminChatForLayout`
+19. **Shop layout**: `TrangThaiDHProvider → Header → main → Footer`
+20. **GHTK Shipping**: Env vars (`GHTK_TOKEN`, `GHTK_OPEN_API_STAGING`, `GHTK_OPEN_API_PRODUCT`) đã set nhưng chưa có implementation code
+21. **Tra cứu đơn hàng**: Public endpoint, không cần auth, trả về tối đa 50 đơn gần nhất theo SĐT

@@ -10,7 +10,7 @@ interface LoadingSpinnerProps {
 export default function LoadingSpinner({ size = 'md', label }: LoadingSpinnerProps) {
   const sizes = {
     sm: 'small' as const,
-    md: 'normal' as const,
+    md: 'large' as const,
     lg: 'large' as const,
     full: 'large' as const,
   };

@@ -3,15 +3,7 @@
 import { useState } from "react";
 import type { DonHang } from "@/types";
 import { useToast } from "@/contexts/ToastContext";
-
-const STATUS_COLORS: Record<string, string> = {
-  "Mới": "bg-blue-50 text-blue-700",
-  "Chốt để lên đơn": "bg-purple-50 text-purple-700",
-  "Đã lên đơn": "bg-teal-50 text-teal-700",
-  "Đang xử lý": "bg-amber-50 text-amber-700",
-  "Đã giao": "bg-green-50 text-green-700",
-  "Huỷ": "bg-red-50 text-red-500",
-};
+import { useTrangThaiDH, getStatusBadgeStyle } from "@/contexts/TrangThaiDHContext";
 
 export default function OrderTable({
   orders,
@@ -26,6 +18,7 @@ export default function OrderTable({
 }) {
   const [updating, setUpdating] = useState<string | null>(null);
   const { showSuccess, showError } = useToast();
+  const { trangThais } = useTrangThaiDH();
 
   const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
 
@@ -196,16 +189,14 @@ export default function OrderTable({
                   value={order.trangThai}
                   onChange={(e) => handleStatusChange(order.id, e.target.value)}
                   disabled={updating === order.id}
-                  className={`text-xs font-medium px-3 py-1 border-0 cursor-pointer rounded ${
-                    STATUS_COLORS[order.trangThai] || "bg-stone-100 text-stone-600"
-                  }`}
+                  className="text-xs font-medium px-3 py-1 border-0 cursor-pointer rounded"
+                  style={getStatusBadgeStyle(
+                    trangThais.find((t) => t.key === order.trangThai)?.mau || "#6B7280"
+                  )}
                 >
-                  <option value="Mới">Mới</option>
-                  <option value="Chốt để lên đơn">Chốt để lên đơn</option>
-                  <option value="Đã lên đơn">Đã lên đơn</option>
-                  <option value="Đang xử lý">Đang xử lý</option>
-                  <option value="Đã giao">Đã giao</option>
-                  <option value="Huỷ">Huỷ</option>
+                  {trangThais.map((tt) => (
+                    <option key={tt.key} value={tt.key}>{tt.ten}</option>
+                  ))}
                 </select>
               </td>
             </tr>

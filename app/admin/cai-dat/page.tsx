@@ -127,14 +127,18 @@ export default function AdminSettingsPage() {
   const [newMauTT, setNewMauTT] = useState("#8C7B72");
   const [addingTT, setAddingTT] = useState(false);
 
-  const loadTrangThai = useCallback(() => {
-    fetch("/api/trang-thai-kh")
+  const loadTrangThai = useCallback((signal?: AbortSignal) => {
+    fetch("/api/trang-thai-kh", { signal })
       .then((r) => r.json())
       .then((d) => { if (d.success) setTrangThaiList(d.data); })
-      .catch(() => {});
+      .catch((err) => { if (err.name !== "AbortError") {} });
   }, []);
 
-  useEffect(() => { loadTrangThai(); }, [loadTrangThai]);
+  useEffect(() => {
+    const controller = new AbortController();
+    loadTrangThai(controller.signal);
+    return () => controller.abort();
+  }, [loadTrangThai]);
 
   const handleAddTrangThai = async () => {
     if (!newTenTT.trim()) return;

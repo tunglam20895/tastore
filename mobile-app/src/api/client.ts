@@ -15,7 +15,6 @@ apiClient.interceptors.request.use((config) => {
   if (state.role === 'admin' && state.adminPassword) {
     config.headers['x-admin-password'] = state.adminPassword;
   } else if (state.role === 'staff' && state.staffToken) {
-    // For mobile, send as header since cookies don't work cross-origin
     config.headers['staff-token'] = state.staffToken;
   }
 

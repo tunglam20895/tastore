@@ -24,7 +24,7 @@ function formatMoney(n: number): string {
 }
 
 export default function AdminChat({ currentPage }: AdminChatProps) {
-  const { screenData, setScreenData } = useAdminChat();
+  const { screenData } = useAdminChat();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -50,7 +50,7 @@ export default function AdminChat({ currentPage }: AdminChatProps) {
   const buildFullContext = useCallback((): string | undefined => {
     if (!context) return undefined;
 
-    let parts = [context];
+    const contextParts = [context];
 
     // Add screen data if available
     if (screenData) {
@@ -81,10 +81,10 @@ export default function AdminChat({ currentPage }: AdminChatProps) {
       }
 
       screenPart += sd.summary ? `\n📝 Tóm tắt: ${sd.summary}\n` : '';
-      parts.push(screenPart);
+      contextParts.push(screenPart);
     }
 
-    return parts.join('');
+    return contextParts.join('');
   }, [context, screenData]);
 
   const fetchContext = useCallback(async () => {
@@ -183,7 +183,7 @@ Nếu có dữ liệu tươi được cung cấp trong context, hãy sử dụng
           const trimmed = line.trim();
           if (!trimmed || !trimmed.startsWith('data: ')) continue;
 
-          const data = trimmed.slice(6); // ❌ ĐỪNG dùng .trim() - sẽ mất khoảng trắng giữa các từ!
+          const data = trimmed.slice(6); // Không .trim() để giữ khoảng trắng
           if (data === '[DONE]') break;
 
           // Handle meta signal for auto-fetch
@@ -217,21 +217,25 @@ Nếu có dữ liệu tươi được cung cấp trong context, hãy sử dụng
             }
           } catch {
             // Not JSON — treat as raw text chunk
-            // QUAN TRỌNG: KHÔNG dùng .trim() vì sẽ cắt mất khoảng trắng đầu chunk
-            // Chỉ lọc các dòng trống (empty lines) từ SSE protocol
             const chunkData = trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed;
-            // Giữ nguyên khoảng trắng, chỉ bỏ qua nếu chunk hoàn toàn trống
-            if (chunkData !== '') {
+            // QUAN TRỌNG: xử lý "\n" mà backend encode thành literal \n trong SSE
+            if (chunkData === '\\n' || chunkData === '\n') {
+              // Đây là newline mà AI gửi → thêm newline thực vào text
+              accumulatedContent += '\n';
+            } else if (chunkData !== '') {
               accumulatedContent += chunkData;
-              setMessages(prev => {
-                const updated = [...prev];
-                updated[assistantIndex] = {
-                  role: 'assistant',
-                  content: accumulatedContent,
-                };
-                return updated;
-              });
+            } else {
+              // Empty data line trong SSE = newline
+              accumulatedContent += '\n';
             }
+            setMessages(prev => {
+              const updated = [...prev];
+              updated[assistantIndex] = {
+                role: 'assistant',
+                content: accumulatedContent,
+              };
+              return updated;
+            });
           }
         }
       }
@@ -247,7 +251,7 @@ Nếu có dữ liệu tươi được cung cấp trong context, hãy sử dụng
           return updated;
         });
       }
-    } catch (e) {
+    } catch {
       setMessages(prev => {
         const updated = [...prev];
         updated[assistantIndex] = {
