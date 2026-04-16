@@ -41,10 +41,12 @@
       "expo-notifications"
     ],
     "extra": {
-      "apiUrl": "https://tastore.vercel.app",
+      "apiUrl": "localhost:3000",
+      "router": {},
       "eas": {
-        "projectId": "your-project-id"
+        "projectId": "620e6f30-3c2f-475b-8f04-b38f500051ea"
       }
-    }
+    },
+    "owner": "tungla.20895"
   }
 }

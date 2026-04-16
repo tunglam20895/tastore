@@ -16,9 +16,11 @@ export async function verifyAccess(request: NextRequest, requiredQuyen?: string)
   const pw = request.headers.get('x-admin-password');
   if (pw && verifyAdminPassword(pw)) return true;
 
-  // 2. Staff token cookie
+  // 2. Staff token — check both header (mobile app) and cookie (web admin)
   if (!requiredQuyen) return false; // route admin-only
-  const token = request.cookies.get('staff-token')?.value;
+  const token =
+    request.headers.get('staff-token') ||          // mobile app gửi qua header
+    request.cookies.get('staff-token')?.value;      // web admin dùng cookie
   if (!token) return false;
   const session = await verifyStaffToken(token);
   if (!session) return false;

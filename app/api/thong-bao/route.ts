@@ -48,20 +48,25 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
     }
 
-    const body = await request.json();
-    const { ids } = body;
+    let body;
+    try { body = await request.json(); } catch { body = {}; }
+    const { ids, markAll } = body;
 
-    if (!ids || !Array.isArray(ids)) {
-      return NextResponse.json({ success: false, error: 'Thiếu IDs' }, { status: 400 });
+    // Mark ALL as read when no specific ids or markAll flag
+    let error;
+    if (markAll || !ids || !Array.isArray(ids) || ids.length === 0) {
+      ({ error } = await supabase
+        .from('thong_bao')
+        .update({ da_doc: true })
+        .eq('da_doc', false));
+    } else {
+      ({ error } = await supabase
+        .from('thong_bao')
+        .update({ da_doc: true })
+        .in('id', ids));
     }
 
-    const { error } = await supabase
-      .from('thong_bao')
-      .update({ da_doc: true })
-      .in('id', ids);
-
     if (error) throw error;
-
     return NextResponse.json({ success: true });
   } catch (e) {
     console.error('PUT /api/thong-bao error:', e);

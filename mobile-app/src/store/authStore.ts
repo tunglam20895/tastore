@@ -1,5 +1,16 @@
 import { create } from 'zustand';
-import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
+
+// Web fallback for SecureStore using localStorage
+const isWeb = Platform.OS === 'web';
+
+const webStore = {
+  getItemAsync: async (key: string) => localStorage.getItem(key),
+  setItemAsync: async (key: string, value: string) => localStorage.setItem(key, value),
+  deleteItemAsync: async (key: string) => localStorage.removeItem(key),
+};
+
+const SecureStore = isWeb ? webStore : require('expo-secure-store');
 
 type AuthRole = 'admin' | 'staff' | null;
 

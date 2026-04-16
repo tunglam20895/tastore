@@ -1,9 +1,8 @@
 import Constants from 'expo-constants';
 
-// API URL — change this to your Vercel deployment URL
-export const API_URL =
-  (Constants.expoConfig?.extra?.apiUrl as string) ||
-  'https://tastore.vercel.app';
+// API URL — production
+export const API_URL = 'https://tastore.vercel.app';
+// export const API_URL = 'http://localhost:3000';
 
 export const APP_NAME = 'TRANG ANH STORE';
 

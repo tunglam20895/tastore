@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity, Modal } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSettings, updateSettings } from "@/src/api/cai-dat";
 import { getTrangThaiDH, updateTrangThaiDH } from "@/src/api/trang-thai-dh";
 import { getTrangThaiKH } from "@/src/api/khach-hang";
 import { useAuthStore } from "@/src/store/authStore";
-import { colors } from "@/src/theme";
+import { colors, shadows, borderRadius } from "@/src/theme";
 import { DEFAULT_TRANG_THAI_DH } from "@/src/types";
 import { uploadImage } from "@/src/utils/upload";
 import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
@@ -24,26 +24,53 @@ export default function SettingsScreen() {
     queryKey: ["settings"],
     queryFn: () => getSettings(),
   });
-  const settings = ((settingsData as any)?.data || settingsData || {}) as Record<string, string>;
 
-  const { data: trangThaiDHData } = useQuery({
+  const { data: trangThaiDHData, isLoading: loadingTrangThaiDH } = useQuery({
     queryKey: ["trang-thai-dh"],
     queryFn: () => getTrangThaiDH(),
   });
-  const trangThaiDH = trangThaiDHData || DEFAULT_TRANG_THAI_DH;
 
-  const { data: trangThaiKHData } = useQuery({
+  const { data: trangThaiKHData, isLoading: loadingTrangThaiKH } = useQuery({
     queryKey: ["trang-thai-kh"],
     queryFn: () => getTrangThaiKH(),
   });
-  const trangThaiKH = (trangThaiKHData as any)?.data || trangThaiKHData || [];
 
-  const [tenShop, setTenShop] = useState(settings.tenShop || "");
-  const [sdt, setSdt] = useState(settings.sdt || "");
-  const [diaChi, setDiaChi] = useState(settings.diaChi || "");
-  const [email, setEmail] = useState(settings.email || "");
-  const [logoURL, setLogoURL] = useState(settings.logoURL || "");
+  // Safe data extraction with type casting
+  const rawSettings = (settingsData as any)?.data || settingsData || {};
+  const safeSettings = (typeof rawSettings === 'object' ? rawSettings : {}) as Record<string, string>;
+
+  const rawTrangThaiDH = trangThaiDHData as any;
+  const trangThaiDH: any[] = Array.isArray(rawTrangThaiDH)
+    ? rawTrangThaiDH
+    : (rawTrangThaiDH?.data && Array.isArray(rawTrangThaiDH.data))
+      ? rawTrangThaiDH.data
+      : DEFAULT_TRANG_THAI_DH;
+
+  const rawTrangThaiKH = trangThaiKHData as any;
+  const trangThaiKH: any[] = Array.isArray(rawTrangThaiKH)
+    ? rawTrangThaiKH
+    : (rawTrangThaiKH?.data && Array.isArray(rawTrangThaiKH.data))
+      ? rawTrangThaiKH.data
+      : [];
+
+  const [tenShop, setTenShop] = useState(safeSettings.tenShop || "");
+  const [sdt, setSdt] = useState(safeSettings.sdt || "");
+  const [diaChi, setDiaChi] = useState(safeSettings.diaChi || "");
+  const [email, setEmail] = useState(safeSettings.email || "");
+  const [logoURL, setLogoURL] = useState(safeSettings.logoURL || "");
   const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  // Sync state when data loads
+  useEffect(() => {
+    if (settingsData && !loadingSettings) {
+      const s = safeSettings;
+      setTenShop(s.tenShop || "");
+      setSdt(s.sdt || "");
+      setDiaChi(s.diaChi || "");
+      setEmail(s.email || "");
+      setLogoURL(s.logoURL || "");
+    }
+  }, [settingsData]);
 
   // Edit status color
   const [editingStatus, setEditingStatus] = useState<any | null>(null);
@@ -89,7 +116,7 @@ export default function SettingsScreen() {
 
   const openEditColor = (tt: any) => {
     setEditingStatus(tt);
-    setEditColor(tt.mau);
+    setEditColor(tt?.mau || "#000000");
   };
 
   const handleSaveColor = async () => {
@@ -115,7 +142,9 @@ export default function SettingsScreen() {
     );
   }
 
-  if (loadingSettings) return <LoadingSpinner size="full" label="Đang tải..." />;
+  if (loadingSettings || loadingTrangThaiDH) {
+    return <LoadingSpinner size="full" label="Đang tải cài đặt..." />;
+  }
 
   const presetColors = [
     '#3B82F6', '#8B5CF6', '#14B8A6', '#F59E0B', '#22C55E', '#A8705F',
@@ -126,8 +155,8 @@ export default function SettingsScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scroll}>
       {/* Logo */}
-      <Text style={styles.sectionTitle}>Logo</Text>
-      <TouchableOpacity style={styles.logoPicker} onPress={pickLogo} disabled={uploadingLogo}>
+      <Text style={styles.sectionTitle}>Logo shop</Text>
+      <TouchableOpacity style={styles.logoPicker} onPress={pickLogo} disabled={uploadingLogo} activeOpacity={0.7}>
         {uploadingLogo ? (
           <LoadingSpinner size="md" />
         ) : logoURL ? (
@@ -135,7 +164,7 @@ export default function SettingsScreen() {
         ) : (
           <>
             <Ionicons name="image-outline" size={40} color={colors.stone[300]} />
-            <Text style={styles.logoText}>Chọn logo shop</Text>
+            <Text style={styles.logoText}>Nhấn để chọn logo</Text>
           </>
         )}
       </TouchableOpacity>
@@ -146,39 +175,62 @@ export default function SettingsScreen() {
       <Input label="Số điện thoại" value={sdt} onChangeText={setSdt} keyboardType="phone-pad" />
       <Input label="Địa chỉ" value={diaChi} onChangeText={setDiaChi} />
       <Input label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
-      <Button title="LƯU THÔNG TIN" onPress={handleSaveSettings} style={styles.saveBtn} />
+      <Button title="💾 Lưu thông tin" onPress={handleSaveSettings} style={styles.saveBtn} />
 
       {/* Order statuses */}
-      <Text style={styles.sectionTitle}>Trạng thái đơn hàng (nhấn để đổi màu)</Text>
+      <Text style={styles.sectionTitle}>Trạng thái đơn hàng</Text>
       {trangThaiDH.map((tt: any) => (
-        <TouchableOpacity key={tt.key} style={styles.ttRow} onPress={() => openEditColor(tt)}>
-          <View style={[styles.ttDot, { backgroundColor: tt.mau }]} />
+        <TouchableOpacity
+          key={tt.key}
+          style={styles.ttRow}
+          onPress={() => openEditColor(tt)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.ttDot, { backgroundColor: tt.mau || colors.stone[300] }]} />
           <Text style={styles.ttText}>{tt.ten}</Text>
-          <Ionicons name="color-palette" size={16} color={colors.stone[300]} />
+          <Ionicons name="color-palette-outline" size={16} color={colors.stone[400]} />
         </TouchableOpacity>
       ))}
 
       {/* Customer statuses */}
-      <Text style={styles.sectionTitle}>Trạng thái khách hàng</Text>
-      {trangThaiKH.map((tt: any) => (
-        <View key={tt.id} style={styles.ttRow}>
-          <View style={[styles.ttDot, { backgroundColor: tt.mau }]} />
-          <Text style={styles.ttText}>{tt.ten}</Text>
-        </View>
-      ))}
+      {trangThaiKH.length > 0 && (
+        <>
+          <Text style={styles.sectionTitle}>Trạng thái khách hàng</Text>
+          {trangThaiKH.map((tt: any) => (
+            <View key={tt.id} style={styles.ttRow}>
+              <View style={[styles.ttDot, { backgroundColor: tt.mau || colors.stone[300] }]} />
+              <Text style={styles.ttText}>{tt.ten}</Text>
+            </View>
+          ))}
+        </>
+      )}
 
       {/* Edit color modal */}
-      <Modal visible={!!editingStatus} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
+      <Modal visible={!!editingStatus} transparent animationType="fade">
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setEditingStatus(null)}
+        >
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Màu: {editingStatus?.ten}</Text>
+            <Text style={styles.modalTitle}>
+              Đổi màu: {editingStatus?.ten || ''}
+            </Text>
             <View style={[styles.colorPreview, { backgroundColor: editColor }]} />
-            <Input label="Mã màu HEX" value={editColor} onChangeText={(v) => setEditColor(v.startsWith('#') ? v : `#${v}`)} placeholder="#000000" />
-            <Text style={styles.label}>Màu gợi ý</Text>
+            <Input
+              label="Mã màu HEX"
+              value={editColor}
+              onChangeText={(v) => setEditColor(v.startsWith('#') ? v : `#${v}`)}
+              placeholder="#000000"
+            />
+            <Text style={styles.presetLabel}>Màu gợi ý</Text>
             <View style={styles.presetColors}>
               {presetColors.map(c => (
-                <TouchableOpacity key={c} style={[styles.presetColor, { backgroundColor: c }, editColor === c && styles.presetColorSelected]}
-                  onPress={() => setEditColor(c)}>
+                <TouchableOpacity
+                  key={c}
+                  style={[styles.presetColor, { backgroundColor: c }, editColor === c && styles.presetColorSelected]}
+                  onPress={() => setEditColor(c)}
+                >
                   {editColor === c && <Ionicons name="checkmark" size={14} color="#fff" />}
                 </TouchableOpacity>
               ))}
@@ -188,7 +240,7 @@ export default function SettingsScreen() {
               <Button title="Lưu" onPress={handleSaveColor} loading={savingColor} style={{ flex: 1 }} />
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
       </Modal>
     </ScrollView>
   );
@@ -196,24 +248,103 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.cream },
-  scroll: { padding: 16 },
-  sectionTitle: { fontSize: 12, fontWeight: "600", textTransform: "uppercase", letterSpacing: 1.5, color: colors.stone[500], marginBottom: 12, marginTop: 16 },
-  saveBtn: { marginTop: 8 },
+  scroll: { padding: 16, paddingBottom: 100 },
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 1.5,
+    color: colors.espresso,
+    marginBottom: 12,
+    marginTop: 20,
+  },
+  saveBtn: { marginTop: 12 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   centerText: { fontSize: 14, color: colors.stone[400], marginTop: 16 },
-  logoPicker: { height: 120, backgroundColor: colors.white, borderRadius: 12, borderWidth: 1, borderColor: colors.stone[300], justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
+  logoPicker: {
+    height: 140,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.stone[200],
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+    ...shadows.card,
+  },
   logoPreview: { width: 100, height: 100 },
   logoText: { fontSize: 12, color: colors.stone[400], marginTop: 8 },
-  ttRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.stone[100] },
+  ttRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.sm,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: colors.stone[100],
+  },
   ttDot: { width: 12, height: 12, borderRadius: 6 },
-  ttText: { fontSize: 14, color: colors.espresso, flex: 1 },
-  label: { fontSize: 10, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: colors.stone[600], marginBottom: 6 },
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center", padding: 24 },
-  modalContent: { backgroundColor: colors.white, borderRadius: 20, padding: 24, width: '100%', maxWidth: 360, maxHeight: '80%' },
-  modalTitle: { fontSize: 18, fontWeight: "600", color: colors.espresso, marginBottom: 16, textAlign: 'center' },
+  ttText: { fontSize: 14, color: colors.espresso, flex: 1, fontWeight: '500' },
+  label: {
+    fontSize: 10,
+    fontWeight: "600",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    color: colors.stone[600],
+    marginBottom: 6,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  modalContent: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: 24,
+    width: '100%',
+    maxWidth: 360,
+    maxHeight: '80%',
+    ...shadows.card,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: colors.espresso,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
   modalButtons: { flexDirection: "row", gap: 12, marginTop: 16 },
-  colorPreview: { width: '100%', height: 60, borderRadius: 12, marginBottom: 16, borderWidth: 1, borderColor: colors.stone[200] },
+  colorPreview: {
+    width: '100%',
+    height: 60,
+    borderRadius: borderRadius.sm,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.stone[200],
+  },
+  presetLabel: {
+    fontSize: 10,
+    fontWeight: "600",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    color: colors.stone[600],
+    marginBottom: 8,
+  },
   presetColors: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  presetColor: { width: 36, height: 36, borderRadius: 8, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: 'transparent' },
+  presetColor: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
   presetColorSelected: { borderColor: colors.espresso, borderWidth: 2 },
 });

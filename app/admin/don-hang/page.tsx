@@ -5,6 +5,7 @@ import { useAdminChat } from "@/contexts/AdminChatContext";
 import OrderTable from "@/components/admin/OrderTable";
 import Pagination from "@/components/admin/Pagination";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import CreateOrderModal from "@/components/admin/CreateOrderModal";
 import type { DonHang } from "@/types";
 import { useToast } from "@/contexts/ToastContext";
 import { useTrangThaiDH } from "@/contexts/TrangThaiDHContext";
@@ -18,6 +19,9 @@ export default function AdminOrdersPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [limit, setLimit] = useState(LIMIT_DEFAULT);
+
+  // Create order modal
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   // Filters
   const [trangThai, setTrangThai] = useState("");
@@ -214,6 +218,15 @@ export default function AdminOrdersPage() {
         <h1 className="font-heading text-xl sm:text-2xl font-light text-espresso">Quản lý đơn hàng</h1>
         <div className="flex items-center gap-2 sm:gap-3">
           <button
+            onClick={() => setCreateModalOpen(true)}
+            className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-espresso text-cream text-[10px] sm:text-xs uppercase tracking-widest hover:opacity-80 transition-opacity rounded"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Thêm đơn hàng
+          </button>
+          <button
             onClick={handleExportChotDonHang}
             disabled={exportLoading}
             className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-teal-600 text-white text-[10px] sm:text-xs uppercase tracking-widest hover:bg-teal-700 disabled:opacity-50 transition-colors rounded"
@@ -357,6 +370,13 @@ export default function AdminOrdersPage() {
           </div>
         </div>
       )}
+
+      {/* Create Order Modal */}
+      <CreateOrderModal
+        isOpen={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onSuccess={() => loadOrders(page, trangThai, searchTen, searchSdt, tuNgay, denNgay)}
+      />
     </div>
   );
 }

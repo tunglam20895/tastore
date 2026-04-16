@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useTrangThaiDH, getTrangThaiMau, getStatusBadgeStyle } from "@/contexts/TrangThaiDHContext";
 import type { DonHang } from "@/types";
 
@@ -78,13 +79,12 @@ export default function OrderLookupResult({ orders }: OrderLookupResultProps) {
                 <div key={i} className="flex items-center justify-between py-2 border-b border-stone-50 last:border-0">
                   <div className="flex items-start gap-3">
                     {sp.anhURL && (
-                      <img
+                      <Image
                         src={sp.anhURL}
                         alt={sp.ten}
+                        width={48}
+                        height={64}
                         className="w-12 h-16 object-cover bg-stone-100 flex-shrink-0"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
                       />
                     )}
                     <div>

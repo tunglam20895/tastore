@@ -22,15 +22,10 @@ export default function ProductDetailPage() {
   useEffect(() => {
     Promise.all([
       fetch(`/api/san-pham/${params.id}`).then((r) => r.json()).catch(() => null),
-      fetch("/api/san-pham").then((r) => r.json()).catch(() => null),
       fetch("/api/danh-muc").then((r) => r.json()).catch(() => null),
-    ]).then(([singleRes, allRes, catsRes]) => {
-      // Ưu tiên fetch single nếu có route, fallback về fetch all
-      if (singleRes?.success && singleRes.data) {
-        setProduct(singleRes.data);
-      } else if (allRes?.success) {
-        const found = (allRes.data as SanPham[]).find((p) => p.id === params.id);
-        setProduct(found || null);
+    ]).then(([spRes, catsRes]) => {
+      if (spRes?.success && spRes.data) {
+        setProduct(spRes.data);
       }
       if (catsRes?.success) setCategories(catsRes.data);
     }).finally(() => setLoading(false));

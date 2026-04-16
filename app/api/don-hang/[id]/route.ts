@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyAccess } from '@/lib/auth'
 import { verifyStaffToken } from '@/lib/staff-auth'
-import type { DonHang } from '@/types'
+import type { DonHang, CartItem } from '@/types'
 
 async function getNguoiXuLy(request: NextRequest): Promise<string> {
   const pw = request.headers.get('x-admin-password')
@@ -35,12 +35,29 @@ export async function GET(
     if (error) throw error
     if (!data) return NextResponse.json({ success: false, error: 'Không tìm thấy đơn hàng' }, { status: 404 })
 
+    const sanPham = (data.san_pham as CartItem[]) || []
+
+    // Enrich products with images from san_pham table
+    if (sanPham.length > 0) {
+      const productIds = sanPham.map(p => p.id).filter(Boolean)
+      if (productIds.length > 0) {
+        const { data: spData } = await supabase
+          .from('san_pham')
+          .select('id, anh_url')
+          .in('id', productIds)
+        if (spData) {
+          const imgMap = new Map(spData.map(s => [s.id, s.anh_url]))
+          sanPham.forEach(p => { if (!p.anhURL) p.anhURL = imgMap.get(p.id) || '' })
+        }
+      }
+    }
+
     const order: DonHang = {
       id: data.id,
       tenKH: data.ten_kh,
       sdt: data.sdt,
       diaChi: data.dia_chi,
-      sanPham: data.san_pham,
+      sanPham,
       tongTien: Number(data.tong_tien),
       thoiGian: data.thoi_gian,
       trangThai: data.trang_thai,

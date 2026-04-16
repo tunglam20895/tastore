@@ -1,18 +1,12 @@
 import { Redirect } from 'expo-router';
 import { useAuthStore } from '@/src/store/authStore';
-import { useEffect, useState } from 'react';
 import LoadingSpinner from '@/src/components/ui/LoadingSpinner';
 
 export default function Index() {
-  const { initialize, isAuthenticated, isLoading } = useAuthStore();
-  const [initialized, setInitialized] = useState(false);
+  const { isAuthenticated, isLoading } = useAuthStore();
 
-  useEffect(() => {
-    initialize().then(() => setInitialized(true));
-  }, []);
-
-  if (!initialized || isLoading) {
-    return <LoadingSpinner size="full" label="TRANG ANH" />;
+  if (isLoading) {
+    return <LoadingSpinner size="full" label="TRANG ANH STORE" />;
   }
 
   return isAuthenticated

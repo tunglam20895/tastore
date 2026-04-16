@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import AdminDetailHeader from "@/src/components/admin/AdminDetailHeader";
 import {
   View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity,
   Switch, KeyboardAvoidingView, Platform,
@@ -135,6 +136,7 @@ export default function AddProductScreen() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
+      <AdminDetailHeader title="Thêm sản phẩm mới" showNotification />
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* Image picker */}
         <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>

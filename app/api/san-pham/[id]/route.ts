@@ -29,6 +29,29 @@ function mapRow(row: Record<string, unknown>): SanPham {
   }
 }
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    // Cho phép public truy cập — shop detail page cần lấy sản phẩm không cần auth
+    const { data, error } = await supabase
+      .from('san_pham')
+      .select('*')
+      .eq('id', params.id)
+      .single()
+
+    if (error) throw error
+    if (!data) return NextResponse.json({ success: false, error: 'Không tìm thấy sản phẩm' }, { status: 404 })
+
+    // Nếu chỉ lấy sản phẩm đang bán (không truyền query param)
+    return NextResponse.json({ success: true, data: mapRow(data) })
+  } catch (error) {
+    console.error('GET /api/san-pham/[id] error:', error)
+    return NextResponse.json({ success: false, error: 'Không thể lấy sản phẩm' }, { status: 500 })
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }

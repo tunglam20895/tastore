@@ -19,8 +19,9 @@ export default function RootLayout() {
     initialize().then(() => setInitialized(true));
   }, []);
 
+  // Show loading only during initial auth check
   if (!initialized || isLoading) {
-    return <LoadingSpinner size="full" label="TRANG ANH" />;
+    return <LoadingSpinner size="full" label="TRANG ANH STORE" />;
   }
 
   return (

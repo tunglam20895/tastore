@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,13 +8,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
+  Keyboard,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { loginAdmin, loginStaff } from "@/src/api/auth";
 import { useAuthStore } from "@/src/store/authStore";
-import { colors } from "@/src/theme";
-import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
+import { colors, borderRadius, shadows } from "@/src/theme";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function LoginScreen() {
   const [mode, setMode] = useState<"admin" | "staff">("admin");
@@ -24,15 +22,19 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const router = useRouter();
   const { loginAsAdmin, loginAsStaff } = useAuthStore();
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener("keyboardDidHide", () => setKeyboardVisible(false));
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
 
   const handleLogin = async () => {
     setLoading(true);
     setError("");
-
-    // Minimum loading to show animation
-    await new Promise<void>((resolve) => setTimeout(resolve, 500));
 
     try {
       if (mode === "admin") {
@@ -69,38 +71,43 @@ export default function LoginScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          <LoadingSpinner size="lg" />
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        {/* Logo - Clean text-based */}
+        <View style={[styles.logoContainer, keyboardVisible && styles.logoContainerKeyboard]}>
+          <View style={styles.logoCircle}>
+            <Text style={styles.logoText}>TA</Text>
+          </View>
           <Text style={styles.shopName}>TRANG ANH STORE</Text>
+          <Text style={styles.shopSubtitle}>Admin Panel</Text>
         </View>
 
-        {/* Tabs */}
-        <View style={styles.tabs}>
+        {/* Mode Toggle */}
+        <View style={styles.modeToggle}>
           <TouchableOpacity
-            style={[styles.tab, mode === "admin" && styles.tabActive]}
-            onPress={() => {
-              setMode("admin");
-              setError("");
-            }}
+            style={[styles.modeTab, mode === "admin" && styles.modeTabActive]}
+            onPress={() => { setMode("admin"); setError(""); }}
+            activeOpacity={0.7}
           >
-            <Text
-              style={[styles.tabText, mode === "admin" && styles.tabTextActive]}
-            >
+            <Ionicons
+              name={mode === "admin" ? "shield-checkmark" : "shield-checkmark-outline"}
+              size={18}
+              color={mode === "admin" ? colors.cream : colors.stone[500]}
+            />
+            <Text style={[styles.modeText, mode === "admin" && styles.modeTextActive]}>
               Admin
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.tab, mode === "staff" && styles.tabActive]}
-            onPress={() => {
-              setMode("staff");
-              setError("");
-            }}
+            style={[styles.modeTab, mode === "staff" && styles.modeTabActive]}
+            onPress={() => { setMode("staff"); setError(""); }}
+            activeOpacity={0.7}
           >
-            <Text
-              style={[styles.tabText, mode === "staff" && styles.tabTextActive]}
-            >
+            <Ionicons
+              name={mode === "staff" ? "person" : "person-outline"}
+              size={18}
+              color={mode === "staff" ? colors.cream : colors.stone[500]}
+            />
+            <Text style={[styles.modeText, mode === "staff" && styles.modeTextActive]}>
               Nhân viên
             </Text>
           </TouchableOpacity>
@@ -111,15 +118,18 @@ export default function LoginScreen() {
           {mode === "staff" && (
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Tên đăng nhập</Text>
-              <TextInput
-                style={styles.input}
-                value={username}
-                onChangeText={setUsername}
-                placeholder="Nhập tên đăng nhập"
-                placeholderTextColor={colors.stone[400]}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
+              <View style={styles.inputWrap}>
+                <Ionicons name="person-outline" size={18} color={colors.stone[400]} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  value={username}
+                  onChangeText={setUsername}
+                  placeholder="Nhập tên đăng nhập"
+                  placeholderTextColor={colors.stone[300]}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
             </View>
           )}
 
@@ -127,33 +137,46 @@ export default function LoginScreen() {
             <Text style={styles.label}>
               {mode === "admin" ? "Mật khẩu admin" : "Mật khẩu"}
             </Text>
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Nhập mật khẩu"
-              placeholderTextColor={colors.stone[400]}
-              secureTextEntry
-              autoCapitalize="none"
-              onSubmitEditing={handleLogin}
-              returnKeyType="go"
-            />
+            <View style={styles.inputWrap}>
+              <Ionicons name="lock-closed-outline" size={18} color={colors.stone[400]} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Nhập mật khẩu"
+                placeholderTextColor={colors.stone[300]}
+                secureTextEntry
+                autoCapitalize="none"
+                onSubmitEditing={handleLogin}
+                returnKeyType="go"
+              />
+            </View>
           </View>
 
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          {error ? (
+            <View style={styles.errorBox}>
+              <Ionicons name="alert-circle" size={16} color="#DC2626" />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
 
           <TouchableOpacity
-            style={[
-              styles.button,
-              loading && styles.buttonDisabled,
-            ]}
+            style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleLogin}
             disabled={loading}
+            activeOpacity={0.8}
           >
             {loading ? (
-              <LoadingSpinner size="sm" />
+              <View style={styles.loadingRow}>
+                <View style={styles.loadingDot} />
+                <View style={styles.loadingDot} />
+                <View style={styles.loadingDot} />
+              </View>
             ) : (
-              <Text style={styles.buttonText}>ĐĂNG NHẬP</Text>
+              <>
+                <Ionicons name="log-in-outline" size={20} color={colors.cream} />
+                <Text style={styles.buttonText}>Đăng nhập</Text>
+              </>
             )}
           </TouchableOpacity>
         </View>
@@ -172,46 +195,82 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 24,
   },
+
+  // Logo
   logoContainer: {
     alignItems: "center",
     marginBottom: 48,
   },
-  shopName: {
-    fontSize: 14,
-    fontWeight: "300",
-    letterSpacing: 4,
-    color: colors.espresso,
-    marginTop: 8,
-    fontFamily: "CormorantGaramond",
+  logoContainerKeyboard: {
+    marginBottom: 24,
   },
-  tabs: {
+  logoCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.espresso,
+    justifyContent: "center",
+    alignItems: "center",
+    ...shadows.card,
+  },
+  logoText: {
+    fontSize: 32,
+    fontWeight: "900",
+    color: colors.cream,
+    letterSpacing: 2,
+  },
+  shopName: {
+    fontSize: 16,
+    fontWeight: "800",
+    letterSpacing: 3,
+    color: colors.espresso,
+    marginTop: 16,
+    textTransform: "uppercase",
+  },
+  shopSubtitle: {
+    fontSize: 11,
+    fontWeight: "500",
+    letterSpacing: 2,
+    color: colors.stone[400],
+    textTransform: "uppercase",
+    marginTop: 4,
+  },
+
+  // Mode toggle
+  modeToggle: {
     flexDirection: "row",
     backgroundColor: colors.white,
-    borderRadius: 12,
+    borderRadius: borderRadius.md,
     padding: 4,
-    marginBottom: 32,
+    marginBottom: 24,
     borderWidth: 1,
-    borderColor: colors.stone[300],
+    borderColor: colors.stone[200],
+    ...shadows.card,
   },
-  tab: {
+  modeTab: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     paddingVertical: 12,
-    alignItems: "center",
-    borderRadius: 8,
+    borderRadius: borderRadius.sm,
   },
-  tabActive: {
+  modeTabActive: {
     backgroundColor: colors.espresso,
   },
-  tabText: {
+  modeText: {
     fontSize: 12,
     fontWeight: "600",
-    letterSpacing: 1.5,
+    letterSpacing: 1,
     textTransform: "uppercase",
     color: colors.stone[500],
   },
-  tabTextActive: {
+  modeTextActive: {
     color: colors.cream,
   },
+
+  // Form
   form: {
     gap: 16,
   },
@@ -223,39 +282,74 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: 1,
     textTransform: "uppercase",
-    color: colors.stone[600],
+    color: colors.stone[500],
   },
-  input: {
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: colors.stone[300],
-    borderRadius: 8,
+    borderColor: colors.stone[200],
+    borderRadius: borderRadius.sm,
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    height: 48,
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
     fontSize: 14,
     color: colors.espresso,
+    height: 48,
+  },
+
+  // Error
+  errorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: `${"#DC2626"}10`,
+    borderRadius: borderRadius.sm,
+    padding: 12,
   },
   errorText: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#DC2626",
-    textAlign: "center",
-    marginTop: 8,
+    flex: 1,
+    fontWeight: '500',
   },
+
+  // Button
   button: {
     backgroundColor: colors.espresso,
     paddingVertical: 14,
-    borderRadius: 8,
+    borderRadius: borderRadius.sm,
     alignItems: "center",
     marginTop: 8,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonText: {
-    fontSize: 12,
-    fontWeight: "600",
-    letterSpacing: 1.5,
+    fontSize: 13,
+    fontWeight: "700",
+    letterSpacing: 1,
     color: colors.cream,
     textTransform: "uppercase",
+  },
+  loadingRow: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+  },
+  loadingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.cream,
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Modal, FlatList,
   Dimensions, Animated,
@@ -7,9 +7,10 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useNotifications } from '@/src/hooks/useNotifications';
 import { useAuthStore } from '@/src/store/authStore';
-import { colors } from '@/src/theme';
+import { colors, shadows } from '@/src/theme';
 import { formatMoney, formatRelativeTime } from '@/src/utils/format';
 import { STATUS_COLORS } from '@/src/utils/constants';
+import BottomDrawer from './BottomDrawer';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
@@ -18,6 +19,7 @@ export default function AdminHeader() {
   const { role, staffTen } = useAuthStore();
   const { notifications, unreadCount, markAllRead, markSingleRead } = useNotifications();
   const [showNotif, setShowNotif] = useState(false);
+  const [showDrawer, setShowDrawer] = useState(false);
   const [scaleAnim] = useState(new Animated.Value(1));
 
   const isAdmin = role === 'admin';
@@ -39,7 +41,19 @@ export default function AdminHeader() {
     markSingleRead(notif.id);
     setShowNotif(false);
     if (notif.donHangId) {
-      router.push({ pathname: '/(admin)/don-hang/[id]', params: { id: notif.donHangId } });
+      // Navigate to order detail with cached data from notification
+      router.push({
+        pathname: '/(admin)/don-hang/[id]',
+        params: {
+          id: notif.donHangId,
+          cachedData: JSON.stringify({
+            id: notif.donHangId,
+            tenKH: notif.tenKH,
+            trangThai: notif.trangThaiMoi,
+            tongTien: notif.tongTien || 0,
+          }),
+        },
+      });
     }
   };
 
@@ -81,24 +95,39 @@ export default function AdminHeader() {
   };
 
   return (
-    <>
-      {/* Header bar */}
+    <View style={styles.safeArea}>
       <View style={styles.header}>
-        <View style={styles.leftSection}>
-          <Text style={styles.shopName}>TRANG ANH STORE</Text>
-          <Text style={styles.userName}>{displayName}</Text>
+        {/* Left: Hamburger + Brand */}
+        <TouchableOpacity
+          style={styles.hamburgerBtn}
+          onPress={() => setShowDrawer(true)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="menu" size={24} color={colors.espresso} />
+        </TouchableOpacity>
+
+        <View style={styles.brandSection}>
+          <Text style={styles.brandText}>TRANG ANH</Text>
+          <Text style={styles.roleBadge}>
+            {isAdmin ? '👑 Admin' : `👤 ${displayName}`}
+          </Text>
         </View>
+
+        {/* Right: AI Chat + Notifications */}
         <View style={styles.rightSection}>
-          {/* AI Chat button */}
           <TouchableOpacity
-            style={styles.chatBtn}
+            style={styles.iconBtn}
             onPress={() => router.push('/(admin)/ai-chat' as any)}
+            activeOpacity={0.7}
           >
             <Ionicons name="sparkles" size={20} color={colors.blush} />
           </TouchableOpacity>
 
-          {/* Notification bell */}
-          <TouchableOpacity style={styles.bellBtn} onPress={handleBellPress}>
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={handleBellPress}
+            activeOpacity={0.7}
+          >
             <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
               <Ionicons name="notifications-outline" size={22} color={colors.espresso} />
             </Animated.View>
@@ -113,16 +142,22 @@ export default function AdminHeader() {
         </View>
       </View>
 
+      {/* Bottom Drawer Menu */}
+      <BottomDrawer visible={showDrawer} onClose={() => setShowDrawer(false)} />
+
       {/* Notification Modal */}
       <Modal visible={showNotif} transparent animationType="slide" onRequestClose={() => setShowNotif(false)}>
-        <View style={styles.modalOverlay}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowNotif(false)}>
+          <View style={styles.modalOverlay} pointerEvents="none" />
+        </TouchableOpacity>
+        <View style={styles.modalContainer} pointerEvents={showNotif ? 'auto' : 'none'}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Thông báo</Text>
               <View style={styles.modalActions}>
                 {unreadCount > 0 && (
                   <TouchableOpacity onPress={markAllRead} style={styles.markReadBtn}>
-                    <Text style={styles.markReadText}>Đánh dấu đã đọc</Text>
+                    <Text style={styles.markReadText}>Đã đọc tất cả</Text>
                   </TouchableOpacity>
                 )}
                 <TouchableOpacity onPress={() => setShowNotif(false)}>
@@ -147,55 +182,101 @@ export default function AdminHeader() {
           </View>
         </View>
       </Modal>
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    backgroundColor: colors.white,
+  },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: colors.stone[200],
+    borderBottomColor: `${colors.stone[200]}60`,
+    minHeight: 44,
   },
-  leftSection: { gap: 2 },
-  shopName: { fontSize: 12, fontWeight: '600', letterSpacing: 2, color: colors.espresso },
-  userName: { fontSize: 10, color: colors.stone[400] },
-  rightSection: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  chatBtn: { padding: 4 },
-  bellBtn: { padding: 4, position: 'relative' },
+  hamburgerBtn: {
+    padding: 8,
+    borderRadius: 10,
+    backgroundColor: `${colors.blush}12`,
+    marginRight: 10,
+  },
+  brandSection: {
+    flex: 1,
+    gap: 0,
+  },
+  brandText: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    color: colors.espresso,
+  },
+  roleBadge: {
+    fontSize: 10,
+    color: colors.stone[400],
+    marginTop: 1,
+  },
+  rightSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  iconBtn: {
+    padding: 8,
+    borderRadius: 10,
+    backgroundColor: `${colors.blush}12`,
+    position: 'relative',
+  },
   badge: {
-    position: 'absolute', top: -2, right: -4,
+    position: 'absolute', top: -2, right: -2,
     backgroundColor: '#DC2626', borderRadius: 8,
     minWidth: 16, height: 16, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4,
   },
   badgeText: { fontSize: 8, fontWeight: '700', color: colors.white },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+
+  // Modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
+  modalContainer: {
+    position: 'absolute',
+    bottom: 0, left: 0, right: 0,
+  },
   modalContent: {
-    backgroundColor: colors.white, borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    maxHeight: SCREEN_HEIGHT * 0.7, paddingBottom: 32,
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: SCREEN_HEIGHT * 0.7,
+    paddingBottom: 32,
+    ...shadows.card,
   },
   modalHeader: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: 16, borderBottomWidth: 1, borderBottomColor: colors.stone[200],
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.stone[100],
   },
-  modalTitle: { fontSize: 18, fontWeight: '600', color: colors.espresso },
+  modalTitle: { fontSize: 16, fontWeight: '700', color: colors.espresso },
   modalActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   markReadBtn: { paddingHorizontal: 8, paddingVertical: 4 },
   markReadText: { fontSize: 12, color: colors.blush, fontWeight: '600' },
   notifList: { maxHeight: SCREEN_HEIGHT * 0.55 },
   notifItem: {
-    flexDirection: 'row', alignItems: 'flex-start',
-    padding: 16, borderBottomWidth: 1, borderBottomColor: colors.stone[100],
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.stone[100],
   },
   notifItemUnread: { backgroundColor: `${colors.blush}08` },
   notifIcon: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   notifContent: { flex: 1 },
-  notifTitle: { fontSize: 14, fontWeight: '600', color: colors.espresso, marginBottom: 4 },
+  notifTitle: { fontSize: 13, fontWeight: '600', color: colors.espresso, marginBottom: 4 },
   notifBody: { fontSize: 12, color: colors.stone[500], lineHeight: 18 },
   notifTime: { fontSize: 10, color: colors.stone[300], marginTop: 4 },
   notifDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.blush, marginTop: 8 },

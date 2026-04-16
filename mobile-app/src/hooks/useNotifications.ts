@@ -100,11 +100,12 @@ export function useNotifications() {
 
   const markAllRead = async () => {
     try {
-      await markNotificationsRead();
+      // Send explicit empty body so backend marks ALL as read
+      await markNotificationsRead({ markAll: true });
       setNotifications(prev => prev.map(n => ({ ...n, daDoc: true })));
       setUnreadCount(0);
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error('markAllRead error:', err);
     }
   };
 
