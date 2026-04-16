@@ -15,25 +15,22 @@ const ROUTE_QUYEN: Record<string, string> = {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-admin-password, staff-token, x-requested-with',
+    'Access-Control-Max-Age': '86400',
+  };
+
   // Handle CORS preflight (OPTIONS) for /api routes
   if (pathname.startsWith('/api/') && request.method === 'OPTIONS') {
-    return new NextResponse(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-admin-password, staff-token, x-requested-with',
-        'Access-Control-Max-Age': '86400',
-      },
-    });
+    return new NextResponse(null, { status: 204, headers: corsHeaders });
   }
 
   // Add CORS headers to all API responses
   if (pathname.startsWith('/api/')) {
     const response = NextResponse.next();
-    response.headers.set('Access-Control-Allow-Origin', '*');
-    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-admin-password, staff-token');
+    Object.entries(corsHeaders).forEach(([k, v]) => response.headers.set(k, v));
     return response;
   }
 

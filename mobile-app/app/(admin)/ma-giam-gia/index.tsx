@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Switch, RefreshControl, Alert, Modal } from "react-native";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Switch, RefreshControl, Modal, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCoupons, createCoupon, toggleCoupon, deleteCoupon } from "@/src/api/ma-giam-gia";
 import { colors } from "@/src/theme";
@@ -11,6 +11,7 @@ import Button from "@/src/components/ui/Button";
 import Input from "@/src/components/ui/Input";
 import ConfirmDialog from "@/src/components/ui/ConfirmDialog";
 import { Ionicons } from "@expo/vector-icons";
+import { showSuccess, showError, showInfo } from "@/src/utils/toast";
 
 export default function CouponsScreen() {
   const queryClient = useQueryClient();
@@ -37,7 +38,7 @@ export default function CouponsScreen() {
   };
 
   const handleCreate = async () => {
-    if (!ma || !giaTri) { Alert.alert("Lỗi", "Điền đủ mã và giá trị"); return; }
+    if (!ma || !giaTri) { showError("Điền đủ mã và giá trị"); return; }
     try {
       await createCoupon({
         ma: ma.toUpperCase(),
@@ -50,9 +51,9 @@ export default function CouponsScreen() {
       queryClient.invalidateQueries({ queryKey: ["coupons"] });
       setShowAdd(false);
       setMa(""); setGiaTri(""); setGiaTriToiDa(""); setDonHangToiThieu(""); setSoLuong("");
-      Alert.alert("Thành công", "Đã tạo mã giảm giá");
+      showSuccess("Đã tạo mã giảm giá");
     } catch {
-      Alert.alert("Lỗi", "Không thể tạo mã giảm giá");
+      showError("Không thể tạo mã giảm giá");
     }
   };
 
@@ -61,7 +62,7 @@ export default function CouponsScreen() {
       await toggleCoupon(id, !current);
       queryClient.invalidateQueries({ queryKey: ["coupons"] });
     } catch {
-      Alert.alert("Lỗi", "Không thể cập nhật");
+      showError("Không thể cập nhật");
     }
   };
 
@@ -70,9 +71,9 @@ export default function CouponsScreen() {
     try {
       await deleteCoupon(deleteId);
       queryClient.invalidateQueries({ queryKey: ["coupons"] });
-      Alert.alert("Thành công", "Đã xóa mã giảm giá");
+      showSuccess("Đã xóa mã giảm giá");
     } catch {
-      Alert.alert("Lỗi", "Không thể xóa");
+      showError("Không thể xóa");
     }
     setDeleteId(null);
   };
@@ -125,33 +126,44 @@ export default function CouponsScreen() {
 
       {/* Add modal */}
       <Modal visible={showAdd} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Thêm mã giảm giá</Text>
-            <View style={styles.codeRow}>
-              <Input value={ma} onChangeText={setMa} placeholder="Mã giảm giá" style={{ flex: 1 }} />
-              <TouchableOpacity style={styles.genBtn} onPress={generateCode}>
-                <Ionicons name="shuffle" size={20} color={colors.cream} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.typeRow}>
-              <TouchableOpacity style={[styles.typeBtn, loai === "phan_tram" && styles.typeBtnActive]} onPress={() => setLoai("phan_tram")}>
-                <Text style={[styles.typeBtnText, loai === "phan_tram" && { color: colors.cream }]}>Phần trăm</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.typeBtn, loai === "so_tien" && styles.typeBtnActive]} onPress={() => setLoai("so_tien")}>
-                <Text style={[styles.typeBtnText, loai === "so_tien" && { color: colors.cream }]}>Số tiền</Text>
-              </TouchableOpacity>
-            </View>
-            <Input label="Giá trị" value={giaTri} onChangeText={setGiaTri} keyboardType="numeric" />
-            {loai === "phan_tram" && <Input label="Giảm tối đa (VNĐ)" value={giaTriToiDa} onChangeText={setGiaTriToiDa} keyboardType="numeric" />}
-            <Input label="Đơn tối thiểu (VNĐ)" value={donHangToiThieu} onChangeText={setDonHangToiThieu} keyboardType="numeric" />
-            <Input label="Số lượng" value={soLuong} onChangeText={setSoLuong} keyboardType="numeric" />
-            <View style={styles.modalButtons}>
-              <Button title="Hủy" onPress={() => setShowAdd(false)} variant="ghost" style={{ flex: 1 }} />
-              <Button title="Tạo" onPress={handleCreate} style={{ flex: 1 }} />
-            </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.modalOverlay}>
+            <ScrollView
+              contentContainerStyle={{ flexGrow: 1, justifyContent: "flex-end" }}
+              keyboardShouldPersistTaps="handled"
+              bounces={false}
+            >
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Thêm mã giảm giá</Text>
+                <View style={styles.codeRow}>
+                  <Input value={ma} onChangeText={setMa} placeholder="Mã giảm giá" style={{ flex: 1 }} />
+                  <TouchableOpacity style={styles.genBtn} onPress={generateCode}>
+                    <Ionicons name="shuffle" size={20} color={colors.cream} />
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.typeRow}>
+                  <TouchableOpacity style={[styles.typeBtn, loai === "phan_tram" && styles.typeBtnActive]} onPress={() => setLoai("phan_tram")}>
+                    <Text style={[styles.typeBtnText, loai === "phan_tram" && { color: colors.cream }]}>Phần trăm</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.typeBtn, loai === "so_tien" && styles.typeBtnActive]} onPress={() => setLoai("so_tien")}>
+                    <Text style={[styles.typeBtnText, loai === "so_tien" && { color: colors.cream }]}>Số tiền</Text>
+                  </TouchableOpacity>
+                </View>
+                <Input label="Giá trị" value={giaTri} onChangeText={setGiaTri} keyboardType="numeric" />
+                {loai === "phan_tram" && <Input label="Giảm tối đa (VNĐ)" value={giaTriToiDa} onChangeText={setGiaTriToiDa} keyboardType="numeric" />}
+                <Input label="Đơn tối thiểu (VNĐ)" value={donHangToiThieu} onChangeText={setDonHangToiThieu} keyboardType="numeric" />
+                <Input label="Số lượng" value={soLuong} onChangeText={setSoLuong} keyboardType="numeric" />
+                <View style={styles.modalButtons}>
+                  <Button title="Hủy" onPress={() => setShowAdd(false)} variant="ghost" style={{ flex: 1 }} />
+                  <Button title="Tạo" onPress={handleCreate} style={{ flex: 1 }} />
+                </View>
+              </View>
+            </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       <ConfirmDialog visible={!!deleteId} title="Xóa mã giảm giá?" message="Hành động này không thể hoàn tác." confirmText="Xóa" isDanger onConfirm={handleDelete} onCancel={() => setDeleteId(null)} />

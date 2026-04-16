@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
 import {
   View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity,
-  RefreshControl, Alert, Modal, ScrollView,
+  RefreshControl, Modal, ScrollView,
 } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
@@ -15,6 +15,7 @@ import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
 import EmptyState from "@/src/components/ui/EmptyState";
 import ConfirmDialog from "@/src/components/ui/ConfirmDialog";
 import { Ionicons } from "@expo/vector-icons";
+import { showSuccess, showError, showInfo } from "@/src/utils/toast";
 
 const IMAGE_W = 70;
 
@@ -43,9 +44,9 @@ export default function ProductsScreen() {
     try {
       await deleteProduct(deleteId);
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      Alert.alert("Thành công", "Đã xóa sản phẩm");
+      showSuccess("Đã xóa sản phẩm");
     } catch {
-      Alert.alert("Lỗi", "Không thể xóa sản phẩm");
+      showError("Không thể xóa sản phẩm");
     } finally {
       setDeleteId(null);
     }

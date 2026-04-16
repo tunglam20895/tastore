@@ -84,23 +84,31 @@ export default function AdminKhachHangPage() {
     setPage(1);
   };
 
-  const openModal = async (kh: KhachHang) => {
-    setSelectedKH(kh);
-    setEditGhiChu(kh.ghiChu || "");
-    setEditTrangThai(kh.trangThai);
+  const openModal = async (sdt: string) => {
     setModalLoading(true);
     setModalOrders([]);
+    setSelectedKH(null);
     try {
-      const res = await fetch(`/api/don-hang?sdt=${encodeURIComponent(kh.sdt)}`, {
+      const res = await fetch(`/api/khach-hang/${encodeURIComponent(sdt)}`, {
         headers: { "x-admin-password": adminPassword || "" },
       });
       const d = await res.json();
       if (d.success) {
-        setModalOrders(d.data || []);
+        setSelectedKH(d.data.khachHang);
+        setModalOrders(d.data.donHangs || []);
+        setEditGhiChu(d.data.khachHang?.ghiChu || "");
+        setEditTrangThai(d.data.khachHang?.trangThai || "");
       }
     } catch { /* ignore */ }
     setModalLoading(false);
   };
+
+  // Escape key to close modal
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape" && selectedKH) setSelectedKH(null); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [selectedKH]);
 
   const handleSaveKH = async () => {
     if (!selectedKH) return;
@@ -225,7 +233,14 @@ export default function AdminKhachHangPage() {
               ) : customers.map((kh) => (
                 <tr key={kh.sdt} className="border-b border-stone-50 hover:bg-cream/40 transition-colors">
                   <td className="py-3 px-4 font-medium text-espresso">{kh.ten}</td>
-                  <td className="py-3 px-4 text-stone-500">{kh.sdt}</td>
+                  <td className="py-3 px-4 text-stone-500">
+                    <button
+                      onClick={() => openModal(kh.sdt)}
+                      className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                    >
+                      {kh.sdt}
+                    </button>
+                  </td>
                   <td className="py-3 px-4">
                     <span
                       className="px-2 py-0.5 text-xs font-medium rounded-sm"
@@ -238,14 +253,6 @@ export default function AdminKhachHangPage() {
                   <td className="py-3 px-4 text-right font-medium text-espresso">{formatMoney(kh.tongDoanhThu)}</td>
                   <td className="py-3 px-4 text-stone-400 text-xs max-w-[160px] truncate">{kh.ghiChu || "—"}</td>
                   <td className="py-3 px-4 text-stone-400 text-xs">{formatDate(kh.updatedAt)}</td>
-                  <td className="py-3 px-4 text-right">
-                    <button
-                      onClick={() => openModal(kh)}
-                      className="text-xs uppercase tracking-widest text-stone-400 hover:text-espresso transition-colors"
-                    >
-                      Chi tiết
-                    </button>
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -267,14 +274,14 @@ export default function AdminKhachHangPage() {
       {selectedKH && (
         <div className="fixed inset-0 bg-espresso/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
-            <div className="p-4 sm:p-6 border-b border-stone-100">
+            <div className="p-4 sm:p-6 border-b border-stone-100 flex items-center justify-between">
               <div>
                 <h2 className="font-heading text-xl font-light text-espresso">{selectedKH.ten}</h2>
                 <p className="text-xs text-stone-400 mt-0.5">{selectedKH.sdt}</p>
               </div>
               <button
                 onClick={() => setSelectedKH(null)}
-                className="text-stone-400 hover:text-espresso text-xl leading-none"
+                className="text-stone-400 hover:text-espresso text-xl leading-none w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 transition-colors"
               >
                 ×
               </button>
@@ -364,19 +371,48 @@ export default function AdminKhachHangPage() {
                         </div>
 
                         {/* Row 2: danh sách sản phẩm */}
-                        <div className="space-y-1 mb-2">
+                        <div className="space-y-2 mb-3">
                           {o.sanPham.map((sp, i) => (
-                            <div key={i} className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-xs pl-1 border-l-2 border-blush">
-                              <span className="font-medium text-espresso">{sp.ten}</span>
-                              {sp.sizeChon && (
-                                <span className="bg-blush/60 text-espresso px-1.5 py-0.5 text-[10px] leading-none">
-                                  {sp.sizeChon}
-                                </span>
-                              )}
-                              <span className="text-stone-400">×{sp.soLuong}</span>
-                              <span className="text-stone-500 ml-auto">
-                                {formatMoney(sp.giaHienThi * sp.soLuong)}
-                              </span>
+                            <div key={i} className="flex items-start gap-3 pl-1 border-l-2 border-blush">
+                              {/* Ảnh sản phẩm */}
+                              <div className="w-12 h-16 shrink-0 bg-white border border-stone-100 rounded overflow-hidden">
+                                {sp.anhURL ? (
+                                  <img
+                                    src={sp.anhURL}
+                                    alt={sp.ten}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-stone-200">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Thông tin sản phẩm */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                  <span className="font-medium text-espresso">{sp.ten}</span>
+                                  {sp.sizeChon && (
+                                    <span className="bg-blush/60 text-espresso px-1.5 py-0.5 text-[10px] leading-none">
+                                      {sp.sizeChon}
+                                    </span>
+                                  )}
+                                  <span className="text-stone-400">×{sp.soLuong}</span>
+                                </div>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  {sp.phanTramGiam && sp.phanTramGiam > 0 && (
+                                    <span className="text-xs text-stone-300 line-through">
+                                      {formatMoney(sp.giaGoc)}
+                                    </span>
+                                  )}
+                                  <span className="text-sm font-medium text-espresso">
+                                    {formatMoney(sp.giaHienThi * sp.soLuong)}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
                           ))}
                         </div>

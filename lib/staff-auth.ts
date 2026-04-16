@@ -68,7 +68,8 @@ export interface StaffSession {
 }
 
 export async function createStaffToken(session: StaffSession): Promise<string> {
-  const payload = encodePayload({ ...session, exp: Date.now() + 24 * 60 * 60 * 1000 });
+  // Không set exp → session tồn tại vĩnh viễn cho đến khi đăng xuất thủ công
+  const payload = encodePayload({ ...session });
   const sig = await hmacSign(payload);
   return `${payload}.${sig}`;
 }
@@ -81,8 +82,8 @@ export async function verifyStaffToken(token: string): Promise<StaffSession | nu
     const sig = token.slice(dot + 1);
     const expected = await hmacSign(payload);
     if (sig !== expected) return null;
-    const data = decodePayload<StaffSession & { exp: number }>(payload);
-    if (data.exp < Date.now()) return null;
+    const data = decodePayload<StaffSession & { exp?: number }>(payload);
+    // Bỏ kiểm tra exp — token không expire
     return { id: data.id, ten: data.ten, username: data.username, quyen: data.quyen };
   } catch { return null; }
 }

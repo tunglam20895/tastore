@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity, Modal } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, KeyboardAvoidingView, Platform } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSettings, updateSettings } from "@/src/api/cai-dat";
 import { getTrangThaiDH, updateTrangThaiDH } from "@/src/api/trang-thai-dh";
@@ -14,6 +14,7 @@ import Button from "@/src/components/ui/Button";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import { showSuccess, showError, showInfo } from "@/src/utils/toast";
 
 export default function SettingsScreen() {
   const { role } = useAuthStore();
@@ -81,9 +82,9 @@ export default function SettingsScreen() {
     try {
       await updateSettings({ tenShop, sdt, diaChi, email });
       queryClient.invalidateQueries({ queryKey: ["settings"] });
-      Alert.alert("Thành công", "Đã lưu cài đặt");
+      showSuccess("Đã lưu cài đặt");
     } catch {
-      Alert.alert("Lỗi", "Không thể lưu");
+      showError("Không thể lưu");
     }
   };
 
@@ -102,12 +103,12 @@ export default function SettingsScreen() {
           setLogoURL(uploadResult.url);
           await updateSettings({ logoURL: uploadResult.url });
           queryClient.invalidateQueries({ queryKey: ["settings"] });
-          Alert.alert("Thành công", "Đã cập nhật logo");
+          showSuccess("Đã cập nhật logo");
         } else {
-          Alert.alert("Lỗi", uploadResult.error || "Không thể upload logo");
+          showError(uploadResult.error || "Không thể upload logo");
         }
       } catch {
-        Alert.alert("Lỗi", "Không thể upload logo");
+        showError("Không thể upload logo");
       } finally {
         setUploadingLogo(false);
       }
@@ -127,7 +128,7 @@ export default function SettingsScreen() {
       queryClient.invalidateQueries({ queryKey: ["trang-thai-dh"] });
       setEditingStatus(null);
     } catch {
-      Alert.alert("Lỗi", "Không thể cập nhật màu");
+      showError("Không thể cập nhật màu");
     } finally {
       setSavingColor(false);
     }
@@ -153,7 +154,11 @@ export default function SettingsScreen() {
   ];
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scroll}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+    <ScrollView style={styles.container} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
       {/* Logo */}
       <Text style={styles.sectionTitle}>Logo shop</Text>
       <TouchableOpacity style={styles.logoPicker} onPress={pickLogo} disabled={uploadingLogo} activeOpacity={0.7}>
@@ -207,42 +212,54 @@ export default function SettingsScreen() {
 
       {/* Edit color modal */}
       <Modal visible={!!editingStatus} transparent animationType="fade">
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setEditingStatus(null)}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
         >
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              Đổi màu: {editingStatus?.ten || ''}
-            </Text>
-            <View style={[styles.colorPreview, { backgroundColor: editColor }]} />
-            <Input
-              label="Mã màu HEX"
-              value={editColor}
-              onChangeText={(v) => setEditColor(v.startsWith('#') ? v : `#${v}`)}
-              placeholder="#000000"
-            />
-            <Text style={styles.presetLabel}>Màu gợi ý</Text>
-            <View style={styles.presetColors}>
-              {presetColors.map(c => (
-                <TouchableOpacity
-                  key={c}
-                  style={[styles.presetColor, { backgroundColor: c }, editColor === c && styles.presetColorSelected]}
-                  onPress={() => setEditColor(c)}
-                >
-                  {editColor === c && <Ionicons name="checkmark" size={14} color="#fff" />}
-                </TouchableOpacity>
-              ))}
-            </View>
-            <View style={styles.modalButtons}>
-              <Button title="Hủy" onPress={() => setEditingStatus(null)} variant="ghost" style={{ flex: 1 }} />
-              <Button title="Lưu" onPress={handleSaveColor} loading={savingColor} style={{ flex: 1 }} />
-            </View>
-          </View>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setEditingStatus(null)}
+          >
+            <ScrollView
+              contentContainerStyle={{ flexGrow: 1, justifyContent: "center", alignItems: "center", padding: 24 }}
+              keyboardShouldPersistTaps="handled"
+              bounces={false}
+            >
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>
+                  Đổi màu: {editingStatus?.ten || ''}
+                </Text>
+                <View style={[styles.colorPreview, { backgroundColor: editColor }]} />
+                <Input
+                  label="Mã màu HEX"
+                  value={editColor}
+                  onChangeText={(v) => setEditColor(v.startsWith('#') ? v : `#${v}`)}
+                  placeholder="#000000"
+                />
+                <Text style={styles.presetLabel}>Màu gợi ý</Text>
+                <View style={styles.presetColors}>
+                  {presetColors.map(c => (
+                    <TouchableOpacity
+                      key={c}
+                      style={[styles.presetColor, { backgroundColor: c }, editColor === c && styles.presetColorSelected]}
+                      onPress={() => setEditColor(c)}
+                    >
+                      {editColor === c && <Ionicons name="checkmark" size={14} color="#fff" />}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <View style={styles.modalButtons}>
+                  <Button title="Hủy" onPress={() => setEditingStatus(null)} variant="ghost" style={{ flex: 1 }} />
+                  <Button title="Lưu" onPress={handleSaveColor} loading={savingColor} style={{ flex: 1 }} />
+                </View>
+              </View>
+            </ScrollView>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
       </Modal>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

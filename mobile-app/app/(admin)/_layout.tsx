@@ -3,11 +3,15 @@ import { useAuthStore } from "@/src/store/authStore";
 import { useNotifications } from "@/src/hooks/useNotifications";
 import { colors } from "@/src/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { View, Platform, TouchableOpacity, Text, StyleSheet } from "react-native";
+import { View, Platform, TouchableOpacity, Text, StyleSheet, KeyboardAvoidingView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useState, useCallback } from "react";
+import { useState, useCallback, createContext, useContext } from "react";
 import BottomDrawer from "@/src/components/admin/BottomDrawer";
 import AdminHeader from "@/src/components/admin/AdminHeader";
+
+// Context để chia sẻ notifications từ hook duy nhất, tránh duplicate polling
+type NotificationContextType = ReturnType<typeof useNotifications>;
+export const NotificationContext = createContext<NotificationContextType | null>(null);
 
 const isWeb = Platform.OS === "web";
 const NAV_BASE = 56;
@@ -18,7 +22,8 @@ const NAV_BASE = 56;
 function BottomNav({ state, descriptors, navigation }: any) {
   const router = useRouter();
   const pathname = usePathname();
-  const { unreadCount } = useNotifications();
+  const notifCtx = useContext(NotificationContext);
+  const unreadCount = notifCtx?.unreadCount ?? 0;
   const { role, staffQuyen } = useAuthStore();
   const isAdmin = role === "admin";
   const insets = useSafeAreaInsets();
@@ -50,23 +55,9 @@ function BottomNav({ state, descriptors, navigation }: any) {
       setShowDrawer(true);
       return;
     }
-    // On web, use router.replace for clean navigation
-    if (isWeb) {
-      router.replace(`/(admin)/${tabName}` as any);
-      return;
-    }
-    // On mobile, use the native tab navigation
-    const route = state?.routes?.find((r: any) => r.name === tabName);
-    if (!route) return;
-    const event = navigation.emit({
-      type: "tabPress",
-      target: route.key,
-      canPreventDefault: true,
-    });
-    if (!event.defaultPrevented) {
-      navigation.navigate(route.name, route.params);
-    }
-  }, [isWeb, router, state, navigation]);
+    // Always use router.push/replace for reliable navigation on both web and mobile
+    router.push(`/(admin)/${tabName}` as any);
+  }, [router]);
 
   const tabBarPaddingBottom = Math.max(insets.bottom, 6);
 
@@ -105,34 +96,43 @@ function BottomNav({ state, descriptors, navigation }: any) {
 // ====================================================
 export default function AdminTabsLayout() {
   const insets = useSafeAreaInsets();
+  const notifHook = useNotifications();
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.cream, paddingTop: isWeb ? 0 : insets.top }}>
-      <AdminHeader />
-      <View style={{ flex: 1 }}>
-        <Tabs
-          tabBar={(props) => <BottomNav {...props} />}
-          screenOptions={{
-            headerShown: false,
-          }}
-        >
-          <Tabs.Screen name="dashboard" />
-          <Tabs.Screen name="don-hang" />
-          <Tabs.Screen name="san-pham" />
-          <Tabs.Screen name="khach-hang" />
-          <Tabs.Screen name="cai-dat" />
-          <Tabs.Screen name="ma-giam-gia" options={{ href: null }} />
-          <Tabs.Screen name="nhan-vien" options={{ href: null }} />
-          <Tabs.Screen name="ai-chat" options={{ href: null }} />
-          <Tabs.Screen name="more" options={{ href: null }} />
-          {/* Stack screens - accessible via router.push */}
-          <Tabs.Screen name="don-hang/[id]" options={{ href: null }} />
-          <Tabs.Screen name="don-hang/add" options={{ href: null }} />
-          <Tabs.Screen name="san-pham/[id]" options={{ href: null }} />
-          <Tabs.Screen name="san-pham/add" options={{ href: null }} />
-        </Tabs>
-      </View>
-    </View>
+    <NotificationContext.Provider value={notifHook}>
+      <KeyboardAvoidingView
+        style={{ flex: 1, backgroundColor: colors.cream }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={0}
+      >
+        <View style={{ flex: 1, paddingTop: isWeb ? 0 : insets.top }}>
+          <AdminHeader />
+          <View style={{ flex: 1 }}>
+            <Tabs
+              tabBar={(props) => <BottomNav {...props} />}
+              screenOptions={{
+                headerShown: false,
+              }}
+            >
+            <Tabs.Screen name="dashboard" />
+            <Tabs.Screen name="don-hang" />
+            <Tabs.Screen name="san-pham" />
+            <Tabs.Screen name="khach-hang" />
+            <Tabs.Screen name="cai-dat" />
+            <Tabs.Screen name="ma-giam-gia" options={{ href: null }} />
+            <Tabs.Screen name="nhan-vien" options={{ href: null }} />
+            <Tabs.Screen name="ai-chat" options={{ href: null }} />
+            <Tabs.Screen name="more" options={{ href: null }} />
+            {/* Stack screens - accessible via router.push */}
+            <Tabs.Screen name="don-hang/[id]" options={{ href: null }} />
+            <Tabs.Screen name="don-hang/add" options={{ href: null }} />
+            <Tabs.Screen name="san-pham/[id]" options={{ href: null }} />
+            <Tabs.Screen name="san-pham/add" options={{ href: null }} />
+            </Tabs>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </NotificationContext.Provider>
   );
 }
 

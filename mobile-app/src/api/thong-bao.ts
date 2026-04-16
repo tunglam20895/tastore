@@ -9,8 +9,14 @@ export async function getNotifications() {
   return (body as OrderNotif[]) || [];
 }
 
-export async function markNotificationsRead(body?: Record<string, unknown>) {
-  // Always send body so backend can parse it
-  const res = await apiClient.put('/api/thong-bao', body || { markAll: true });
+/** Đánh dấu tất cả đã đọc */
+export async function markAllNotificationsRead() {
+  const res = await apiClient.put('/api/thong-bao', { markAll: true });
+  return res.data;
+}
+
+/** Đánh dấu một hoặc nhiều thông báo đã đọc theo id */
+export async function markNotificationsReadByIds(ids: string[]) {
+  const res = await apiClient.put('/api/thong-bao', { ids });
   return res.data;
 }

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView,
   Dimensions, Platform,
 } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 import { useAuthStore } from '@/src/store/authStore';
-import { useNotifications } from '@/src/hooks/useNotifications';
+import { NotificationContext } from '@/app/(admin)/_layout';
 import { colors, shadows, borderRadius } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { logout } from '@/src/api/auth';
@@ -32,7 +32,8 @@ const menuItems = [
 export default function BottomDrawer({ visible, onClose }: BottomDrawerProps) {
   const router = useRouter();
   const { role, staffTen, staffQuyen, logout: logoutStore } = useAuthStore();
-  const { unreadCount } = useNotifications();
+  const notifCtx = useContext(NotificationContext);
+  const unreadCount = notifCtx?.unreadCount ?? 0;
   const isAdmin = role === 'admin';
 
   const hasPermission = (quyen: string | null) => {

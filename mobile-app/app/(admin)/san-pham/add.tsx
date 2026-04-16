@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import AdminDetailHeader from "@/src/components/admin/AdminDetailHeader";
 import {
-  View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Switch, KeyboardAvoidingView, Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -9,6 +9,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import { createProduct, getCategories, generateMoTa } from "@/src/api/san-pham";
 import { uploadImage } from "@/src/utils/upload";
+import { showSuccess, showError, showInfo } from "@/src/utils/toast";
 import { colors } from "@/src/theme";
 import { QUICK_SIZES } from "@/src/utils/constants";
 import Button from "@/src/components/ui/Button";
@@ -67,7 +68,7 @@ export default function AddProductScreen() {
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert("Lỗi", "Cần cấp quyền camera");
+      showError("Cần cấp quyền camera");
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
@@ -81,17 +82,17 @@ export default function AddProductScreen() {
   };
 
   const handleGenerate = async () => {
-    if (!ten) { Alert.alert("Lỗi", "Nhập tên sản phẩm trước"); return; }
+    if (!ten) { showError("Nhập tên sản phẩm trước"); return; }
     setGenerating(true);
     try {
       const res = await generateMoTa(ten, parseFloat(giaGoc) || 0, danhMuc);
       if (res.success) setMoTa(res.data?.moTa || res.data || res.moTa || "");
-    } catch { Alert.alert("Lỗi", "Không thể tạo mô tả"); }
+    } catch { showError("Không thể tạo mô tả"); }
     setGenerating(false);
   };
 
   const handleSave = async () => {
-    if (!ten || !giaGoc) { Alert.alert("Lỗi", "Điền đủ tên và giá"); return; }
+    if (!ten || !giaGoc) { showError("Điền đủ tên và giá"); return; }
 
     setSaving(true);
     try {
@@ -105,7 +106,7 @@ export default function AddProductScreen() {
         if (uploadResult.success && uploadResult.url) {
           anhURL = uploadResult.url;
         } else {
-          Alert.alert("Lỗi upload", uploadResult.error || "Không thể upload ảnh");
+          showError(uploadResult.error || "Không thể upload ảnh");
           setSaving(false);
           return;
         }
@@ -125,10 +126,10 @@ export default function AddProductScreen() {
 
       await createProduct(productData);
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      Alert.alert("Thành công", "Đã thêm sản phẩm");
-      router.back();
+      showSuccess("Đã thêm sản phẩm");
+      setTimeout(() => router.back(), 1000);
     } catch {
-      Alert.alert("Lỗi", "Không thể thêm sản phẩm");
+      showError("Không thể thêm sản phẩm");
     } finally {
       setSaving(false);
     }

@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useContext } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuthStore } from "@/src/store/authStore";
-import { useNotifications } from "@/src/hooks/useNotifications";
+import { NotificationContext } from "@/app/(admin)/_layout";
 import { colors } from "@/src/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { logout } from "@/src/api/auth";
@@ -18,7 +18,8 @@ const menuItems = [
 export default function MoreScreen() {
   const router = useRouter();
   const { role, staffQuyen, logout: logoutStore } = useAuthStore();
-  const { unreadCount } = useNotifications();
+  const notifCtx = useContext(NotificationContext);
+  const unreadCount = notifCtx?.unreadCount ?? 0;
   const isAdmin = role === "admin";
 
   const handleLogout = async () => {

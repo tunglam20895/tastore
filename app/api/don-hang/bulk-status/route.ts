@@ -4,6 +4,9 @@ import { supabase } from '@/lib/supabase'
 import { verifyAccess } from '@/lib/auth'
 import { verifyStaffToken } from '@/lib/staff-auth'
 import type { DonHang } from '@/types'
+import { CORS_HEADERS, handleOptions } from "@/lib/cors";
+
+export async function OPTIONS() { return handleOptions(); }
 
 async function getNguoiXuLy(request: NextRequest): Promise<string> {
   const pw = request.headers.get('x-admin-password')
@@ -20,7 +23,7 @@ async function getNguoiXuLy(request: NextRequest): Promise<string> {
 export async function POST(request: NextRequest) {
   try {
     if (!await verifyAccess(request, 'don-hang')) {
-      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
     }
 
     const body = await request.json()
@@ -28,7 +31,7 @@ export async function POST(request: NextRequest) {
     const trangThai: DonHang['trangThai'] = body.trangThai
 
     if (!ids.length || !trangThai) {
-      return NextResponse.json({ success: false, error: 'Thiếu dữ liệu' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'Thiếu dữ liệu' }, { status: 400, headers: CORS_HEADERS })
     }
 
     const nguoiXuLy = await getNguoiXuLy(request)
@@ -40,9 +43,9 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error
 
-    return NextResponse.json({ success: true, updated: ids.length })
+    return NextResponse.json({ success: true, updated: ids.length }, { headers: CORS_HEADERS })
   } catch (error) {
     console.error('POST /api/don-hang/bulk-status error:', error)
-    return NextResponse.json({ success: false, error: 'Không thể cập nhật hàng loạt' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Không thể cập nhật hàng loạt' }, { status: 500, headers: CORS_HEADERS })
   }
 }

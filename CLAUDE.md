@@ -31,8 +31,8 @@ tranh-anh-store/
 │   │   ├── login/page.tsx              # Đăng nhập — Admin/Staff tabs, full-page SVG spinner loading
 │   │   ├── dashboard/page.tsx          # Thống kê KPIs + đơn theo NV/KH + lương nhân viên
 │   │   ├── san-pham/page.tsx           # Quản lý SP — filter, pagination, StockBadge, sizes
-│   │   ├── don-hang/page.tsx           # Quản lý đơn — filter, bulk select/status, export Excel
-│   │   ├── khach-hang/page.tsx         # CRM khách hàng — filter trạng thái, modal chi tiết
+│   │   ├── don-hang/page.tsx           # Quản lý đơn — filter, bulk select/status, export Excel, modal chi tiết (click ID)
+│   │   ├── khach-hang/page.tsx         # CRM khách hàng — filter trạng thái, click SĐT để xem modal chi tiết + lịch sử đơn
 │   │   ├── ma-giam-gia/page.tsx        # Quản lý mã giảm giá — CRUD, toggle, generate code
 │   │   ├── nhan-vien/page.tsx          # Quản lý nhân viên — CRUD, phân quyền, lương, password hash
 │   │   └── cai-dat/page.tsx            # 2-column layout: trái=shop info, phải=trạng thái ĐH+KH
@@ -44,11 +44,11 @@ tranh-anh-store/
 │       ├── san-pham/route.ts           # GET (pagination + filters), POST (admin/staff san-pham access)
 │       ├── san-pham/[id]/route.ts      # PUT, DELETE (san-pham access)
 │       ├── don-hang/route.ts           # GET (pagination + filters), POST (public — đặt hàng)
-│       ├── don-hang/[id]/route.ts      # GET chi tiết, PUT trạng thái + nguoi_xu_ly
+│       ├── don-hang/[id]/route.ts      # GET chi tiết (có ảnh SP), PUT trạng thái + nguoi_xu_ly
 │       ├── don-hang/bulk-status/route.ts # POST cập nhật trạng thái hàng loạt
 │       ├── don-hang/export-excel/route.ts # POST export Excel từ template → download
 │       ├── khach-hang/route.ts         # GET (pagination + search)
-│       ├── khach-hang/[sdt]/route.ts   # PUT (trạng thái + ghi chú)
+│       ├── khach-hang/[sdt]/route.ts   # GET (chi tiết + lịch sử đơn với ảnh), PUT (trạng thái + ghi chú)
 │       ├── ma-giam-gia/route.ts        # GET (pagination), POST
 │       ├── ma-giam-gia/[id]/route.ts   # PUT (toggle), DELETE
 │       ├── ma-giam-gia/kiem-tra/route.ts # POST kiểm tra mã giảm giá (public)
@@ -84,15 +84,16 @@ tranh-anh-store/
 │   └── admin/
 │       ├── AdminNav.tsx                # Redesigned bell icon, notification dropdown với màu theo trạng thái
 │       ├── ProductForm.tsx             # Form thêm/sửa SP — quick-pick sizes, AI mô tả, image upload
-│       ├── OrderTable.tsx              # Bảng đơn hàng — checkboxes, inline status select, bulk actions
-│       ├── OrderDetailModal.tsx        # Popup chi tiết đơn — status update buttons, customer info
+│       ├── OrderTable.tsx              # Bảng đơn hàng — checkboxes, inline status select, bulk actions, clickable order ID
+│       ├── OrderDetailModal.tsx        # Popup chi tiết đơn — hiển thị ảnh SP, status buttons, ESC key to close
 │       ├── Pagination.tsx              # Phân trang admin (with total count)
 │       ├── LogoUpload.tsx              # Upload logo → Supabase shop-assets bucket
 │       ├── ImageUpload.tsx             # Upload ảnh SP → Supabase san-pham-images bucket
 │       ├── AdminChat.tsx               # Floating AI chat panel — SSE streaming, intent analysis, auto-fetch data
 │       ├── AdminChatForLayout.tsx      # Layout wrapper — maps URL to page, clears screen data on nav
 │       ├── AdminChatWrapper.tsx        # Standalone wrapper with own AdminChatProvider
-│       └── ConfirmDialog.tsx           # Reusable confirmation dialog — framer-motion, danger mode
+│       ├── ConfirmDialog.tsx           # Reusable confirmation dialog — framer-motion, danger mode
+│       └── CreateOrderModal.tsx        # Tạo đơn thủ công — search SP, add-to-cart, ESC key to close
 ├── contexts/
 │   ├── CartContext.tsx                 # Cart state (localStorage), fly animation trigger, CRUD
 │   ├── SettingsContext.tsx             # Global shop settings (fetch từ /api/cai-dat)
@@ -492,11 +493,11 @@ colors: {
 | `/api/san-pham` | GET, POST | GET: public; POST: `san-pham` access | `san_pham` |
 | `/api/san-pham/[id]` | PUT, DELETE | `san-pham` access | `san_pham` |
 | `/api/don-hang` | GET, POST | GET: `don-hang` access; POST: public | `don_hang`, `ma_giam_gia`, `khach_hang` |
-| `/api/don-hang/[id]` | GET, PUT | `don-hang` access | `don_hang` |
+| `/api/don-hang/[id]` | GET, PUT | `don-hang` access | `don_hang` (enriches với ảnh SP từ bảng san_pham) |
 | `/api/don-hang/bulk-status` | POST | `don-hang` access | `don_hang` |
 | `/api/don-hang/export-excel` | POST | `don-hang` access | `don_hang` |
 | `/api/khach-hang` | GET | `khach-hang` access | `khach_hang` |
-| `/api/khach-hang/[sdt]` | PUT | `khach-hang` access | `khach_hang` |
+| `/api/khach-hang/[sdt]` | GET, PUT | `khach-hang` access | `khach_hang`, `don_hang` (returns khách hàng + danh sách đơn hàng đầy đủ với ảnh sản phẩm) |
 | `/api/ma-giam-gia` | GET, POST | `ma-giam-gia` access | `ma_giam_gia` |
 | `/api/ma-giam-gia/[id]` | PUT, DELETE | `ma-giam-gia` access | `ma_giam_gia` |
 | `/api/ma-giam-gia/kiem-tra` | POST | None (public) | `ma_giam_gia` |
@@ -593,8 +594,8 @@ useEffect(() => { loadData(page, ...filters); }, [page, ...filterStates, refresh
   - Auto-refresh mỗi 60s
 
 - **Sản phẩm**: CRUD, upload ảnh, quick-pick sizes (XS-XXL, 36-42), generate mô tả AI, filter, server-side pagination
-- **Đơn hàng**: Filter đa chiều, bulk select + bulk status, export Excel từ template
-- **Khách hàng**: CRM tự động từ đơn hàng, filter trạng thái, modal chi tiết + lịch sử đơn
+- **Đơn hàng**: Filter đa chiều, bulk select + bulk status, export Excel từ template, **click mã đơn (xanh) xem modal chi tiết** với ảnh sản phẩm
+- **Khách hàng**: CRM tự động từ đơn hàng, filter trạng thái, **click SĐT (xanh) xem modal chi tiết + lịch sử đơn hàng có ảnh**, lưu trạng thái và ghi chú
 - **Mã giảm giá**: CRUD, toggle on/off, generate code ngẫu nhiên
 - **Nhân viên**: CRUD, phân quyền, **lương** (VNĐ/tháng), password hash, active toggle
 - **Cài đặt**: **2-column layout** — trái=thông tin shop (logo+tên+SĐT+địa chỉ+email), phải=trạng thái đơn hàng (grid 3 cột, đổi màu)+trạng thái khách hàng (pills)
@@ -610,6 +611,7 @@ useEffect(() => { loadData(page, ...filters); }, [page, ...filterStates, refresh
   - Kết hợp dữ liệu API + screen context (filter, stats, items đang hiển thị)
   - Context fetch cho từng trang (dashboard, san-pham, don-hang, khach-hang, nhan-vien)
   - Hỗ trợ tìm đơn/cụ thể theo ID (`dh_*`) hoặc SĐT khách hàng
+- **Modal ESC key support**: Tất cả popup (OrderDetailModal, CreateOrderModal, Customer Detail Modal) đều hỗ trợ đóng bằng phím ESC
 
 ---
 
@@ -675,3 +677,8 @@ useEffect(() => { loadData(page, ...filters); }, [page, ...filterStates, refresh
 19. **Shop layout**: `TrangThaiDHProvider → Header → main → Footer`
 20. **GHTK Shipping**: Env vars (`GHTK_TOKEN`, `GHTK_OPEN_API_STAGING`, `GHTK_OPEN_API_PRODUCT`) đã set nhưng chưa có implementation code
 21. **Tra cứu đơn hàng**: Public endpoint, không cần auth, trả về tối đa 50 đơn gần nhất theo SĐT
+22. **Product images in modals**: OrderDetailModal và Customer Detail Modal đều hiển thị ảnh sản phẩm (16x20 và 12x16 thumbnails), fallback icon khi không có ảnh
+23. **Clickable IDs for detail views**: Mã đơn hàng (xanh) trong bảng don-hang và SĐT (xanh) trong bảng khach-hang click để xem chi tiết → mở modal
+24. **API `/api/khach-hang/[sdt]`**: Returns khách hàng + danh sách đơn hàng đầy đủ với ảnh sản phẩm (enriched from san_pham table)
+25. **Order detail API enrichment**: `/api/don-hang/[id]` enriches products with `anh_url` from san_pham table if not already in order data
+26. **Modal close button fix**: All modal × buttons now properly aligned (top-right, circular hover effect, w-8 h-8)

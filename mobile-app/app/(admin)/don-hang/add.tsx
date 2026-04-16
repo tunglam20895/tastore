@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from "react";
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput,
-  KeyboardAvoidingView, Platform, Alert, FlatList, Modal,
+  KeyboardAvoidingView, Platform, FlatList, Modal,
 } from "react-native";
+import { showSuccess, showError, showInfo } from "@/src/utils/toast";
 import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getProducts } from "@/src/api/san-pham";
@@ -147,10 +148,10 @@ export default function CreateOrderScreen() {
   }, [couponCode, subtotal]);
 
   const handleSubmit = async () => {
-    if (!tenKH.trim()) { Alert.alert("Lỗi", "Nhập tên khách hàng"); return; }
-    if (!sdt.trim()) { Alert.alert("Lỗi", "Nhập số điện thoại"); return; }
-    if (!diaChi.trim()) { Alert.alert("Lỗi", "Nhập địa chỉ"); return; }
-    if (cart.length === 0) { Alert.alert("Lỗi", "Thêm ít nhất 1 sản phẩm"); return; }
+    if (!tenKH.trim()) { showInfo("Nhập tên khách hàng"); return; }
+    if (!sdt.trim()) { showInfo("Nhập số điện thoại"); return; }
+    if (!diaChi.trim()) { showInfo("Nhập địa chỉ"); return; }
+    if (cart.length === 0) { showInfo("Thêm ít nhất 1 sản phẩm"); return; }
 
     setSubmitting(true);
     try {
@@ -175,11 +176,10 @@ export default function CreateOrderScreen() {
       }, { headers });
 
       queryClient.invalidateQueries({ queryKey: ["orders"] });
-      Alert.alert("Thành công", "Đã tạo đơn hàng", [
-        { text: "OK", onPress: () => router.replace("/(admin)/don-hang") },
-      ]);
+      showSuccess("Đã tạo đơn hàng thành công");
+      setTimeout(() => router.replace("/(admin)/don-hang"), 1000);
     } catch (err: any) {
-      Alert.alert("Lỗi", err?.response?.data?.error || "Không thể tạo đơn hàng");
+      showError(err?.response?.data?.error || "Không thể tạo đơn hàng");
     } finally {
       setSubmitting(false);
     }

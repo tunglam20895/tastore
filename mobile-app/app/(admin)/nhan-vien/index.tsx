@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Switch, RefreshControl, Alert, Modal } from "react-native";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Switch, RefreshControl, Modal, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getStaff, createStaff, updateStaff, deleteStaff } from "@/src/api/nhan-vien";
 import { colors } from "@/src/theme";
@@ -12,6 +12,7 @@ import Input from "@/src/components/ui/Input";
 import ConfirmDialog from "@/src/components/ui/ConfirmDialog";
 import Badge from "@/src/components/ui/Badge";
 import { Ionicons } from "@expo/vector-icons";
+import { showSuccess, showError, showInfo } from "@/src/utils/toast";
 
 export default function StaffScreen() {
   const queryClient = useQueryClient();
@@ -48,7 +49,7 @@ export default function StaffScreen() {
 
   const handleSave = async () => {
     if (!ten || (!editingStaff && !username) || (!editingStaff && !password)) {
-      Alert.alert("Lỗi", "Điền đủ thông tin"); return;
+      showError("Điền đủ thông tin"); return;
     }
     try {
       const d: Record<string, unknown> = { ten, quyen, luong: parseFloat(luong) || 0, con_hoat_dong: conHoatDong };
@@ -61,9 +62,9 @@ export default function StaffScreen() {
       }
       queryClient.invalidateQueries({ queryKey: ["staff"] });
       setShowAdd(false);
-      Alert.alert("Thành công", editingStaff ? "Đã cập nhật" : "Đã thêm nhân viên");
+      showSuccess(editingStaff ? "Đã cập nhật" : "Đã thêm nhân viên");
     } catch {
-      Alert.alert("Lỗi", "Không thể lưu");
+      showError("Không thể lưu");
     }
   };
 
@@ -72,9 +73,9 @@ export default function StaffScreen() {
     try {
       await deleteStaff(deleteId);
       queryClient.invalidateQueries({ queryKey: ["staff"] });
-      Alert.alert("Thành công", "Đã xóa nhân viên");
+      showSuccess("Đã xóa nhân viên");
     } catch {
-      Alert.alert("Lỗi", "Không thể xóa");
+      showError("Không thể xóa");
     }
     setDeleteId(null);
   };
@@ -137,34 +138,45 @@ export default function StaffScreen() {
 
       {/* Add/Edit modal */}
       <Modal visible={showAdd} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{editingStaff ? "Sửa nhân viên" : "Thêm nhân viên"}</Text>
-            <Input label="Tên" value={ten} onChangeText={setTen} />
-            {!editingStaff && <Input label="Username" value={username} onChangeText={setUsername} autoCapitalize="none" />}
-            <Input label="Mật khẩu" value={password} onChangeText={setPassword} secureTextEntry placeholder={editingStaff ? "Để trống nếu không đổi" : ""} />
-            <Input label="Lương (VNĐ)" value={luong} onChangeText={setLuong} keyboardType="numeric" />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.modalOverlay}>
+            <ScrollView
+              contentContainerStyle={{ flexGrow: 1, justifyContent: "flex-end" }}
+              keyboardShouldPersistTaps="handled"
+              bounces={false}
+            >
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>{editingStaff ? "Sửa nhân viên" : "Thêm nhân viên"}</Text>
+                <Input label="Tên" value={ten} onChangeText={setTen} />
+                {!editingStaff && <Input label="Username" value={username} onChangeText={setUsername} autoCapitalize="none" />}
+                <Input label="Mật khẩu" value={password} onChangeText={setPassword} secureTextEntry placeholder={editingStaff ? "Để trống nếu không đổi" : ""} />
+                <Input label="Lương (VNĐ)" value={luong} onChangeText={setLuong} keyboardType="numeric" />
 
-            <Text style={styles.label}>Quyền</Text>
-            <View style={styles.quyenGrid}>
-              {ALL_QUYEN.map(q => (
-                <TouchableOpacity key={q.key} style={[styles.quyenChip, quyen.includes(q.key) && styles.quyenChipActive]} onPress={() => toggleQuyen(q.key)}>
-                  <Text style={[styles.quyenChipText, quyen.includes(q.key) && { color: colors.cream }]}>{q.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+                <Text style={styles.label}>Quyền</Text>
+                <View style={styles.quyenGrid}>
+                  {ALL_QUYEN.map(q => (
+                    <TouchableOpacity key={q.key} style={[styles.quyenChip, quyen.includes(q.key) && styles.quyenChipActive]} onPress={() => toggleQuyen(q.key)}>
+                      <Text style={[styles.quyenChipText, quyen.includes(q.key) && { color: colors.cream }]}>{q.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
 
-            <View style={styles.switchRow}>
-              <Text style={styles.label}>Còn hoạt động</Text>
-              <Switch value={conHoatDong} onValueChange={setConHoatDong} />
-            </View>
+                <View style={styles.switchRow}>
+                  <Text style={styles.label}>Còn hoạt động</Text>
+                  <Switch value={conHoatDong} onValueChange={setConHoatDong} />
+                </View>
 
-            <View style={styles.modalButtons}>
-              <Button title="Hủy" onPress={() => setShowAdd(false)} variant="ghost" style={{ flex: 1 }} />
-              <Button title="Lưu" onPress={handleSave} style={{ flex: 1 }} />
-            </View>
+                <View style={styles.modalButtons}>
+                  <Button title="Hủy" onPress={() => setShowAdd(false)} variant="ghost" style={{ flex: 1 }} />
+                  <Button title="Lưu" onPress={handleSave} style={{ flex: 1 }} />
+                </View>
+              </View>
+            </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       <ConfirmDialog visible={!!deleteId} title="Xóa nhân viên?" message="Hành động này không thể hoàn tác." confirmText="Xóa" isDanger onConfirm={handleDelete} onCancel={() => setDeleteId(null)} />

@@ -4,6 +4,9 @@ import { supabase } from '@/lib/supabase'
 import { verifyAdminPassword } from '@/lib/auth'
 import { hashPassword } from '@/lib/staff-auth'
 import type { NhanVien } from '@/types'
+import { CORS_HEADERS, handleOptions } from "@/lib/cors";
+
+export async function OPTIONS() { return handleOptions(); }
 
 function mapRow(row: Record<string, unknown>): NhanVien {
   return {
@@ -26,7 +29,7 @@ function isAdmin(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   if (!isAdmin(request)) {
-    return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
+    return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
   }
   try {
     const { data, error } = await supabase
@@ -34,33 +37,33 @@ export async function GET(request: NextRequest) {
       .select('id, ten, username, quyen, con_hoat_dong, luong, created_at, updated_at')
       .order('created_at', { ascending: false })
     if (error) throw error
-    return NextResponse.json({ success: true, data: (data || []).map(mapRow) })
+    return NextResponse.json({ success: true, data: (data || []).map(mapRow) }, { headers: CORS_HEADERS })
   } catch (e) {
     console.error('GET /api/nhan-vien error:', e)
-    return NextResponse.json({ success: false, error: 'Không thể lấy danh sách' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Không thể lấy danh sách' }, { status: 500, headers: CORS_HEADERS })
   }
 }
 
 export async function POST(request: NextRequest) {
   if (!isAdmin(request)) {
-    return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
+    return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
   }
   try {
     const body = await request.json()
     const { ten, username, password, quyen, luong } = body
 
     if (!ten?.trim() || !username?.trim() || !password?.trim()) {
-      return NextResponse.json({ success: false, error: 'Thiếu thông tin bắt buộc' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'Thiếu thông tin bắt buộc' }, { status: 400, headers: CORS_HEADERS })
     }
     if (password.length < 6) {
-      return NextResponse.json({ success: false, error: 'Mật khẩu tối thiểu 6 ký tự' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'Mật khẩu tối thiểu 6 ký tự' }, { status: 400, headers: CORS_HEADERS })
     }
 
     // Kiểm tra username trùng
     const { data: existing } = await supabase
       .from('nhan_vien').select('id').eq('username', username.trim()).single()
     if (existing) {
-      return NextResponse.json({ success: false, error: 'Username đã tồn tại' }, { status: 409 })
+      return NextResponse.json({ success: false, error: 'Username đã tồn tại' }, { status: 409, headers: CORS_HEADERS })
     }
 
     const passwordHash = await hashPassword(password)
@@ -77,9 +80,9 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) throw error
-    return NextResponse.json({ success: true, data: mapRow(data) })
+    return NextResponse.json({ success: true, data: mapRow(data) }, { headers: CORS_HEADERS })
   } catch (e) {
     console.error('POST /api/nhan-vien error:', e)
-    return NextResponse.json({ success: false, error: 'Không thể tạo nhân viên' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Không thể tạo nhân viên' }, { status: 500, headers: CORS_HEADERS })
   }
 }

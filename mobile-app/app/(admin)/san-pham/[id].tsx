@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import {
-  View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Switch, KeyboardAvoidingView, Platform, Image,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { updateProduct, deleteProduct, getCategories, generateMoTa } from "@/src/api/san-pham";
 import { uploadImage } from "@/src/utils/upload";
+import { showSuccess, showError, showInfo } from "@/src/utils/toast";
 import { colors, shadows, borderRadius } from "@/src/theme";
 import { QUICK_SIZES } from "@/src/utils/constants";
 import { formatMoney } from "@/src/utils/format";
@@ -31,7 +32,13 @@ export default function EditProductScreen() {
   const [generating, setGenerating] = useState(false);
 
   // Try to get cached data from list first (fast, no extra API call)
-  const cached = params.cachedData ? JSON.parse(params.cachedData) : null;
+  const cached = params.cachedData ? (() => {
+    try { 
+      return JSON.parse(params.cachedData); 
+    } catch { 
+      return null; 
+    }
+  })() : null;
   const cachedProduct = cached ? { data: cached, isLoading: false } : undefined;
 
   // Only call API if no cached data
@@ -94,17 +101,17 @@ export default function EditProductScreen() {
   };
 
   const handleGenerate = async () => {
-    if (!ten) { Alert.alert("Lỗi", "Nhập tên sản phẩm trước"); return; }
+    if (!ten) { showError("Nhập tên sản phẩm trước"); return; }
     setGenerating(true);
     try {
       const res = await generateMoTa(ten, parseFloat(giaGoc) || 0, danhMuc);
       if (res.success) setMoTa(res.data?.moTa || res.data || res.moTa || "");
-    } catch { Alert.alert("Lỗi", "Không thể tạo mô tả"); }
+    } catch { showError("Không thể tạo mô tả"); }
     setGenerating(false);
   };
 
   const handleSave = async () => {
-    if (!id || !ten || !giaGoc) { Alert.alert("Lỗi", "Điền đủ tên và giá"); return; }
+    if (!id || !ten || !giaGoc) { showError("Điền đủ tên và giá"); return; }
     setSaving(true);
     try {
       let anhURL = data?.anhURL || "";
@@ -115,7 +122,7 @@ export default function EditProductScreen() {
         if (uploadResult.success && uploadResult.url) {
           anhURL = uploadResult.url;
         } else {
-          Alert.alert("Lỗi upload", uploadResult.error || "Không thể upload ảnh");
+          showError(uploadResult.error || "Không thể upload ảnh");
           setSaving(false);
           return;
         }
@@ -134,10 +141,10 @@ export default function EditProductScreen() {
       });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["product", id] });
-      Alert.alert("Thành công", "Đã cập nhật sản phẩm");
-      router.back();
+      showSuccess("Đã cập nhật sản phẩm");
+      setTimeout(() => router.back(), 1000);
     } catch {
-      Alert.alert("Lỗi", "Không thể cập nhật");
+      showError("Không thể cập nhật");
     } finally {
       setSaving(false);
     }
@@ -148,10 +155,10 @@ export default function EditProductScreen() {
     try {
       await deleteProduct(id);
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      Alert.alert("Thành công", "Đã xóa sản phẩm");
-      router.replace("/(admin)/san-pham");
+      showSuccess("Đã xóa sản phẩm");
+      setTimeout(() => router.replace("/(admin)/san-pham"), 1000);
     } catch {
-      Alert.alert("Lỗi", "Không thể xóa");
+      showError("Không thể xóa");
     }
   };
 

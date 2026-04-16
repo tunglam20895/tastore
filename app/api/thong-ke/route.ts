@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyAccess } from '@/lib/auth'
+import { CORS_HEADERS, handleOptions } from "@/lib/cors";
 export const dynamic = "force-dynamic";
+
+export async function OPTIONS() { return handleOptions(); }
 
 function startOfDay(d: Date) {
   const r = new Date(d); r.setHours(0, 0, 0, 0); return r.toISOString()
@@ -29,7 +32,7 @@ function getMonthLabel(d: Date) {
 export async function GET(request: NextRequest) {
   try {
     if (!await verifyAccess(request, 'dashboard')) {
-      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
     }
 
     const { searchParams } = new URL(request.url);
@@ -344,9 +347,9 @@ export async function GET(request: NextRequest) {
         donHangChart: donHangChartData,
         chartTheoThang,
       },
-    });
+    }, { headers: CORS_HEADERS });
   } catch (error) {
     console.error('GET /api/thong-ke error:', error);
-    return NextResponse.json({ success: false, error: 'Không thể lấy thống kê' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Không thể lấy thống kê' }, { status: 500, headers: CORS_HEADERS });
   }
 }

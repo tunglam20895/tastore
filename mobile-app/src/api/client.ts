@@ -28,17 +28,32 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor: better error handling for web
+// Response interceptor
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (isWeb && error.code === 'ERR_NETWORK') {
+    if (isWeb) {
       console.error(
-        '[API CORS Error] Trình duyệt chặn request đến',
-        error.config?.url,
-        '\nFix: Backend cần có CORS headers hoặc chạy backend với --cors flag'
+        '[API Error]',
+        error.code,
+        error.message,
+        'URL:', error.config?.url,
+        'Status:', error?.response?.status,
       );
     }
+
+    // Chỉ logout khi 401 xảy ra trên auth endpoint (token thực sự bị từ chối)
+    // KHÔNG logout khi 401 do lỗi nghiệp vụ (vd: sai mật khẩu khi đăng nhập)
+    if (error?.response?.status === 401) {
+      const url: string = error.config?.url || '';
+      const isAuthEndpoint = url.includes('/api/authenticate');
+      if (!isAuthEndpoint) {
+        // Token hết hạn hoặc không hợp lệ → logout
+        const { logout } = useAuthStore.getState();
+        logout().catch(() => {});
+      }
+    }
+
     return Promise.reject(error);
   }
 );

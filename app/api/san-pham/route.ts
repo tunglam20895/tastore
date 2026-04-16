@@ -3,6 +3,9 @@ import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyAccess } from '@/lib/auth'
 import type { SanPham, SizeItem } from '@/types'
+import { CORS_HEADERS, handleOptions } from "@/lib/cors";
+
+export async function OPTIONS() { return handleOptions(); }
 
 function computeGiaHienThi(giaGoc: number, phanTramGiam: number | null): number {
   if (!phanTramGiam) return giaGoc
@@ -66,20 +69,20 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         totalPages: Math.ceil(total / limit),
-      })
+      }, { headers: CORS_HEADERS })
     }
 
-    return NextResponse.json({ success: true, data: (data || []).map(mapRow) })
+    return NextResponse.json({ success: true, data: (data || []).map(mapRow) }, { headers: CORS_HEADERS })
   } catch (error) {
     console.error('GET /api/san-pham error:', error)
-    return NextResponse.json({ success: false, error: 'Không thể lấy danh sách sản phẩm' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Không thể lấy danh sách sản phẩm' }, { status: 500, headers: CORS_HEADERS })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     if (!await verifyAccess(request, 'san-pham')) {
-      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
     }
 
     const body = await request.json()
@@ -101,9 +104,9 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) throw error
-    return NextResponse.json({ success: true, data: mapRow(data) })
+    return NextResponse.json({ success: true, data: mapRow(data) }, { headers: CORS_HEADERS })
   } catch (error) {
     console.error('POST /api/san-pham error:', error)
-    return NextResponse.json({ success: false, error: 'Không thể thêm sản phẩm' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Không thể thêm sản phẩm' }, { status: 500, headers: CORS_HEADERS })
   }
 }

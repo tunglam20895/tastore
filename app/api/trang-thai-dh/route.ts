@@ -2,8 +2,11 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyAdminPassword } from '@/lib/auth'
+import { CORS_HEADERS, handleOptions } from "@/lib/cors";
 
 export const dynamic = "force-dynamic";
+
+export async function OPTIONS() { return handleOptions(); }
 
 const DEFAULT_COLORS = [
   { key: "Mới", ten: "Mới", mau: "#3B82F6", thuTu: 1 },
@@ -23,7 +26,7 @@ export async function GET() {
       .order('thu_tu', { ascending: true });
 
     if (error || !data || data.length === 0) {
-      return NextResponse.json({ success: true, data: DEFAULT_COLORS });
+      return NextResponse.json({ success: true, data: DEFAULT_COLORS }, { headers: CORS_HEADERS });
     }
 
     return NextResponse.json({
@@ -34,9 +37,9 @@ export async function GET() {
         mau: row.mau,
         thuTu: row.thu_tu,
       })),
-    });
+    }, { headers: CORS_HEADERS });
   } catch {
-    return NextResponse.json({ success: true, data: DEFAULT_COLORS });
+    return NextResponse.json({ success: true, data: DEFAULT_COLORS }, { headers: CORS_HEADERS });
   }
 }
 
@@ -45,14 +48,14 @@ export async function PUT(request: NextRequest) {
   try {
     const pw = request.headers.get('x-admin-password');
     if (!pw || !verifyAdminPassword(pw)) {
-      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS });
     }
 
     const body = await request.json();
     const { key, mau } = body;
 
     if (!key || !mau) {
-      return NextResponse.json({ success: false, error: 'Thiếu key hoặc màu' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Thiếu key hoặc màu' }, { status: 400, headers: CORS_HEADERS });
     }
 
     const { error } = await supabase
@@ -62,10 +65,10 @@ export async function PUT(request: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: CORS_HEADERS });
   } catch (e) {
     console.error('PUT /api/trang-thai-dh error:', e);
-    return NextResponse.json({ success: false, error: 'Không thể cập nhật màu' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Không thể cập nhật màu' }, { status: 500, headers: CORS_HEADERS });
   }
 }
 
@@ -74,14 +77,14 @@ export async function POST(request: NextRequest) {
   try {
     const pw = request.headers.get('x-admin-password');
     if (!pw || !verifyAdminPassword(pw)) {
-      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS });
     }
 
     const body = await request.json();
     const { ten, mau } = body;
 
     if (!ten?.trim()) {
-      return NextResponse.json({ success: false, error: 'Thiếu tên trạng thái' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Thiếu tên trạng thái' }, { status: 400, headers: CORS_HEADERS });
     }
 
     // Kiểm tra trùng key
@@ -92,7 +95,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (existing) {
-      return NextResponse.json({ success: false, error: 'Trạng thái đã tồn tại' }, { status: 409 });
+      return NextResponse.json({ success: false, error: 'Trạng thái đã tồn tại' }, { status: 409, headers: CORS_HEADERS });
     }
 
     // Lấy thu_tu cao nhất + 1
@@ -120,10 +123,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: { key: data.key, ten: data.ten, mau: data.mau, thuTu: data.thu_tu },
-    });
+    }, { headers: CORS_HEADERS });
   } catch (e) {
     console.error('POST /api/trang-thai-dh error:', e);
-    return NextResponse.json({ success: false, error: 'Không thể thêm trạng thái' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Không thể thêm trạng thái' }, { status: 500, headers: CORS_HEADERS });
   }
 }
 
@@ -132,14 +135,14 @@ export async function DELETE(request: NextRequest) {
   try {
     const pw = request.headers.get('x-admin-password');
     if (!pw || !verifyAdminPassword(pw)) {
-      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS });
     }
 
     const { searchParams } = new URL(request.url);
     const key = searchParams.get('key');
 
     if (!key) {
-      return NextResponse.json({ success: false, error: 'Thiếu key' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Thiếu key' }, { status: 400, headers: CORS_HEADERS });
     }
 
     const { error } = await supabase
@@ -149,9 +152,9 @@ export async function DELETE(request: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: CORS_HEADERS });
   } catch (e) {
     console.error('DELETE /api/trang-thai-dh error:', e);
-    return NextResponse.json({ success: false, error: 'Không thể xóa trạng thái' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Không thể xóa trạng thái' }, { status: 500, headers: CORS_HEADERS });
   }
 }

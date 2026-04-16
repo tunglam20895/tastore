@@ -3,7 +3,10 @@ import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyAccess } from '@/lib/auth'
 import type { KhachHang } from '@/types'
+import { CORS_HEADERS, handleOptions } from "@/lib/cors";
 export const dynamic = "force-dynamic";
+
+export async function OPTIONS() { return handleOptions(); }
 
 function mapRow(row: Record<string, unknown>): KhachHang {
   return {
@@ -21,7 +24,7 @@ function mapRow(row: Record<string, unknown>): KhachHang {
 export async function GET(request: NextRequest) {
   try {
     if (!await verifyAccess(request, 'khach-hang')) {
-      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
     }
 
     const { searchParams } = new URL(request.url)
@@ -52,9 +55,9 @@ export async function GET(request: NextRequest) {
       page,
       limit,
       totalPages: Math.ceil(total / limit),
-    })
+    }, { headers: CORS_HEADERS })
   } catch (error) {
     console.error('GET /api/khach-hang error:', error)
-    return NextResponse.json({ success: false, error: 'Không thể lấy danh sách khách hàng' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Không thể lấy danh sách khách hàng' }, { status: 500, headers: CORS_HEADERS })
   }
 }

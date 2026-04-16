@@ -4,6 +4,9 @@ import { supabase } from '@/lib/supabase'
 import { verifyAccess } from '@/lib/auth'
 import { verifyStaffToken } from '@/lib/staff-auth'
 import type { DonHang, CartItem } from '@/types'
+import { CORS_HEADERS, handleOptions } from "@/lib/cors";
+
+export async function OPTIONS() { return handleOptions(); }
 
 async function getNguoiXuLy(request: NextRequest): Promise<string> {
   const pw = request.headers.get('x-admin-password')
@@ -23,7 +26,7 @@ export async function GET(
 ) {
   try {
     if (!await verifyAccess(request, 'don-hang')) {
-      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
     }
 
     const { data, error } = await supabase
@@ -33,7 +36,7 @@ export async function GET(
       .single()
 
     if (error) throw error
-    if (!data) return NextResponse.json({ success: false, error: 'Không tìm thấy đơn hàng' }, { status: 404 })
+    if (!data) return NextResponse.json({ success: false, error: 'Không tìm thấy đơn hàng' }, { status: 404, headers: CORS_HEADERS })
 
     const sanPham = (data.san_pham as CartItem[]) || []
 
@@ -66,10 +69,10 @@ export async function GET(
       nguoiXuLy: data.nguoi_xu_ly || 'Chưa có',
     }
 
-    return NextResponse.json({ success: true, data: order })
+    return NextResponse.json({ success: true, data: order }, { headers: CORS_HEADERS })
   } catch (error) {
     console.error('GET /api/don-hang/[id] error:', error)
-    return NextResponse.json({ success: false, error: 'Không thể lấy đơn hàng' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Không thể lấy đơn hàng' }, { status: 500, headers: CORS_HEADERS })
   }
 }
 
@@ -79,13 +82,13 @@ export async function PUT(
 ) {
   try {
     if (!await verifyAccess(request, 'don-hang')) {
-      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
     }
 
     const body = await request.json()
     const trangThai = body.trangThai as DonHang['trangThai']
     if (!trangThai) {
-      return NextResponse.json({ success: false, error: 'Thiếu trạng thái' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'Thiếu trạng thái' }, { status: 400, headers: CORS_HEADERS })
     }
 
     const nguoiXuLy = await getNguoiXuLy(request)
@@ -96,9 +99,9 @@ export async function PUT(
       .eq('id', params.id)
 
     if (error) throw error
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true }, { headers: CORS_HEADERS })
   } catch (error) {
     console.error('PUT /api/don-hang/[id] error:', error)
-    return NextResponse.json({ success: false, error: 'Không thể cập nhật đơn hàng' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Không thể cập nhật đơn hàng' }, { status: 500, headers: CORS_HEADERS })
   }
 }

@@ -3,6 +3,9 @@ import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyAdminPassword } from '@/lib/auth'
 import type { CaiDat } from '@/types'
+import { CORS_HEADERS, handleOptions } from "@/lib/cors";
+
+export async function OPTIONS() { return handleOptions(); }
 
 export const dynamic = 'force-dynamic'
 
@@ -28,11 +31,11 @@ export async function GET() {
     const settings = await getSettings()
     return NextResponse.json(
         { success: true, data: settings },
-        { headers: { 'Cache-Control': 'no-store' } }
+        { headers: { 'Cache-Control': 'no-store', ...CORS_HEADERS } }
     )
   } catch (error) {
     console.error('GET /api/cai-dat error:', error)
-    return NextResponse.json({ success: false, error: 'Không thể lấy cài đặt' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Không thể lấy cài đặt' }, { status: 500, headers: CORS_HEADERS })
   }
 }
 
@@ -40,7 +43,7 @@ export async function PUT(request: NextRequest) {
   try {
     const adminPassword = request.headers.get('x-admin-password')
     if (!adminPassword || !verifyAdminPassword(adminPassword)) {
-      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
     }
 
     const body = await request.json() as Partial<CaiDat>
@@ -64,10 +67,10 @@ export async function PUT(request: NextRequest) {
     const settings = await getSettings()
     return NextResponse.json(
         { success: true, data: settings },
-        { headers: { 'Cache-Control': 'no-store' } }
+        { headers: { 'Cache-Control': 'no-store', ...CORS_HEADERS } }
     )
   } catch (error) {
     console.error('PUT /api/cai-dat error:', error)
-    return NextResponse.json({ success: false, error: 'Không thể cập nhật cài đặt' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Không thể cập nhật cài đặt' }, { status: 500, headers: CORS_HEADERS })
   }
 }

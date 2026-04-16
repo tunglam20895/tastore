@@ -16,6 +16,23 @@ import { useAuthStore } from "@/src/store/authStore";
 import { colors, borderRadius, shadows } from "@/src/theme";
 import { Ionicons } from "@expo/vector-icons";
 
+// Thứ tự ưu tiên màn hình theo quyền
+const SCREEN_PRIORITY = [
+  { quyen: "dashboard",   route: "/(admin)/dashboard"   },
+  { quyen: "don-hang",    route: "/(admin)/don-hang"    },
+  { quyen: "san-pham",    route: "/(admin)/san-pham"    },
+  { quyen: "khach-hang",  route: "/(admin)/khach-hang"  },
+  { quyen: "ma-giam-gia", route: "/(admin)/ma-giam-gia" },
+];
+
+function getFirstAllowedScreen(quyen: string[]): string {
+  for (const screen of SCREEN_PRIORITY) {
+    if (quyen.includes(screen.quyen)) return screen.route;
+  }
+  // Không có quyền nào khớp → vào more (menu)
+  return "/(admin)/more";
+}
+
 export default function LoginScreen() {
   const [mode, setMode] = useState<"admin" | "staff">("admin");
   const [username, setUsername] = useState("");
@@ -48,13 +65,16 @@ export default function LoginScreen() {
       } else {
         const data = await loginStaff(username.trim(), password);
         if (data.success) {
+          const quyen: string[] = data.quyen || [];
           await loginAsStaff(
             data.staffToken || "",
-            data.quyen || [],
+            quyen,
             data.ten || "",
             data.id || ""
           );
-          router.replace("/(admin)");
+          // Điều hướng tới màn hình đầu tiên nhân viên có quyền truy cập
+          const firstScreen = getFirstAllowedScreen(quyen);
+          router.replace(firstScreen as any);
         } else {
           setError(data.error || "Sai tên đăng nhập hoặc mật khẩu");
         }

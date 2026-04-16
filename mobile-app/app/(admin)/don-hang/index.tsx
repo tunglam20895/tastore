@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from "react";
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  TextInput, RefreshControl, Modal, Alert, ScrollView,
+  TextInput, RefreshControl, Modal, ScrollView,
 } from "react-native";
+import { showSuccess, showError } from "@/src/utils/toast";
 import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getOrders, updateOrderStatus, bulkUpdateStatus } from "@/src/api/don-hang";
@@ -64,9 +65,8 @@ export default function OrdersScreen() {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       clearSelection();
       setBulkStatusModal(false);
-      Alert.alert("Thành công", `Đã cập nhật ${selectedIds.length} đơn hàng`);
     } catch {
-      Alert.alert("Lỗi", "Không thể cập nhật trạng thái hàng loạt");
+      showError("Không thể cập nhật trạng thái hàng loạt");
     }
   };
 

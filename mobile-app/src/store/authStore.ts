@@ -43,12 +43,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   initialize: async () => {
     try {
       const adminPw = await SecureStore.getItemAsync('admin-password');
-      if (adminPw) {
+      if (adminPw && adminPw.trim().length > 0) {
         set({ role: 'admin', adminPassword: adminPw, isAuthenticated: true, isLoading: false });
         return;
       }
       const staffToken = await SecureStore.getItemAsync('staff-token');
-      if (staffToken) {
+      if (staffToken && staffToken.trim().length > 0) {
         const quyen = (await SecureStore.getItemAsync('staff-quyen'))?.split(',').filter(Boolean) || [];
         const ten = (await SecureStore.getItemAsync('staff-ten')) || '';
         const id = (await SecureStore.getItemAsync('staff-id')) || null;
@@ -56,7 +56,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         return;
       }
     } catch { /* ignore */ }
-    set({ isLoading: false });
+    set({ isAuthenticated: false, isLoading: false });
   },
 
   loginAsAdmin: async (password: string) => {

@@ -10,11 +10,13 @@ export default function OrderTable({
   selectedIds,
   onSelectChange,
   onStatusChange,
+  onOrderIdClick,
 }: {
   orders: DonHang[];
   selectedIds: string[];
   onSelectChange: (ids: string[]) => void;
   onStatusChange: () => void;
+  onOrderIdClick?: (orderId: string) => void;
 }) {
   const [updating, setUpdating] = useState<string | null>(null);
   const { showSuccess, showError } = useToast();
@@ -111,8 +113,17 @@ export default function OrderTable({
               </td>
 
               {/* Mã đơn */}
-              <td className="py-3 px-4 font-mono text-xs text-rose whitespace-nowrap">
-                {order.id}
+              <td className="py-3 px-4 whitespace-nowrap">
+                {onOrderIdClick ? (
+                  <button
+                    onClick={() => onOrderIdClick(order.id)}
+                    className="font-mono text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline transition-all"
+                  >
+                    {order.id}
+                  </button>
+                ) : (
+                  <span className="font-mono text-xs text-rose">{order.id}</span>
+                )}
               </td>
 
               {/* Khách hàng: tên + SĐT */}

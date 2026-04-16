@@ -3,6 +3,9 @@ import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyAccess } from '@/lib/auth'
 import type { SanPham, SizeItem } from '@/types'
+import { CORS_HEADERS, handleOptions } from "@/lib/cors";
+
+export async function OPTIONS() { return handleOptions(); }
 
 function computeGiaHienThi(giaGoc: number, phanTramGiam: number | null): number {
   if (!phanTramGiam) return giaGoc
@@ -42,13 +45,13 @@ export async function GET(
       .single()
 
     if (error) throw error
-    if (!data) return NextResponse.json({ success: false, error: 'Không tìm thấy sản phẩm' }, { status: 404 })
+    if (!data) return NextResponse.json({ success: false, error: 'Không tìm thấy sản phẩm' }, { status: 404, headers: CORS_HEADERS })
 
     // Nếu chỉ lấy sản phẩm đang bán (không truyền query param)
-    return NextResponse.json({ success: true, data: mapRow(data) })
+    return NextResponse.json({ success: true, data: mapRow(data) }, { headers: CORS_HEADERS })
   } catch (error) {
     console.error('GET /api/san-pham/[id] error:', error)
-    return NextResponse.json({ success: false, error: 'Không thể lấy sản phẩm' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Không thể lấy sản phẩm' }, { status: 500, headers: CORS_HEADERS })
   }
 }
 
@@ -58,7 +61,7 @@ export async function PUT(
 ) {
   try {
     if (!await verifyAccess(request, 'san-pham')) {
-      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
     }
 
     const body = await request.json()
@@ -88,10 +91,10 @@ export async function PUT(
       .single()
 
     if (error) throw error
-    return NextResponse.json({ success: true, data: mapRow(data) })
+    return NextResponse.json({ success: true, data: mapRow(data) }, { headers: CORS_HEADERS })
   } catch (error) {
     console.error('PUT /api/san-pham/[id] error:', error)
-    return NextResponse.json({ success: false, error: 'Không thể cập nhật sản phẩm' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Không thể cập nhật sản phẩm' }, { status: 500, headers: CORS_HEADERS })
   }
 }
 
@@ -101,7 +104,7 @@ export async function DELETE(
 ) {
   try {
     if (!await verifyAccess(request, 'san-pham')) {
-      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
     }
 
     const { error } = await supabase
@@ -110,9 +113,9 @@ export async function DELETE(
       .eq('id', params.id)
 
     if (error) throw error
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true }, { headers: CORS_HEADERS })
   } catch (error) {
     console.error('DELETE /api/san-pham/[id] error:', error)
-    return NextResponse.json({ success: false, error: 'Không thể xóa sản phẩm' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Không thể xóa sản phẩm' }, { status: 500, headers: CORS_HEADERS })
   }
 }

@@ -9,6 +9,7 @@ import CreateOrderModal from "@/components/admin/CreateOrderModal";
 import type { DonHang } from "@/types";
 import { useToast } from "@/contexts/ToastContext";
 import { useTrangThaiDH } from "@/contexts/TrangThaiDHContext";
+import OrderDetailModal from "@/components/admin/OrderDetailModal";
 
 const LIMIT_DEFAULT = 20;
 
@@ -36,6 +37,9 @@ export default function AdminOrdersPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+
+  // Order detail modal
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
   const { showSuccess, showError } = useToast();
   const { trangThais } = useTrangThaiDH();
@@ -357,6 +361,7 @@ export default function AdminOrdersPage() {
             selectedIds={selectedIds}
             onSelectChange={setSelectedIds}
             onStatusChange={() => loadOrders(page, trangThai, searchTen, searchSdt, tuNgay, denNgay)}
+            onOrderIdClick={(orderId) => setSelectedOrderId(orderId)}
           />
           <div className="px-4">
             <Pagination
@@ -369,6 +374,15 @@ export default function AdminOrdersPage() {
             />
           </div>
         </div>
+      )}
+
+      {/* Order Detail Modal */}
+      {selectedOrderId && (
+        <OrderDetailModal
+          orderId={selectedOrderId}
+          onClose={() => setSelectedOrderId(null)}
+          onStatusChange={() => loadOrders(page, trangThai, searchTen, searchSdt, tuNgay, denNgay)}
+        />
       )}
 
       {/* Create Order Modal */}

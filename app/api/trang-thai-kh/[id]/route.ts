@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyAdminPassword } from '@/lib/auth'
+import { CORS_HEADERS, handleOptions } from "@/lib/cors";
+
+export async function OPTIONS() { return handleOptions(); }
 
 export async function DELETE(
   request: NextRequest,
@@ -10,7 +13,7 @@ export async function DELETE(
   try {
     const adminPassword = request.headers.get('x-admin-password')
     if (!adminPassword || !verifyAdminPassword(adminPassword)) {
-      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
     }
 
     // Kiểm tra xem trạng thái có đang được dùng không
@@ -29,7 +32,7 @@ export async function DELETE(
       if (count && count > 0) {
         return NextResponse.json(
           { success: false, error: `Trạng thái đang được dùng bởi ${count} khách hàng` },
-          { status: 400 }
+          { status: 400, headers: CORS_HEADERS }
         )
       }
     }
@@ -37,9 +40,9 @@ export async function DELETE(
     const { error } = await supabase.from('trang_thai_kh').delete().eq('id', params.id)
     if (error) throw error
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true }, { headers: CORS_HEADERS })
   } catch (error) {
     console.error('DELETE /api/trang-thai-kh/[id] error:', error)
-    return NextResponse.json({ success: false, error: 'Không thể xóa trạng thái' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Không thể xóa trạng thái' }, { status: 500, headers: CORS_HEADERS })
   }
 }

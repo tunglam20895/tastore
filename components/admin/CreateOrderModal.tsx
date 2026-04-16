@@ -135,6 +135,13 @@ export default function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateO
     setTenKH(""); setSdt(""); setDiaChi(""); setCartItems([]); setSearchTerm(""); setSearchResults([]); setSearched(false); onClose();
   };
 
+  // Escape key to close
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape" && isOpen) handleClose(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [isOpen, submitting]);
+
   return (
     <AnimatePresence>
       {isOpen && (

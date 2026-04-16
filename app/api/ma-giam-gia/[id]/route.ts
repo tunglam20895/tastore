@@ -3,6 +3,9 @@ import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyAccess } from '@/lib/auth'
 import type { MaGiamGia } from '@/types'
+import { CORS_HEADERS, handleOptions } from "@/lib/cors";
+
+export async function OPTIONS() { return handleOptions(); }
 
 function mapRow(row: Record<string, unknown>): MaGiamGia {
   return {
@@ -26,7 +29,7 @@ export async function PUT(
 ) {
   try {
     if (!await verifyAccess(request, 'ma-giam-gia')) {
-      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
     }
 
     const body = await request.json()
@@ -48,10 +51,10 @@ export async function PUT(
       .single()
 
     if (error) throw error
-    return NextResponse.json({ success: true, data: mapRow(data) })
+    return NextResponse.json({ success: true, data: mapRow(data) }, { headers: CORS_HEADERS })
   } catch (error) {
     console.error('PUT /api/ma-giam-gia/[id] error:', error)
-    return NextResponse.json({ success: false, error: 'Không thể cập nhật mã giảm giá' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Không thể cập nhật mã giảm giá' }, { status: 500, headers: CORS_HEADERS })
   }
 }
 
@@ -61,7 +64,7 @@ export async function DELETE(
 ) {
   try {
     if (!await verifyAccess(request, 'ma-giam-gia')) {
-      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
     }
 
     const { error } = await supabase
@@ -70,9 +73,9 @@ export async function DELETE(
       .eq('id', params.id)
 
     if (error) throw error
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true }, { headers: CORS_HEADERS })
   } catch (error) {
     console.error('DELETE /api/ma-giam-gia/[id] error:', error)
-    return NextResponse.json({ success: false, error: 'Không thể xóa mã giảm giá' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Không thể xóa mã giảm giá' }, { status: 500, headers: CORS_HEADERS })
   }
 }

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, RefreshControl, Modal, Alert } from "react-native";
+import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, RefreshControl, Modal, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
+import { showSuccess, showError, showInfo } from "@/src/utils/toast";
 import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCustomers, getTrangThaiKH, updateCustomer, deleteCustomer } from "@/src/api/khach-hang";
@@ -52,9 +53,9 @@ export default function CustomersScreen() {
       await updateCustomer(selectedKH.sdt, { trang_thai: editTrangThai, ghi_chu: editGhiChu });
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       setModalVisible(false);
-      Alert.alert("Thành công", "Đã cập nhật khách hàng");
+      showSuccess("Đã cập nhật khách hàng");
     } catch {
-      Alert.alert("Lỗi", "Không thể cập nhật");
+      showError("Không thể cập nhật");
     }
     setSaving(false);
   };
@@ -65,9 +66,9 @@ export default function CustomersScreen() {
       await deleteCustomer(deleteKH);
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       setDeleteKH(null);
-      Alert.alert("Thành công", "Đã xóa khách hàng");
+      showSuccess("Đã xóa khách hàng");
     } catch {
-      Alert.alert("Lỗi", "Không thể xóa");
+      showError("Không thể xóa");
     }
   };
 
@@ -162,61 +163,72 @@ export default function CustomersScreen() {
 
       {/* Edit modal */}
       <Modal visible={modalVisible} transparent animationType="fade">
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setModalVisible(false)}>
-          <View style={styles.modalContent} pointerEvents="box-none">
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Chi tiết khách hàng</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close" size={24} color={colors.stone[500]} />
-              </TouchableOpacity>
-            </View>
-            {selectedKH && (
-              <>
-                <View style={styles.modalCustomerInfo}>
-                  <View style={styles.modalAvatar}>
-                    <Text style={styles.modalAvatarText}>{getInitials(selectedKH.ten)}</Text>
-                  </View>
-                  <View>
-                    <Text style={styles.modalName}>{selectedKH.ten}</Text>
-                    <Text style={styles.modalSdt}>{selectedKH.sdt}</Text>
-                  </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setModalVisible(false)}>
+            <ScrollView
+              contentContainerStyle={{ flexGrow: 1, justifyContent: "flex-end" }}
+              keyboardShouldPersistTaps="handled"
+              bounces={false}
+            >
+              <View style={styles.modalContent} pointerEvents="box-none">
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Chi tiết khách hàng</Text>
+                  <TouchableOpacity onPress={() => setModalVisible(false)}>
+                    <Ionicons name="close" size={24} color={colors.stone[500]} />
+                  </TouchableOpacity>
                 </View>
-                <View style={styles.modalStatsRow}>
-                  <View style={styles.modalStatCard}>
-                    <Ionicons name="cube-outline" size={20} color={colors.blush} />
-                    <Text style={styles.modalStatValue}>{formatNumber(selectedKH.tongDon)}</Text>
-                    <Text style={styles.modalStatLabel}>Đơn hàng</Text>
-                  </View>
-                  <View style={styles.modalStatCard}>
-                    <Ionicons name="cash-outline" size={20} color={colors.rose} />
-                    <Text style={styles.modalStatValue}>{formatMoney(selectedKH.tongDoanhThu)}</Text>
-                    <Text style={styles.modalStatLabel}>Doanh thu</Text>
-                  </View>
-                </View>
+                {selectedKH && (
+                  <>
+                    <View style={styles.modalCustomerInfo}>
+                      <View style={styles.modalAvatar}>
+                        <Text style={styles.modalAvatarText}>{getInitials(selectedKH.ten)}</Text>
+                      </View>
+                      <View>
+                        <Text style={styles.modalName}>{selectedKH.ten}</Text>
+                        <Text style={styles.modalSdt}>{selectedKH.sdt}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.modalStatsRow}>
+                      <View style={styles.modalStatCard}>
+                        <Ionicons name="cube-outline" size={20} color={colors.blush} />
+                        <Text style={styles.modalStatValue}>{formatNumber(selectedKH.tongDon)}</Text>
+                        <Text style={styles.modalStatLabel}>Đơn hàng</Text>
+                      </View>
+                      <View style={styles.modalStatCard}>
+                        <Ionicons name="cash-outline" size={20} color={colors.rose} />
+                        <Text style={styles.modalStatValue}>{formatMoney(selectedKH.tongDoanhThu)}</Text>
+                        <Text style={styles.modalStatLabel}>Doanh thu</Text>
+                      </View>
+                    </View>
 
-                <Text style={styles.label}>Trạng thái</Text>
-                <View style={styles.ttChips}>
-                  {ttList.map((tt: any) => (
-                    <TouchableOpacity
-                      key={tt.id}
-                      style={[styles.ttChip, editTrangThai === tt.ten && styles.ttChipActive]}
-                      onPress={() => setEditTrangThai(tt.ten)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[styles.ttChipText, editTrangThai === tt.ten && { color: colors.cream }]}>{tt.ten}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+                    <Text style={styles.label}>Trạng thái</Text>
+                    <View style={styles.ttChips}>
+                      {ttList.map((tt: any) => (
+                        <TouchableOpacity
+                          key={tt.id}
+                          style={[styles.ttChip, editTrangThai === tt.ten && styles.ttChipActive]}
+                          onPress={() => setEditTrangThai(tt.ten)}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={[styles.ttChipText, editTrangThai === tt.ten && { color: colors.cream }]}>{tt.ten}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
 
-                <Input label="Ghi chú" value={editGhiChu} onChangeText={setEditGhiChu} multiline numberOfLines={3} />
-                <View style={styles.modalButtons}>
-                  <Button title="Hủy" onPress={() => setModalVisible(false)} variant="ghost" style={{ flex: 1 }} />
-                  <Button title="Lưu" onPress={handleSaveKH} loading={saving} style={{ flex: 1 }} />
-                </View>
-              </>
-            )}
-          </View>
-        </TouchableOpacity>
+                    <Input label="Ghi chú" value={editGhiChu} onChangeText={setEditGhiChu} multiline numberOfLines={3} />
+                    <View style={styles.modalButtons}>
+                      <Button title="Hủy" onPress={() => setModalVisible(false)} variant="ghost" style={{ flex: 1 }} />
+                      <Button title="Lưu" onPress={handleSaveKH} loading={saving} style={{ flex: 1 }} />
+                    </View>
+                  </>
+                )}
+              </View>
+            </ScrollView>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
       </Modal>
 
       <ConfirmDialog

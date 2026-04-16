@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Modal, FlatList,
   Dimensions, Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useNotifications } from '@/src/hooks/useNotifications';
+import { NotificationContext } from '@/app/(admin)/_layout';
 import { useAuthStore } from '@/src/store/authStore';
 import { colors, shadows } from '@/src/theme';
 import { formatMoney, formatRelativeTime } from '@/src/utils/format';
@@ -17,7 +17,11 @@ const SCREEN_HEIGHT = Dimensions.get('window').height;
 export default function AdminHeader() {
   const router = useRouter();
   const { role, staffTen } = useAuthStore();
-  const { notifications, unreadCount, markAllRead, markSingleRead } = useNotifications();
+  const notifCtx = useContext(NotificationContext);
+  const notifications = notifCtx?.notifications ?? [];
+  const unreadCount = notifCtx?.unreadCount ?? 0;
+  const markAllRead = notifCtx?.markAllRead ?? (() => Promise.resolve());
+  const markSingleRead = notifCtx?.markSingleRead ?? (() => Promise.resolve());
   const [showNotif, setShowNotif] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);
   const [scaleAnim] = useState(new Animated.Value(1));
@@ -41,18 +45,10 @@ export default function AdminHeader() {
     markSingleRead(notif.id);
     setShowNotif(false);
     if (notif.donHangId) {
-      // Navigate to order detail with cached data from notification
+      // Navigate to order detail - screen will fetch full data from API
       router.push({
         pathname: '/(admin)/don-hang/[id]',
-        params: {
-          id: notif.donHangId,
-          cachedData: JSON.stringify({
-            id: notif.donHangId,
-            tenKH: notif.tenKH,
-            trangThai: notif.trangThaiMoi,
-            tongTien: notif.tongTien || 0,
-          }),
-        },
+        params: { id: notif.donHangId },
       });
     }
   };

@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { CORS_HEADERS, handleOptions } from "@/lib/cors";
+
+export async function OPTIONS() { return handleOptions(); }
 
 export async function POST(request: NextRequest) {
   try {
     const { ma, tongTien } = await request.json()
 
     if (!ma || typeof tongTien !== 'number') {
-      return NextResponse.json({ success: false, error: 'Thiếu thông tin' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'Thiếu thông tin' }, { status: 400, headers: CORS_HEADERS })
     }
 
     const { data, error } = await supabase
@@ -17,22 +20,22 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error || !data) {
-      return NextResponse.json({ success: false, error: 'Mã giảm giá không tồn tại' })
+      return NextResponse.json({ success: false, error: 'Mã giảm giá không tồn tại' }, { headers: CORS_HEADERS })
     }
 
     // Kiểm tra hiệu lực
     if (!data.con_hieu_luc) {
-      return NextResponse.json({ success: false, error: 'Mã đã bị vô hiệu hóa' })
+      return NextResponse.json({ success: false, error: 'Mã đã bị vô hiệu hóa' }, { headers: CORS_HEADERS })
     }
 
     // Kiểm tra hết lượt
     if (data.da_dung >= data.so_luong) {
-      return NextResponse.json({ success: false, error: 'Mã đã hết lượt sử dụng' })
+      return NextResponse.json({ success: false, error: 'Mã đã hết lượt sử dụng' }, { headers: CORS_HEADERS })
     }
 
     // Kiểm tra hết hạn
     if (data.ngay_het_han && new Date(data.ngay_het_han) < new Date()) {
-      return NextResponse.json({ success: false, error: 'Mã đã hết hạn sử dụng' })
+      return NextResponse.json({ success: false, error: 'Mã đã hết hạn sử dụng' }, { headers: CORS_HEADERS })
     }
 
     // Kiểm tra đơn tối thiểu
@@ -40,7 +43,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: false,
         error: `Đơn hàng tối thiểu ${Number(data.don_hang_toi_thieu).toLocaleString('vi-VN')}đ để dùng mã này`,
-      })
+      }, { headers: CORS_HEADERS })
     }
 
     // Tính giá trị giảm
@@ -72,9 +75,9 @@ export async function POST(request: NextRequest) {
           createdAt: data.created_at,
         },
       },
-    })
+    }, { headers: CORS_HEADERS })
   } catch (error) {
     console.error('POST /api/ma-giam-gia/kiem-tra error:', error)
-    return NextResponse.json({ success: false, error: 'Không thể kiểm tra mã giảm giá' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Không thể kiểm tra mã giảm giá' }, { status: 500, headers: CORS_HEADERS })
   }
 }

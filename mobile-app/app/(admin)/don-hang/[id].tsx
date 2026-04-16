@@ -1,15 +1,16 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from "react-native";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { updateOrderStatus } from "@/src/api/don-hang";
+import { updateOrderStatus, getOrder } from "@/src/api/don-hang";
 import { useAuthStore } from "@/src/store/authStore";
 import { colors, shadows, borderRadius } from "@/src/theme";
 import { ORDER_STATUSES, STATUS_COLORS, STATUS_COLORS_BG } from "@/src/utils/constants";
 import { formatMoney, formatDate } from "@/src/utils/format";
 import AdminDetailHeader from "@/src/components/admin/AdminDetailHeader";
 import { Ionicons } from "@expo/vector-icons";
+import { showSuccess, showError } from "@/src/utils/toast";
 
 const statusIcons: Record<string, string> = {
   "Mới": "document-outline",
@@ -26,32 +27,68 @@ export default function OrderDetailScreen() {
   const { role, staffTen } = useAuthStore();
   const isAdmin = role === "admin";
   const [refreshing, setRefreshing] = useState(false);
+  const [orderData, setOrderData] = useState<any | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
 
   // Get id + cached data from params
   const params = useLocalSearchParams<{ id: string; cachedData?: string }>();
   const id = params?.id || "";
-  const cached = params.cachedData ? JSON.parse(params.cachedData) : null;
+  const cached = params.cachedData ? (() => { try { return JSON.parse(params.cachedData!); } catch { return null; } })() : null;
 
-  // Use cached data directly - no extra API call needed
-  const data = cached || null;
+  // Check if cached data is complete (has sanPham array = came from order list)
+  // If not complete (came from notification), fetch from API
+  const isCachedComplete = cached && Array.isArray(cached.sanPham);
+
+  useEffect(() => {
+    if (!id || id === "undefined" || id === "null") return;
+    if (isCachedComplete) {
+      setOrderData(cached);
+      return;
+    }
+    // Fetch full order from API (e.g. navigated from notification)
+    const fetchOrder = async () => {
+      setLoading(true);
+      setFetchError(false);
+      try {
+        const result = await getOrder(id);
+        setOrderData(result);
+      } catch {
+        setFetchError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrder();
+  }, [id]);
+
+  // data is the final resolved order data
+  const data = orderData;
 
   const handleStatusChange = async (newStatus: string) => {
     if (!id || data?.trangThai === newStatus) return;
     try {
       const nguoiXuLy = isAdmin ? "Admin" : (staffTen || "NV");
       await updateOrderStatus(id, newStatus, nguoiXuLy);
+      // Update local state optimistically
+      setOrderData((prev: any) => prev ? { ...prev, trangThai: newStatus } : prev);
       queryClient.invalidateQueries({ queryKey: ["orders"] });
-      // Update local data state would require refetch or optimistic update
-      Alert.alert("Thành công", `Đã chuyển sang "${newStatus}"`);
     } catch {
-      Alert.alert("Lỗi", "Không thể cập nhật trạng thái");
+      showError("Không thể cập nhật trạng thái");
     }
   };
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await queryClient.refetchQueries({ queryKey: ["orders"] });
-    setRefreshing(false);
+    try {
+      const result = await getOrder(id);
+      setOrderData(result);
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    } catch {
+      showError("Không thể tải lại đơn hàng");
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   // No valid ID
@@ -70,7 +107,39 @@ export default function OrderDetailScreen() {
     );
   }
 
-  // No data available (should not happen since we pass cached data)
+  // Loading state (fetching from API)
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <AdminDetailHeader title={`Đơn hàng #${id}`} showNotification onBack={router.back} />
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color={colors.blush} />
+          <Text style={[styles.centerText, { marginTop: 12 }]}>Đang tải đơn hàng...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  // Fetch error
+  if (fetchError) {
+    return (
+      <View style={styles.container}>
+        <AdminDetailHeader title={`Đơn hàng #${id}`} showNotification onBack={router.back} />
+        <View style={styles.centerContent}>
+          <Ionicons name="alert-circle-outline" size={64} color={colors.rose} />
+          <Text style={styles.centerText}>Không thể tải dữ liệu đơn hàng</Text>
+          <TouchableOpacity style={styles.backButton} onPress={() => { setFetchError(false); setLoading(true); getOrder(id).then(setOrderData).catch(() => setFetchError(true)).finally(() => setLoading(false)); }} activeOpacity={0.7}>
+            <Text style={styles.backButtonText}>↺ Thử lại</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.backButton, { marginTop: 8, backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.stone[300] }]} onPress={() => router.back()} activeOpacity={0.7}>
+            <Text style={[styles.backButtonText, { color: colors.stone[500] }]}>← Quay lại</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  // No data available
   if (!data) {
     return (
       <View style={[styles.container, styles.center]}>

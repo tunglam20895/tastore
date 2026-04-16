@@ -3,6 +3,9 @@ import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyAccess } from '@/lib/auth'
 import type { MaGiamGia } from '@/types'
+import { CORS_HEADERS, handleOptions } from "@/lib/cors";
+
+export async function OPTIONS() { return handleOptions(); }
 
 function mapRow(row: Record<string, unknown>): MaGiamGia {
   return {
@@ -23,7 +26,7 @@ function mapRow(row: Record<string, unknown>): MaGiamGia {
 export async function GET(request: NextRequest) {
   try {
     if (!await verifyAccess(request, 'ma-giam-gia')) {
-      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
     }
 
     const { searchParams } = new URL(request.url)
@@ -49,20 +52,20 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         totalPages: Math.ceil(total / limit),
-      })
+      }, { headers: CORS_HEADERS })
     }
 
-    return NextResponse.json({ success: true, data: (data || []).map(mapRow) })
+    return NextResponse.json({ success: true, data: (data || []).map(mapRow) }, { headers: CORS_HEADERS })
   } catch (error) {
     console.error('GET /api/ma-giam-gia error:', error)
-    return NextResponse.json({ success: false, error: 'Không thể lấy danh sách mã giảm giá' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Không thể lấy danh sách mã giảm giá' }, { status: 500, headers: CORS_HEADERS })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     if (!await verifyAccess(request, 'ma-giam-gia')) {
-      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
     }
 
     const body = await request.json()
@@ -84,13 +87,13 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       if (error.code === '23505') {
-        return NextResponse.json({ success: false, error: 'Mã này đã tồn tại' }, { status: 400 })
+        return NextResponse.json({ success: false, error: 'Mã này đã tồn tại' }, { status: 400, headers: CORS_HEADERS })
       }
       throw error
     }
-    return NextResponse.json({ success: true, data: mapRow(data) })
+    return NextResponse.json({ success: true, data: mapRow(data) }, { headers: CORS_HEADERS })
   } catch (error) {
     console.error('POST /api/ma-giam-gia error:', error)
-    return NextResponse.json({ success: false, error: 'Không thể tạo mã giảm giá' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Không thể tạo mã giảm giá' }, { status: 500, headers: CORS_HEADERS })
   }
 }
