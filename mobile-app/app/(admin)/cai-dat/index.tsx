@@ -148,8 +148,8 @@ export default function SettingsScreen() {
   }
 
   const presetColors = [
-    '#3B82F6', '#8B5CF6', '#14B8A6', '#F59E0B', '#22C55E', '#A8705F',
-    '#DC2626', '#EC4899', '#6366F1', '#0EA5E9', '#F97316', '#84CC16',
+    colors.info, '#8B5CF6', '#14B8A6', '#F59E0B', '#22C55E', '#A8705F',
+    colors.danger, '#EC4899', '#6366F1', '#0EA5E9', '#F97316', '#84CC16',
     '#6B7280', '#1A0A04', '#C8A991', '#1E40AF',
   ];
 

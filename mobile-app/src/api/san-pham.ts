@@ -65,21 +65,6 @@ export async function getCategories() {
   return res.data;
 }
 
-export async function uploadImage(uri: string, folder?: string) {
-  const formData = new FormData();
-  formData.append('file', {
-    uri,
-    type: 'image/jpeg',
-    name: uri.split('/').pop() || 'upload.jpg',
-  } as any);
-  if (folder) formData.append('folder', folder);
-
-  const res = await apiClient.post('/api/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
-  return res.data;
-}
-
 export async function generateMoTa(ten: string, gia: number, danhMuc: string) {
   const res = await apiClient.post('/api/generate-mo-ta', { ten, gia, danhMuc });
   return res.data;

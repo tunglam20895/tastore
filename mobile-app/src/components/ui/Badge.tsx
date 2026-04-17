@@ -10,10 +10,10 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<string, { color: string; bgColor: string }> = {
-  success: { color: '#16A34A', bgColor: '#DCFCE7' },
-  warning: { color: '#D97706', bgColor: '#FEF3C7' },
-  danger: { color: '#DC2626', bgColor: '#FEE2E2' },
-  info: { color: '#2563EB', bgColor: '#DBEAFE' },
+  success: { color: colors.success, bgColor: '#DCFCE7' },
+  warning: { color: colors.warning, bgColor: '#FEF3C7' },
+  danger: { color: colors.danger, bgColor: '#FEE2E2' },
+  info: { color: colors.info, bgColor: '#DBEAFE' },
   custom: { color: colors.stone[500], bgColor: colors.stone[100] },
 };
 

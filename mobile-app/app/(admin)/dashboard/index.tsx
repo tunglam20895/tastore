@@ -1,15 +1,16 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback } from "react";
 import {
   View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity,
   Dimensions, Platform,
 } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
-import { apiClient } from "@/src/api/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { colors, shadows, borderRadius } from "@/src/theme";
 import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
 import { formatMoney, formatNumber } from "@/src/utils/format";
 import { BarChart } from "react-native-gifted-charts";
 import { Ionicons } from "@expo/vector-icons";
+import { getDashboardStats } from "@/src/api/cai-dat";
+import NotificationPermissionBanner from "@/src/components/admin/NotificationPermissionBanner";
 
 type ThongKe = {
   doanhThu: {
@@ -101,45 +102,55 @@ function Section({ title, icon, children }: { title: string; icon: string; child
 }
 
 export default function DashboardScreen() {
-  const [data, setData] = useState<ThongKe | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const queryClient = useQueryClient();
+  
+  const { data, isLoading, isFetching, refetch } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: () => getDashboardStats(),
+    staleTime: 60000, // 1 minute
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+  });
 
-  const loadData = async () => {
-    try {
-      const res = await apiClient.get("/api/thong-ke");
-      if (res.data.success) {
-        setData(res.data.data);
-      }
-    } catch { /* ignore */ }
-    finally { setLoading(false); setRefreshing(false); }
-  };
+  const onRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
-  useFocusEffect(useCallback(() => { loadData(); }, []));
+  const d = data?.data || data;
 
-  const onRefresh = useCallback(() => { setRefreshing(true); loadData(); }, []);
-
-  if (loading && !data) {
+  if (isLoading && !d) {
     return <LoadingSpinner size="full" label="Đang tải dữ liệu..." />;
   }
 
-  const d = data;
-  const growth = d?.doanhThu.phanTramTangTruong;
+  if (!d || !d.doanhThu) {
+    return (
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        refreshControl={<RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor={colors.blush} />}
+      >
+        <Ionicons name="warning-outline" size={48} color={colors.stone[300]} />
+        <Text style={{ marginTop: 16, color: colors.stone[500] }}>Không thể tải dữ liệu thống kê.</Text>
+      </ScrollView>
+    );
+  }
+
+  const growth = d.doanhThu.phanTramTangTruong;
   const growthColor = growth == null ? colors.stone[400]
-    : growth > 0 ? "#16A34A" : growth < 0 ? "#A8705F" : colors.stone[400];
+    : growth > 0 ? colors.success : growth < 0 ? "#A8705F" : colors.stone[400];
   const growthIcon = growth == null ? "remove-outline" : growth > 0 ? "trending-up" : "trending-down";
   const growthText = growth == null ? "N/A" : growth > 0 ? `+${growth}%` : `${growth}%`;
 
   // Prepare chart data
-  const trackingData = d?.tracking?.last7Days?.map(item => ({
+  const trackingData = d?.tracking?.last7Days?.map((item: { date: string; count: number }) => ({
     value: item.count,
-    label: item.date.slice(5),
+    label: item?.date ? item.date.slice(5) : "",
     frontColor: colors.blush,
   })) || [];
 
-  const orderData = d?.donHang7Ngay?.map(item => ({
+  const orderData = d?.donHang7Ngay?.map((item: { date: string; count: number }) => ({
     value: item.count,
-    label: item.date.slice(5),
+    label: item?.date ? item.date.slice(5) : "",
     frontColor: colors.espresso,
   })) || [];
 
@@ -147,43 +158,46 @@ export default function DashboardScreen() {
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.blush} />}
+      refreshControl={<RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor={colors.blush} />}
     >
+      {/* Notification Permission Banner */}
+      <NotificationPermissionBanner />
+
       {/* Quick Stats Bar */}
       <View style={styles.quickStatsBar}>
-        <QuickStat icon="cash" value={d ? formatMoney(d.doanhThu.homNay) : "—"} label="Hôm nay" iconColor={colors.espresso} />
+        <QuickStat icon="cash" value={formatMoney(d?.doanhThu?.homNay || 0)} label="Hôm nay" iconColor={colors.espresso} />
         <QuickStat icon="trending-up" value={growthText} label="Tăng trưởng" iconColor={growthColor} />
-        <QuickStat icon="cash-outline" value={d ? formatMoney(d.doanhThu.tongCong) : "—"} label="Tổng DT" iconColor={colors.blush} />
+        <QuickStat icon="cash-outline" value={formatMoney(d?.doanhThu?.tongCong || 0)} label="Tổng DT" iconColor={colors.blush} />
       </View>
 
       {/* KPI Cards */}
       <View style={styles.kpiGrid}>
-        <KpiCard label="Doanh thu tháng" value={d ? formatMoney(d.doanhThu.thangNay) : "—"} sub={`Tháng trước: ${d ? formatMoney(d.doanhThu.thangTruoc) : "—"}`} icon="cash" accent={colors.espresso} />
-        <KpiCard label="Đơn hôm nay" value={d ? formatNumber(d.donHang.homNay) : "—"} sub={`Tổng: ${d ? formatNumber(d.donHang.tongCong) : "—"} đơn`} icon="cube" accent={colors.rose} />
-        <KpiCard label="Lượt truy cập" value={d ? formatNumber(d.tracking.homNay) : "—"} sub={`Hôm nay`} icon="eye" accent={colors.stone[500]} />
-        <KpiCard label="SP đang bán" value={d ? formatNumber(d.sanPham.dangBan) : "—"} sub={`Hết: ${d ? formatNumber(d.sanPham.hetHang) : "—"}`} icon="shirt" accent={colors.stone[400]} />
+        <KpiCard label="Doanh thu tháng" value={formatMoney(d?.doanhThu?.thangNay || 0)} sub={`Tháng trước: ${formatMoney(d?.doanhThu?.thangTruoc || 0)}`} icon="cash" accent={colors.espresso} />
+        <KpiCard label="Đơn hôm nay" value={formatNumber(d?.donHang?.homNay || 0)} sub={`Tổng: ${formatNumber(d?.donHang?.tongCong || 0)} đơn`} icon="cube" accent={colors.rose} />
+        <KpiCard label="Lượt truy cập" value={formatNumber(d?.tracking?.homNay || 0)} sub={`Hôm nay`} icon="eye" accent={colors.stone[500]} />
+        <KpiCard label="SP đang bán" value={formatNumber(d?.sanPham?.dangBan || 0)} sub={`Hết: ${formatNumber(d?.sanPham?.hetHang || 0)}`} icon="shirt" accent={colors.stone[400]} />
       </View>
 
       {/* Order status cards */}
       <View style={styles.statGrid}>
-        <StatCard label="Đơn mới" value={d ? formatNumber(d.donHang.moiChua) : "—"} color="#2563EB" icon="document-outline" />
-        <StatCard label="Chốt lên đơn" value={d ? formatNumber(d.donHang.choTotLenDon) : "—"} color="#8B5CF6" icon="clipboard-outline" />
-        <StatCard label="Đang xử lý" value={d ? formatNumber(d.donHang.dangXuLy) : "—"} color="#D97706" icon="time-outline" />
-        <StatCard label="Đã giao" value={d ? formatNumber(d.donHang.daGiao) : "—"} color="#22C55E" icon="checkmark-circle-outline" />
-        <StatCard label="Huỷ" value={d ? formatNumber(d.donHang.huy) : "—"} color={colors.rose} icon="close-circle-outline" />
+        <StatCard label="Đơn mới" value={formatNumber(d?.donHang?.moiChua || 0)} color={colors.info} icon="document-outline" />
+        <StatCard label="Chốt lên đơn" value={formatNumber(d?.donHang?.choTotLenDon || 0)} color="#8B5CF6" icon="clipboard-outline" />
+        <StatCard label="Đang xử lý" value={formatNumber(d?.donHang?.dangXuLy || 0)} color={colors.warning} icon="time-outline" />
+        <StatCard label="Đã giao" value={formatNumber(d?.donHang?.daGiao || 0)} color="#22C55E" icon="checkmark-circle-outline" />
+        <StatCard label="Huỷ" value={formatNumber(d?.donHang?.huy || 0)} color={colors.rose} icon="close-circle-outline" />
       </View>
 
       {/* Order statuses with progress bars */}
       <Section title="Đơn hàng theo trạng thái" icon="bar-chart">
-        {d && [
-          { label: "Mới", count: d.donHang.moiChua, color: "#3B82F6", icon: "document-outline" },
-          { label: "Chốt lên đơn", count: d.donHang.choTotLenDon, color: "#8B5CF6", icon: "clipboard-outline" },
-          { label: "Đã lên đơn", count: d.donHang.daLenDon, color: "#14B8A6", icon: "send-outline" },
-          { label: "Đang xử lý", count: d.donHang.dangXuLy, color: "#F59E0B", icon: "time-outline" },
-          { label: "Đã giao", count: d.donHang.daGiao, color: "#22C55E", icon: "checkmark-circle-outline" },
-          { label: "Huỷ", count: d.donHang.huy, color: colors.rose, icon: "close-circle-outline" },
+        {[
+          { label: "Mới", count: d?.donHang?.moiChua || 0, color: colors.info, icon: "document-outline" },
+          { label: "Chốt lên đơn", count: d?.donHang?.choTotLenDon || 0, color: "#8B5CF6", icon: "clipboard-outline" },
+          { label: "Đã lên đơn", count: d?.donHang?.daLenDon || 0, color: "#14B8A6", icon: "send-outline" },
+          { label: "Đang xử lý", count: d?.donHang?.dangXuLy || 0, color: "#F59E0B", icon: "time-outline" },
+          { label: "Đã giao", count: d?.donHang?.daGiao || 0, color: "#22C55E", icon: "checkmark-circle-outline" },
+          { label: "Huỷ", count: d?.donHang?.huy || 0, color: colors.rose, icon: "close-circle-outline" },
         ].map((s, i) => {
-          const max = Math.max(1, d.donHang.moiChua, d.donHang.choTotLenDon, d.donHang.daLenDon, d.donHang.dangXuLy, d.donHang.daGiao, d.donHang.huy);
+          const max = Math.max(1, d?.donHang?.moiChua || 0, d?.donHang?.choTotLenDon || 0, d?.donHang?.daLenDon || 0, d?.donHang?.dangXuLy || 0, d?.donHang?.daGiao || 0, d?.donHang?.huy || 0);
           const pct = Math.round((s.count / max) * 100);
           return (
             <View key={i} style={styles.statusRow}>
@@ -251,7 +265,7 @@ export default function DashboardScreen() {
       {/* Top sản phẩm bán chạy */}
       {d?.sanPham?.topBanChay && d.sanPham.topBanChay.length > 0 && (
         <Section title="Top sản phẩm bán chạy" icon="flame">
-          {d.sanPham.topBanChay.slice(0, 5).map((sp, i) => {
+          {d.sanPham.topBanChay.slice(0, 5).map((sp: { ten: string; soLuong: number }, i: number) => {
             const max = d.sanPham.topBanChay![0]?.soLuong || 1;
             const pct = Math.round((sp.soLuong / max) * 100);
             const medalColor = i === 0 ? "#FFD700" : i === 1 ? "#C0C0C0" : i === 2 ? "#CD7F32" : colors.stone[300];
@@ -276,7 +290,7 @@ export default function DashboardScreen() {
       {/* Top danh mục */}
       {d?.sanPham?.topDanhMuc && d.sanPham.topDanhMuc.length > 0 && (
         <Section title="Top danh mục" icon="pricetags">
-          {d.sanPham.topDanhMuc.slice(0, 5).map((dm, i) => {
+          {d.sanPham.topDanhMuc.slice(0, 5).map((dm: { ten: string; soLuong: number }, i: number) => {
             const max = d.sanPham.topDanhMuc![0]?.soLuong || 1;
             const pct = Math.round((dm.soLuong / max) * 100);
             return (
@@ -300,13 +314,13 @@ export default function DashboardScreen() {
       {/* Đơn hàng theo nhân viên */}
       {d?.donTheoNhanVien && d.donTheoNhanVien.length > 0 && (
         <Section title="Đơn hàng theo nhân viên" icon="people">
-          {d.donTheoNhanVien.map((nv, i) => {
-            const max = Math.max(1, ...d.donTheoNhanVien!.map(n => n.soDon));
+          {d.donTheoNhanVien.map((nv: { ten: string; soDon: number; doanhThu: number }, i: number) => {
+            const max = Math.max(1, ...d.donTheoNhanVien!.map((n: { soDon: number }) => n.soDon));
             const pct = Math.round((nv.soDon / max) * 100);
             return (
               <View key={i} style={styles.staffRow}>
                 <View style={styles.staffAvatar}>
-                  <Text style={styles.staffAvatarText}>{nv.ten.charAt(0).toUpperCase()}</Text>
+                  <Text style={styles.staffAvatarText}>{nv.ten ? nv.ten.charAt(0).toUpperCase() : "?"}</Text>
                 </View>
                 <View style={styles.staffInfo}>
                   <Text style={styles.staffName}>{nv.ten}</Text>
@@ -327,7 +341,7 @@ export default function DashboardScreen() {
       {/* Top khách hàng */}
       {d?.khachHang?.topKhachHang && d.khachHang.topKhachHang.length > 0 && (
         <Section title="Top khách hàng" icon="heart">
-          {d.khachHang.topKhachHang.slice(0, 5).map((kh, i) => (
+          {d.khachHang.topKhachHang.slice(0, 5).map((kh: { ten: string; tongDon: number; tongDoanhThu: number }, i: number) => (
             <View key={i} style={styles.customerRow}>
               <View style={[styles.topRankBadge, { backgroundColor: `${colors.blush}15` }]}>
                 <Text style={[styles.topRank, { color: colors.blush }]}>#{i + 1}</Text>
@@ -347,17 +361,17 @@ export default function DashboardScreen() {
         <View style={styles.summaryRow}>
           <View style={[styles.summaryCard, { backgroundColor: `${colors.blush}12` }]}>
             <Ionicons name="people-outline" size={20} color={colors.espresso} />
-            <Text style={styles.summaryValue}>{formatNumber(d?.nhanVien.tongSo ?? 0)}</Text>
+            <Text style={styles.summaryValue}>{formatNumber(d?.nhanVien?.tongSo || 0)}</Text>
             <Text style={styles.summaryLabel}>Tổng NV</Text>
           </View>
           <View style={[styles.summaryCard, { backgroundColor: `${colors.rose}10` }]}>
             <Ionicons name="cash-outline" size={20} color={colors.rose} />
-            <Text style={[styles.summaryValue, { color: colors.rose }]}>{d ? formatMoney(d.nhanVien.tongLuongChiTra) : "—"}</Text>
+            <Text style={[styles.summaryValue, { color: colors.rose }]}>{formatMoney(d?.nhanVien?.tongLuongChiTra || 0)}</Text>
             <Text style={styles.summaryLabel}>Tổng lương</Text>
           </View>
           <View style={[styles.summaryCard, { backgroundColor: `${colors.blush}15` }]}>
             <Ionicons name="checkmark-circle-outline" size={20} color={colors.blush} />
-            <Text style={[styles.summaryValue, { color: colors.blush }]}>{formatNumber(d?.nhanVien.conHoatDong ?? 0)}</Text>
+            <Text style={[styles.summaryValue, { color: colors.blush }]}>{formatNumber(d?.nhanVien?.conHoatDong || 0)}</Text>
             <Text style={styles.summaryLabel}>Đang HĐ</Text>
           </View>
         </View>
@@ -368,12 +382,12 @@ export default function DashboardScreen() {
         <View style={styles.summaryRow}>
           <View style={[styles.summaryCard, { backgroundColor: `${colors.blush}12` }]}>
             <Ionicons name="person-outline" size={20} color={colors.espresso} />
-            <Text style={styles.summaryValue}>{formatNumber(d?.khachHang.tongSo ?? 0)}</Text>
+            <Text style={styles.summaryValue}>{formatNumber(d?.khachHang?.tongSo || 0)}</Text>
             <Text style={styles.summaryLabel}>Tổng KH</Text>
           </View>
           <View style={[styles.summaryCard, { backgroundColor: `${colors.rose}10` }]}>
             <Ionicons name="cart-outline" size={20} color={colors.rose} />
-            <Text style={[styles.summaryValue, { color: colors.rose }]}>{d ? formatMoney(d.khachHang.tongDoanhThu) : "—"}</Text>
+            <Text style={[styles.summaryValue, { color: colors.rose }]}>{formatMoney(d?.khachHang?.tongDoanhThu || 0)}</Text>
             <Text style={styles.summaryLabel}>Doanh thu KH</Text>
           </View>
         </View>

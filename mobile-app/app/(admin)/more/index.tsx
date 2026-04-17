@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuthStore } from "@/src/store/authStore";
-import { NotificationContext } from "@/app/(admin)/_layout";
+import { NotificationContext } from "@/src/hooks/useNotifications";
 import { colors } from "@/src/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { logout } from "@/src/api/auth";
@@ -73,7 +73,7 @@ export default function MoreScreen() {
       <View style={styles.divider} />
 
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-        <Ionicons name="log-out" size={22} color="#DC2626" />
+        <Ionicons name="log-out" size={22} color={colors.danger} />
         <Text style={styles.logoutText}>Đăng xuất</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   menuLabel: { flex: 1, fontSize: 16, color: colors.espresso },
   divider: { height: 12, backgroundColor: colors.cream },
   logoutBtn: { flexDirection: "row", alignItems: "center", gap: 16, paddingVertical: 16, paddingHorizontal: 16 },
-  logoutText: { fontSize: 16, color: "#DC2626", fontWeight: "600" },
-  badge: { backgroundColor: '#DC2626', borderRadius: 10, minWidth: 20, height: 20, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4, marginRight: 8 },
+  logoutText: { fontSize: 16, color: colors.danger, fontWeight: "600" },
+  badge: { backgroundColor: colors.danger, borderRadius: 10, minWidth: 20, height: 20, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4, marginRight: 8 },
   badgeText: { fontSize: 10, fontWeight: '700', color: colors.white },
 });

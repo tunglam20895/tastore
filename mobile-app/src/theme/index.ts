@@ -16,6 +16,10 @@ export const colors = {
     800: '#2A1F1A',
     900: '#1A0A04',
   },
+  success: '#16A34A',
+  danger: '#DC2626',
+  warning: '#D97706',
+  info: '#2563EB',
 };
 
 export const spacing = {

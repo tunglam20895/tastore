@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+import { useDebounce } from "@/src/hooks/useDebounce";
 import {
   View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity,
   RefreshControl, Modal, ScrollView,
@@ -25,13 +26,14 @@ export default function ProductsScreen() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [danhMuc, setDanhMuc] = useState("");
+  const debouncedSearch = useDebounce(search, 500);
   const [showFilter, setShowFilter] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteName, setDeleteName] = useState("");
 
   const { data, isLoading, isFetching, refetch } = useQuery({
-    queryKey: ["products", page, search, danhMuc],
-    queryFn: () => getProducts({ page, limit: LIMIT_DEFAULT, search, danh_muc: danhMuc }),
+    queryKey: ["products", page, debouncedSearch, danhMuc],
+    queryFn: () => getProducts({ page, limit: LIMIT_DEFAULT, search: debouncedSearch, danh_muc: danhMuc }),
   });
 
   const { data: categories } = useQuery({
@@ -53,14 +55,14 @@ export default function ProductsScreen() {
   };
 
   const getStockLabel = (soLuong: number) => {
-    if (soLuong === 0) return { text: "Hết hàng", color: "#DC2626", bg: `${"#DC2626"}12` };
+    if (soLuong === 0) return { text: "Hết hàng", color: colors.danger, bg: `${colors.danger}12` };
     if (soLuong <= 30) return { text: `Còn ${soLuong}`, color: colors.rose, bg: `${colors.rose}12` };
-    return { text: `Còn ${soLuong}`, color: "#16A34A", bg: `#16A34A12` };
+    return { text: `Còn ${soLuong}`, color: colors.success, bg: `${colors.success}12` };
   };
 
-  const renderItem = ({ item }: { item: any }) => {
+  const renderItem = useCallback(({ item }: { item: any }) => {
     const stock = getStockLabel(item.soLuong || 0);
-    const stockColor = item.soLuong === 0 ? "#DC2626" : item.soLuong <= 30 ? colors.rose : "#16A34A";
+    const stockColor = item.soLuong === 0 ? colors.danger : item.soLuong <= 30 ? colors.rose : colors.success;
     return (
       <TouchableOpacity
         style={[styles.card, shadows.card]}
@@ -81,7 +83,9 @@ export default function ProductsScreen() {
           <Image
             source={{ uri: item.anhURL }}
             style={styles.productImage}
-            resizeMode="cover"
+            contentFit="cover"
+            transition={200}
+            cachePolicy="memory-disk"
           />
         ) : (
           <View style={[styles.productImage, styles.productImagePlaceholder]}>
@@ -156,7 +160,7 @@ export default function ProductsScreen() {
         </View>
       </TouchableOpacity>
     );
-  };
+  }, [router]);
 
   return (
     <View style={styles.container}>
@@ -234,6 +238,11 @@ export default function ProductsScreen() {
           onEndReached={() => {
             if (page < (data?.totalPages ?? 1)) setPage((p) => p + 1);
           }}
+          onEndReachedThreshold={0.3}
+          windowSize={10}
+          maxToRenderPerBatch={10}
+          initialNumToRender={10}
+          removeClippedSubviews={true}
           ListFooterComponent={
             isFetching ? <LoadingSpinner size="sm" /> : null
           }

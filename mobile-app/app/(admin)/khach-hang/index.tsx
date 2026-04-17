@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
+import { useDebounce } from "@/src/hooks/useDebounce";
 import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, RefreshControl, Modal, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { showSuccess, showError, showInfo } from "@/src/utils/toast";
 import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCustomers, getTrangThaiKH, updateCustomer, deleteCustomer } from "@/src/api/khach-hang";
+import { getOrders } from "@/src/api/don-hang";
+import { Image } from "expo-image";
 import { useAuthStore } from "@/src/store/authStore";
 import { colors, shadows, borderRadius } from "@/src/theme";
 import { LIMIT_DEFAULT } from "@/src/utils/constants";
@@ -21,6 +24,7 @@ export default function CustomersScreen() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [filterTT, setFilterTT] = useState("");
+  const debouncedSearch = useDebounce(search, 500);
   const [selectedKH, setSelectedKH] = useState<any | null>(null);
   const [editGhiChu, setEditGhiChu] = useState("");
   const [editTrangThai, setEditTrangThai] = useState("");
@@ -29,8 +33,8 @@ export default function CustomersScreen() {
   const [deleteKH, setDeleteKH] = useState<string | null>(null);
 
   const { data, isLoading, isFetching, refetch } = useQuery({
-    queryKey: ["customers", page, search, filterTT],
-    queryFn: () => getCustomers({ page, limit: LIMIT_DEFAULT, search, trang_thai: filterTT }),
+    queryKey: ["customers", page, debouncedSearch, filterTT],
+    queryFn: () => getCustomers({ page, limit: LIMIT_DEFAULT, search: debouncedSearch, trang_thai: filterTT }),
   });
 
   const { data: trangThaiList } = useQuery({
@@ -38,6 +42,13 @@ export default function CustomersScreen() {
     queryFn: () => getTrangThaiKH(),
   });
   const ttList = (trangThaiList as any)?.data || trangThaiList || [];
+
+  const { data: ordersData, isLoading: loadingOrders } = useQuery({
+    queryKey: ["customerOrders", selectedKH?.sdt],
+    queryFn: () => getOrders({ page: 1, limit: 50, sdt: selectedKH.sdt }),
+    enabled: !!selectedKH?.sdt,
+  });
+  const customerOrders = ordersData?.data || [];
 
   const openModal = (kh: any) => {
     setSelectedKH(kh);
@@ -76,7 +87,7 @@ export default function CustomersScreen() {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const renderItem = ({ item }: { item: any }) => (
+  const renderItem = useCallback(({ item }: { item: any }) => (
     <View style={[styles.card, shadows.card]}>
       <TouchableOpacity style={styles.cardTop} onPress={() => openModal(item)} activeOpacity={0.7}>
         <View style={styles.customerAvatar}>
@@ -111,7 +122,7 @@ export default function CustomersScreen() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [openModal, setDeleteKH]);
 
   return (
     <View style={styles.container}>
@@ -158,28 +169,39 @@ export default function CustomersScreen() {
           contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={isFetching} onRefresh={() => refetch()} tintColor={colors.blush} />}
           onEndReached={() => { if (page < (data?.totalPages ?? 1)) setPage(p => p + 1); }}
+          onEndReachedThreshold={0.3}
+          windowSize={10}
+          maxToRenderPerBatch={10}
+          initialNumToRender={10}
+          removeClippedSubviews={true}
         />
       )}
 
       {/* Edit modal */}
-      <Modal visible={modalVisible} transparent animationType="fade">
+      <Modal visible={modalVisible} transparent animationType="slide">
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={{ flex: 1 }}
         >
-          <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setModalVisible(false)}>
-            <ScrollView
-              contentContainerStyle={{ flexGrow: 1, justifyContent: "flex-end" }}
-              keyboardShouldPersistTaps="handled"
-              bounces={false}
-            >
-              <View style={styles.modalContent} pointerEvents="box-none">
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Chi tiết khách hàng</Text>
-                  <TouchableOpacity onPress={() => setModalVisible(false)}>
-                    <Ionicons name="close" size={24} color={colors.stone[500]} />
-                  </TouchableOpacity>
-                </View>
+          <View style={styles.modalOverlay}>
+            {/* Overlay tap to close */}
+            <TouchableOpacity
+              style={StyleSheet.absoluteFillObject}
+              activeOpacity={1}
+              onPress={() => setModalVisible(false)}
+            />
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Chi tiết khách hàng</Text>
+                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                  <Ionicons name="close" size={24} color={colors.stone[500]} />
+                </TouchableOpacity>
+              </View>
+              <ScrollView
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 16 }}
+              >
                 {selectedKH && (
                   <>
                     <View style={styles.modalCustomerInfo}>
@@ -219,15 +241,70 @@ export default function CustomersScreen() {
                     </View>
 
                     <Input label="Ghi chú" value={editGhiChu} onChangeText={setEditGhiChu} multiline numberOfLines={3} />
+
+                    <Text style={[styles.label, { marginTop: 16 }]}>Lịch sử mua hàng</Text>
+                    {loadingOrders ? (
+                      <LoadingSpinner size="sm" />
+                    ) : customerOrders.length === 0 ? (
+                      <Text style={styles.noOrdersText}>Chưa có đơn hàng nào</Text>
+                    ) : (
+                      <View style={styles.orderHistoryList}>
+                        {customerOrders.map((order: any) => (
+                          <TouchableOpacity 
+                            key={order.id} 
+                            style={styles.historyOrderCard}
+                            onPress={() => {
+                              setModalVisible(false);
+                              router.push({
+                                pathname: "/(admin)/don-hang/[id]",
+                                params: { id: order.id, cachedData: JSON.stringify(order) },
+                              });
+                            }}
+                          >
+                            <View style={styles.historyOrderHeader}>
+                              <Text style={styles.historyOrderId}>Đơn #{order.id}</Text>
+                              <Text style={styles.historyOrderTotal}>{formatMoney(order.tongTien)}</Text>
+                            </View>
+                            
+                            <View style={styles.historyProducts}>
+                              {order.sanPham && order.sanPham.map((sp: any, idx: number) => (
+                                <View key={idx} style={styles.historyProductRow}>
+                                  {sp.anhURL ? (
+                                    <Image
+                                      source={{ uri: sp.anhURL }}
+                                      style={styles.historyProductImg}
+                                      contentFit="cover"
+                                      transition={200}
+                                      cachePolicy="memory-disk"
+                                    />
+                                  ) : (
+                                    <View style={[styles.historyProductImg, styles.historyProductPlaceholder]}>
+                                      <Ionicons name="shirt-outline" size={14} color={colors.stone[300]} />
+                                    </View>
+                                  )}
+                                  <View style={styles.historyProductInfo}>
+                                    <Text style={styles.historyProductName} numberOfLines={1}>{sp.ten}</Text>
+                                    <Text style={styles.historyProductMeta}>
+                                      {sp.sizeChon ? `Size: ${sp.sizeChon} • ` : ''}SL: {sp.soLuong}
+                                    </Text>
+                                  </View>
+                                </View>
+                              ))}
+                            </View>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+
                     <View style={styles.modalButtons}>
                       <Button title="Hủy" onPress={() => setModalVisible(false)} variant="ghost" style={{ flex: 1 }} />
                       <Button title="Lưu" onPress={handleSaveKH} loading={saving} style={{ flex: 1 }} />
                     </View>
                   </>
                 )}
-              </View>
-            </ScrollView>
-          </TouchableOpacity>
+              </ScrollView>
+            </View>
+          </View>
         </KeyboardAvoidingView>
       </Modal>
 
@@ -301,8 +378,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: 24,
-    maxHeight: "80%",
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    maxHeight: "92%",
     ...shadows.card,
   },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
@@ -322,4 +400,34 @@ const styles = StyleSheet.create({
   ttChipActive: { backgroundColor: colors.espresso, borderColor: colors.espresso },
   ttChipText: { fontSize: 11, color: colors.stone[500] },
   modalButtons: { flexDirection: "row", gap: 12, marginTop: 16 },
+
+  // Order history
+  noOrdersText: { fontSize: 12, color: colors.stone[400], fontStyle: 'italic', marginBottom: 16 },
+  orderHistoryList: { gap: 12, marginBottom: 16 },
+  historyOrderCard: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.sm,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: colors.stone[200],
+    ...shadows.card,
+  },
+  historyOrderHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: `${colors.stone[100]}80`,
+  },
+  historyOrderId: { fontSize: 12, fontWeight: '700', color: colors.espresso },
+  historyOrderTotal: { fontSize: 13, fontWeight: '800', color: colors.rose },
+  historyProducts: { gap: 8 },
+  historyProductRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  historyProductImg: { width: 36, height: 36, borderRadius: 6, backgroundColor: colors.stone[100] },
+  historyProductPlaceholder: { justifyContent: 'center', alignItems: 'center' },
+  historyProductInfo: { flex: 1 },
+  historyProductName: { fontSize: 12, fontWeight: '600', color: colors.espresso },
+  historyProductMeta: { fontSize: 10, color: colors.stone[500], marginTop: 2 },
 });

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Switch, RefreshControl, Modal, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getStaff, createStaff, updateStaff, deleteStaff } from "@/src/api/nhan-vien";
@@ -84,7 +84,7 @@ export default function StaffScreen() {
     setQuyen(prev => prev.includes(key) ? prev.filter(q => q !== key) : [...prev, key]);
   };
 
-  const renderItem = ({ item }: { item: any }) => (
+  const renderItem = useCallback(({ item }: { item: any }) => (
     <TouchableOpacity style={styles.card} onPress={() => openEdit(item)}>
       <View style={styles.cardHeader}>
         <View style={styles.avatar}>
@@ -111,7 +111,7 @@ export default function StaffScreen() {
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
-  );
+  ), [openEdit, queryClient, setDeleteId]);
 
   return (
     <View style={styles.container}>
@@ -133,6 +133,10 @@ export default function StaffScreen() {
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={isFetching} onRefresh={() => refetch()} />}
+          windowSize={10}
+          maxToRenderPerBatch={10}
+          initialNumToRender={10}
+          removeClippedSubviews={true}
         />
       )}
 

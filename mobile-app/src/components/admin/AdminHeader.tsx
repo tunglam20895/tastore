@@ -1,11 +1,11 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Modal, FlatList,
   Dimensions, Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { NotificationContext } from '@/app/(admin)/_layout';
+import { NotificationContext } from '@/src/hooks/useNotifications';
 import { useAuthStore } from '@/src/store/authStore';
 import { colors, shadows } from '@/src/theme';
 import { formatMoney, formatRelativeTime } from '@/src/utils/format';
@@ -53,7 +53,7 @@ export default function AdminHeader() {
     }
   };
 
-  const renderNotifItem = ({ item }: { item: any }) => {
+  const renderNotifItem = useCallback(({ item }: { item: any }) => {
     const isNew = item.loai === 'don_moi';
     const statusColor = isNew ? '#22C55E' : (STATUS_COLORS[item.trangThaiMoi] || colors.blush);
 
@@ -88,7 +88,7 @@ export default function AdminHeader() {
         {!item.daDoc && <View style={styles.notifDot} />}
       </TouchableOpacity>
     );
-  };
+  }, [handleNotifPress]);
 
   return (
     <View style={styles.safeArea}>
@@ -173,6 +173,10 @@ export default function AdminHeader() {
                 keyExtractor={(item) => item.id}
                 renderItem={renderNotifItem}
                 style={styles.notifList}
+                windowSize={5}
+                maxToRenderPerBatch={5}
+                initialNumToRender={5}
+                removeClippedSubviews={true}
               />
             )}
           </View>
@@ -230,7 +234,7 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute', top: -2, right: -2,
-    backgroundColor: '#DC2626', borderRadius: 8,
+    backgroundColor: colors.danger, borderRadius: 8,
     minWidth: 16, height: 16, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4,
   },
   badgeText: { fontSize: 8, fontWeight: '700', color: colors.white },

@@ -32,7 +32,7 @@ export default function Button({
     primary: colors.espresso,
     secondary: colors.blush,
     ghost: 'transparent',
-    danger: '#DC2626',
+    danger: colors.danger,
   };
 
   const textColors: Record<string, string> = {

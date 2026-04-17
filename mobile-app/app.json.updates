@@ -1,0 +1,81 @@
+{
+  "instructions": "Copy the following values to your app.json to match your logo's cream color exactly",
+  "brandColors": {
+    "cream": "#F5EFE7",
+    "darkBrown": "#3E2723",
+    "accent": "#8D6E63"
+  },
+  "updates": {
+    "splash.backgroundColor": "#F5EFE7",
+    "android.adaptiveIcon.backgroundColor": "#F5EFE7",
+    "web.backgroundColor": "#F5EFE7"
+  },
+  "fullConfig": {
+    "expo": {
+      "name": "TRANG ANH Store",
+      "slug": "trang-anh-mobile",
+      "version": "1.0.0",
+      "orientation": "portrait",
+      "icon": "./assets/icon.png",
+      "userInterfaceStyle": "light",
+      "newArchEnabled": true,
+      "scheme": "tranh-anh",
+      "splash": {
+        "image": "./assets/splash-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#F5EFE7"
+      },
+      "ios": {
+        "supportsTablet": true,
+        "bundleIdentifier": "com.tranhanh.mobile",
+        "infoPlist": {
+          "UIBackgroundModes": [
+            "fetch",
+            "remote-notification"
+          ]
+        }
+      },
+      "android": {
+        "adaptiveIcon": {
+          "foregroundImage": "./assets/adaptive-icon.png",
+          "backgroundColor": "#F5EFE7"
+        },
+        "edgeToEdgeEnabled": false,
+        "predictiveBackGestureEnabled": false,
+        "package": "com.tranhanh.mobile",
+        "permissions": [
+          "NOTIFICATIONS",
+          "VIBRATE"
+        ]
+      },
+      "web": {
+        "favicon": "./assets/favicon.png",
+        "bundler": "metro",
+        "backgroundColor": "#F5EFE7"
+      },
+      "plugins": [
+        "expo-router",
+        "expo-secure-store",
+        "expo-font",
+        [
+          "expo-notifications",
+          {
+            "icon": "./assets/icon.png",
+            "color": "#C8A991",
+            "sounds": [],
+            "androidMode": "default",
+            "androidCollapsedTitle": "#{unread_notifications} thông báo mới"
+          }
+        ]
+      ],
+      "extra": {
+        "apiUrl": "localhost:3000",
+        "router": {},
+        "eas": {
+          "projectId": "7edc5c0d-9fef-48e8-af3f-46cb918e8f2a"
+        }
+      },
+      "owner": "tunglam823111"
+    }
+  }
+}

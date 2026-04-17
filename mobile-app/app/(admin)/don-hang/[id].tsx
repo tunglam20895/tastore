@@ -64,9 +64,11 @@ export default function OrderDetailScreen() {
 
   // data is the final resolved order data
   const data = orderData;
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   const handleStatusChange = async (newStatus: string) => {
-    if (!id || data?.trangThai === newStatus) return;
+    if (!id || data?.trangThai === newStatus || updatingStatus) return;
+    setUpdatingStatus(true);
     try {
       const nguoiXuLy = isAdmin ? "Admin" : (staffTen || "NV");
       await updateOrderStatus(id, newStatus, nguoiXuLy);
@@ -75,6 +77,8 @@ export default function OrderDetailScreen() {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
     } catch {
       showError("Không thể cập nhật trạng thái");
+    } finally {
+      setUpdatingStatus(false);
     }
   };
 
@@ -244,7 +248,9 @@ export default function OrderDetailScreen() {
                   <Image
                     source={{ uri: sp.anhURL }}
                     style={styles.productImage}
-                    resizeMode="cover"
+                    contentFit="cover"
+                    transition={200}
+                    cachePolicy="memory-disk"
                   />
                 ) : (
                   <View style={[styles.productImage, styles.productImagePlaceholder]}>
@@ -272,6 +278,7 @@ export default function OrderDetailScreen() {
         <View style={[styles.card, shadows.card]}>
           <Text style={styles.sectionTitle}>
             <Ionicons name="swap-horizontal" size={16} color={colors.blush} /> Trạng thái đơn hàng
+            {updatingStatus && <ActivityIndicator size="small" color={colors.blush} style={{ marginLeft: 8 }} />}
           </Text>
           <View style={styles.statusProgress}>
             {ORDER_STATUSES.map((stt, i) => {
@@ -279,7 +286,7 @@ export default function OrderDetailScreen() {
               const isCurrent = i === currentStatusIdx;
               const color = STATUS_COLORS[stt] || colors.stone[300];
               return (
-                <TouchableOpacity key={stt} style={styles.statusStep} onPress={() => handleStatusChange(stt)} activeOpacity={0.7}>
+                <TouchableOpacity key={stt} style={styles.statusStep} onPress={() => handleStatusChange(stt)} disabled={updatingStatus} activeOpacity={0.7}>
                   <View style={[styles.statusDot, isActive && { backgroundColor: color }, isCurrent && styles.statusDotCurrent]}>
                     {isCurrent && <Ionicons name="checkmark" size={12} color={colors.cream} />}
                   </View>
@@ -346,8 +353,8 @@ const styles = StyleSheet.create({
   totalLabel: { fontSize: 13, fontWeight: '600', color: colors.espresso },
   totalValue: { fontSize: 18, fontWeight: '800', color: colors.rose },
 
-  productRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: `${colors.stone[100]}60`, gap: 10 },
-  productImage: { width: 44, height: 44, borderRadius: 8, flexShrink: 0 },
+  productRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: `${colors.stone[100]}60`, gap: 12 },
+  productImage: { width: 64, height: 64, borderRadius: 10, flexShrink: 0 },
   productImagePlaceholder: { backgroundColor: `${colors.stone[100]}80`, justifyContent: 'center', alignItems: 'center' },
   productQty: { width: 32, height: 32, borderRadius: 8, backgroundColor: `${colors.blush}15`, justifyContent: 'center', alignItems: 'center' },
   productQtyText: { fontSize: 12, fontWeight: '700', color: colors.blush },

@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import { useDebounce } from "@/src/hooks/useDebounce";
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   TextInput, RefreshControl, Modal, ScrollView,
@@ -32,12 +33,15 @@ export default function OrdersScreen() {
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkStatusModal, setBulkStatusModal] = useState(false);
   const [bulkConfirm, setBulkConfirm] = useState(false);
+  
+  const debouncedSearchTen = useDebounce(searchTen, 500);
+  const debouncedSearchSdt = useDebounce(searchSdt, 500);
 
   const { data, isLoading, isFetching, refetch } = useQuery({
-    queryKey: ["orders", page, searchTen, searchSdt, trangThai, tuNgay, denNgay],
+    queryKey: ["orders", page, debouncedSearchTen, debouncedSearchSdt, trangThai, tuNgay, denNgay],
     queryFn: () => getOrders({
       page, limit: LIMIT_DEFAULT,
-      search_ten: searchTen, search_sdt: searchSdt, trang_thai: trangThai,
+      search_ten: debouncedSearchTen, search_sdt: debouncedSearchSdt, trang_thai: trangThai,
       tu_ngay: tuNgay ? tuNgay.toISOString().split('T')[0] : undefined,
       den_ngay: denNgay ? denNgay.toISOString().split('T')[0] : undefined,
     }),
@@ -74,7 +78,7 @@ export default function OrdersScreen() {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const renderItem = ({ item }: { item: any }) => (
+  const renderItem = useCallback(({ item }: { item: any }) => (
     <TouchableOpacity
       style={[styles.card, shadows.card, bulkMode && styles.cardBulk]}
       onPress={() => bulkMode ? toggleSelect(item.id) : router.push({
@@ -116,9 +120,25 @@ export default function OrdersScreen() {
             <Text style={styles.time}>{formatRelativeTime(item.thoiGian)}</Text>
           </View>
         </View>
+
+        {/* Product summary list */}
+        {item.sanPham && item.sanPham.length > 0 && (
+          <View style={styles.productSummary}>
+            {item.sanPham.map((sp: any, idx: number) => (
+              <View key={idx} style={styles.productSummaryRow}>
+                <Ionicons name="caret-forward" size={10} color={colors.stone[300]} />
+                <Text style={styles.productSummaryText} numberOfLines={1}>
+                  <Text style={{ fontWeight: '600' }}>{sp.ten}</Text>
+                  {sp.sizeChon ? ` (Size: ${sp.sizeChon})` : ''}
+                  <Text style={{ color: colors.rose }}> x{sp.soLuong}</Text>
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
     </TouchableOpacity>
-  );
+  ), [bulkMode, selectedIds, router]);
 
   const activeFilterCount = (trangThai ? 1 : 0) + (tuNgay ? 1 : 0) + (denNgay ? 1 : 0) + (searchSdt ? 1 : 0);
 
@@ -320,6 +340,11 @@ export default function OrdersScreen() {
           contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={isFetching} onRefresh={() => refetch()} tintColor={colors.blush} />}
           onEndReached={() => { if (page < (data?.totalPages ?? 1)) setPage(p => p + 1); }}
+          onEndReachedThreshold={0.3}
+          windowSize={10}
+          maxToRenderPerBatch={10}
+          initialNumToRender={10}
+          removeClippedSubviews={true}
           ListFooterComponent={isFetching ? <LoadingSpinner size="sm" /> : null}
         />
       )}
@@ -413,7 +438,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: '#DC2626',
+    backgroundColor: colors.danger,
     borderRadius: 8,
     minWidth: 16,
     height: 16,
@@ -722,5 +747,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  productSummary: {
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: `${colors.stone[200]}40`,
+    gap: 4,
+  },
+  productSummaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  productSummaryText: {
+    fontSize: 11,
+    color: colors.stone[500],
+    flex: 1,
   },
 });

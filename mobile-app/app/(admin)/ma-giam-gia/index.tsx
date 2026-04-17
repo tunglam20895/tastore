@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Switch, RefreshControl, Modal, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCoupons, createCoupon, toggleCoupon, deleteCoupon } from "@/src/api/ma-giam-gia";
@@ -78,7 +78,7 @@ export default function CouponsScreen() {
     setDeleteId(null);
   };
 
-  const renderItem = ({ item }: { item: any }) => (
+  const renderItem = useCallback(({ item }: { item: any }) => (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <View>
@@ -98,7 +98,7 @@ export default function CouponsScreen() {
         {item.ngayHetHan && <Text style={styles.expiry}>Hết hạn: {formatDate(item.ngayHetHan)}</Text>}
       </View>
     </View>
-  );
+  ), [handleToggle, setDeleteId]);
 
   return (
     <View style={styles.container}>
@@ -121,6 +121,11 @@ export default function CouponsScreen() {
           contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={isFetching} onRefresh={() => refetch()} />}
           onEndReached={() => { if (page < (data?.totalPages ?? 1)) setPage(p => p + 1); }}
+          onEndReachedThreshold={0.3}
+          windowSize={10}
+          maxToRenderPerBatch={10}
+          initialNumToRender={10}
+          removeClippedSubviews={true}
         />
       )}
 

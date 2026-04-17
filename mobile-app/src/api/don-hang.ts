@@ -23,6 +23,11 @@ export async function getOrder(id: string) {
   return res.data;
 }
 
+export async function createOrder(data: Record<string, unknown>) {
+  const res = await apiClient.post('/api/don-hang', data);
+  return res.data;
+}
+
 export async function updateOrderStatus(id: string, trangThai: string, nguoiXuLy?: string) {
   const res = await apiClient.put(`/api/don-hang/${id}`, {
     trangThai,

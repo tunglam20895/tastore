@@ -7,7 +7,12 @@ import LoadingSpinner from '@/src/components/ui/LoadingSpinner';
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { staleTime: 30000, retry: 1 },
+    queries: {
+      staleTime: 30000,
+      gcTime: 5 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
   },
 });
 

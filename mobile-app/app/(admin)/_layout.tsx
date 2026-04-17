@@ -1,17 +1,13 @@
 import { Tabs, useRouter, usePathname } from "expo-router";
 import { useAuthStore } from "@/src/store/authStore";
-import { useNotifications } from "@/src/hooks/useNotifications";
+import { useNotifications, NotificationContext } from "@/src/hooks/useNotifications";
 import { colors } from "@/src/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { View, Platform, TouchableOpacity, Text, StyleSheet, KeyboardAvoidingView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useState, useCallback, createContext, useContext } from "react";
+import { useState, useCallback, useContext } from "react";
 import BottomDrawer from "@/src/components/admin/BottomDrawer";
 import AdminHeader from "@/src/components/admin/AdminHeader";
-
-// Context để chia sẻ notifications từ hook duy nhất, tránh duplicate polling
-type NotificationContextType = ReturnType<typeof useNotifications>;
-export const NotificationContext = createContext<NotificationContextType | null>(null);
 
 const isWeb = Platform.OS === "web";
 const NAV_BASE = 56;
@@ -38,7 +34,7 @@ function BottomNav({ state, descriptors, navigation }: any) {
     { name: "more", label: "Menu", icon: "menu-outline", activeIcon: "menu", quyen: null },
   ].filter((t) => {
     if (t.quyen === 'admin-only') return isAdmin;
-    return !t.quyen || isAdmin || staffQuyen.includes(t.quyen);
+    return !t.quyen || isAdmin || staffQuyen.some(q => q.toLowerCase() === t.quyen?.toLowerCase());
   });
 
   // Check if a tab is currently active
@@ -59,11 +55,9 @@ function BottomNav({ state, descriptors, navigation }: any) {
     router.push(`/(admin)/${tabName}` as any);
   }, [router]);
 
-  const tabBarPaddingBottom = Math.max(insets.bottom, 6);
-
   return (
     <>
-      <View style={[s.tabBar, { paddingBottom: tabBarPaddingBottom }]}>
+      <View style={[s.tabBar, { paddingBottom: 0 }]}>
         {tabs.map((tab) => {
           const focused = isTabActive(tab.name);
 
@@ -77,7 +71,7 @@ function BottomNav({ state, descriptors, navigation }: any) {
               <View style={s.iconWrap}>
                 <Ionicons name={(focused ? tab.activeIcon : tab.icon) as any} size={24} color={focused ? colors.espresso : colors.stone[400]} />
                 {tab.badge ? (
-                  <View style={s.dot}><Ionicons name="ellipse" size={7} color="#DC2626" /></View>
+                  <View style={s.dot}><Ionicons name="ellipse" size={7} color={colors.danger} /></View>
                 ) : null}
               </View>
               <Text style={[s.tabLabel, focused && s.tabLabelActive]}>{tab.label}</Text>
@@ -143,7 +137,8 @@ const s = StyleSheet.create({
     borderTopWidth: 0.5,
     borderTopColor: `${colors.stone[200]}40`,
     paddingTop: 6,
-    height: NAV_BASE + 6,
+    paddingBottom: 0,
+    minHeight: NAV_BASE,
     elevation: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -3 },

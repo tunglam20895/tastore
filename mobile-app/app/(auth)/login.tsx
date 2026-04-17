@@ -9,6 +9,7 @@ import {
   Platform,
   ScrollView,
   Keyboard,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { loginAdmin, loginStaff } from "@/src/api/auth";
@@ -26,8 +27,9 @@ const SCREEN_PRIORITY = [
 ];
 
 function getFirstAllowedScreen(quyen: string[]): string {
+  const normalizedQuyen = quyen.map(q => q.toLowerCase());
   for (const screen of SCREEN_PRIORITY) {
-    if (quyen.includes(screen.quyen)) return screen.route;
+    if (normalizedQuyen.includes(screen.quyen)) return screen.route;
   }
   // Không có quyền nào khớp → vào more (menu)
   return "/(admin)/more";
@@ -92,13 +94,14 @@ export default function LoginScreen() {
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        {/* Logo - Clean text-based */}
+        {/* Logo - Image-based */}
         <View style={[styles.logoContainer, keyboardVisible && styles.logoContainerKeyboard]}>
-          <View style={styles.logoCircle}>
-            <Text style={styles.logoText}>TA</Text>
-          </View>
+          <Image 
+            source={require('@/assets/logo-app.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <Text style={styles.shopName}>TRANG ANH STORE</Text>
-          <Text style={styles.shopSubtitle}>Admin Panel</Text>
         </View>
 
         {/* Mode Toggle */}
@@ -175,7 +178,7 @@ export default function LoginScreen() {
 
           {error ? (
             <View style={styles.errorBox}>
-              <Ionicons name="alert-circle" size={16} color="#DC2626" />
+              <Ionicons name="alert-circle" size={16} color={colors.danger} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           ) : null}
@@ -224,27 +227,17 @@ const styles = StyleSheet.create({
   logoContainerKeyboard: {
     marginBottom: 24,
   },
-  logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.espresso,
-    justifyContent: "center",
-    alignItems: "center",
-    ...shadows.card,
-  },
-  logoText: {
-    fontSize: 32,
-    fontWeight: "900",
-    color: colors.cream,
-    letterSpacing: 2,
+  logoImage: {
+    width: 180,
+    height: 180,
+    marginBottom: 12,
   },
   shopName: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: "800",
-    letterSpacing: 3,
+    letterSpacing: 4,
     color: colors.espresso,
-    marginTop: 16,
+    marginTop: 8,
     textTransform: "uppercase",
   },
   shopSubtitle: {
@@ -329,13 +322,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: `${"#DC2626"}10`,
+    backgroundColor: `${colors.danger}10`,
     borderRadius: borderRadius.sm,
     padding: 12,
   },
   errorText: {
     fontSize: 13,
-    color: "#DC2626",
+    color: colors.danger,
     flex: 1,
     fontWeight: '500',
   },

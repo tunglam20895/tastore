@@ -10,3 +10,8 @@ export async function updateSettings(data: Record<string, string>) {
   const res = await apiClient.put('/api/cai-dat', data);
   return res.data;
 }
+
+export async function getDashboardStats() {
+  const res = await apiClient.get('/api/thong-ke');
+  return res.data;
+}

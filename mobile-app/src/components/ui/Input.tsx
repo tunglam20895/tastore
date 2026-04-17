@@ -50,7 +50,7 @@ export default function Input({
         style={[
           styles.input,
           multiline && { height: Math.max(80, (numberOfLines || 3) * 24) },
-          error && { borderColor: '#DC2626' },
+          error && { borderColor: colors.danger },
           !editable && { opacity: 0.6 },
           inputStyle,
         ]}
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 12,
-    color: '#DC2626',
+    color: colors.danger,
     marginTop: 4,
   },
 });

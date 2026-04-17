@@ -11,21 +11,24 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#EDE8DF"
+      "backgroundColor": "#F5EFE7"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tranhanh.mobile",
       "infoPlist": {
-        "UIBackgroundModes": ["fetch", "remote-notification"]
+        "UIBackgroundModes": [
+          "fetch",
+          "remote-notification"
+        ]
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#EDE8DF"
+        "backgroundColor": "#F5EFE7"
       },
-      "edgeToEdgeEnabled": true,
+      "edgeToEdgeEnabled": false,
       "predictiveBackGestureEnabled": false,
       "package": "com.tranhanh.mobile",
       "permissions": [
@@ -35,7 +38,8 @@
     },
     "web": {
       "favicon": "./assets/favicon.png",
-      "bundler": "metro"
+      "bundler": "metro",
+      "backgroundColor": "#F5EFE7"
     },
     "plugins": [
       "expo-router",
@@ -56,9 +60,9 @@
       "apiUrl": "localhost:3000",
       "router": {},
       "eas": {
-        "projectId": "620e6f30-3c2f-475b-8f04-b38f500051ea"
+        "projectId": "7edc5c0d-9fef-48e8-af3f-46cb918e8f2a"
       }
     },
-    "owner": "tungla.20895"
+    "owner": "tunglam823111"
   }
 }

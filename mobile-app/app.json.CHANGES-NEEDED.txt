@@ -1,0 +1,76 @@
+═══════════════════════════════════════════════════════════════
+  📝 EXACT CHANGES FOR app.json
+═══════════════════════════════════════════════════════════════
+
+You need to change the background color from #EDE8DF to #F5EFE7
+in THREE locations:
+
+─────────────────────────────────────────────────────────────────
+CHANGE #1: Splash Screen Background
+─────────────────────────────────────────────────────────────────
+
+FIND (around line 13):
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#EDE8DF"    ← CHANGE THIS
+    },
+
+CHANGE TO:
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F5EFE7"    ← NEW COLOR!
+    },
+
+─────────────────────────────────────────────────────────────────
+CHANGE #2: Android Adaptive Icon Background
+─────────────────────────────────────────────────────────────────
+
+FIND (around line 25):
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#EDE8DF"    ← CHANGE THIS
+      },
+
+CHANGE TO:
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F5EFE7"    ← NEW COLOR!
+      },
+
+─────────────────────────────────────────────────────────────────
+CHANGE #3: Web Background (ADD if not present)
+─────────────────────────────────────────────────────────────────
+
+FIND (around line 37):
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+
+CHANGE TO:
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "backgroundColor": "#F5EFE7"    ← ADD THIS LINE!
+    },
+
+═══════════════════════════════════════════════════════════════
+
+🔍 QUICK FIND & REPLACE:
+
+1. Open app.json in your editor
+2. Press Ctrl+H (Find & Replace)
+3. Find:    #EDE8DF
+4. Replace: #F5EFE7
+5. Click "Replace All"
+6. Manually add "backgroundColor": "#F5EFE7" to web section
+
+═══════════════════════════════════════════════════════════════
+
+OR: Simply copy the entire content from app.json.updates!
+
+═══════════════════════════════════════════════════════════════

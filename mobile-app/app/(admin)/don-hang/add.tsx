@@ -8,6 +8,7 @@ import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getProducts } from "@/src/api/san-pham";
 import { getCustomers } from "@/src/api/khach-hang";
+import { createOrder } from "@/src/api/don-hang";
 import { apiClient } from "@/src/api/client";
 import { useAuthStore } from "@/src/store/authStore";
 import { colors, shadows, borderRadius } from "@/src/theme";
@@ -155,11 +156,7 @@ export default function CreateOrderScreen() {
 
     setSubmitting(true);
     try {
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (isAdmin && adminPassword) headers["x-admin-password"] = adminPassword;
-      else if (staffToken) headers["staff-token"] = staffToken;
-
-      await apiClient.post("/api/don-hang", {
+      await createOrder({
         tenKH: tenKH.trim(),
         sdt: sdt.trim(),
         diaChi: diaChi.trim(),
@@ -173,11 +170,11 @@ export default function CreateOrderScreen() {
         tongTien: subtotal,
         maGiamGia: appliedCoupon?.maInfo?.ma || null,
         ghiChu: null,
-      }, { headers });
+      });
 
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       showSuccess("Đã tạo đơn hàng thành công");
-      setTimeout(() => router.replace("/(admin)/don-hang"), 1000);
+      router.replace("/(admin)/don-hang");
     } catch (err: any) {
       showError(err?.response?.data?.error || "Không thể tạo đơn hàng");
     } finally {
@@ -255,7 +252,7 @@ export default function CreateOrderScreen() {
                 products.map((sp: any) => (
                   <TouchableOpacity key={sp.id} style={styles.productItem} onPress={() => openProductModal(sp)} activeOpacity={0.7}>
                     {sp.anhURL ? (
-                      <Image source={{ uri: sp.anhURL }} style={styles.productThumb} resizeMode="cover" />
+                      <Image source={{ uri: sp.anhURL }} style={styles.productThumb} contentFit="cover" transition={200} cachePolicy="memory-disk" />
                     ) : (
                       <View style={[styles.productThumb, styles.productThumbPlaceholder]}>
                         <Ionicons name="shirt-outline" size={24} color={colors.stone[300]} />
@@ -278,7 +275,7 @@ export default function CreateOrderScreen() {
               {cart.map((item, idx) => (
                 <View key={`${item.id}-${item.sizeChon}`} style={styles.cartItem}>
                   {item.anhURL ? (
-                    <Image source={{ uri: item.anhURL }} style={styles.cartThumb} resizeMode="cover" />
+                    <Image source={{ uri: item.anhURL }} style={styles.cartThumb} contentFit="cover" transition={200} cachePolicy="memory-disk" />
                   ) : (
                     <View style={[styles.cartThumb, styles.cartThumbPlaceholder]}>
                       <Ionicons name="shirt-outline" size={18} color={colors.stone[300]} />
@@ -314,7 +311,7 @@ export default function CreateOrderScreen() {
           {couponError ? <Text style={styles.errorText}>{couponError}</Text> : null}
           {appliedCoupon && (
             <View style={styles.couponSuccess}>
-              <Ionicons name="checkmark-circle" size={16} color="#16A34A" />
+              <Ionicons name="checkmark-circle" size={16} color={colors.success} />
               <Text style={styles.couponSuccessText}>Đã áp dụng: {appliedCoupon.maInfo?.ma} (-{formatMoney(discount)})</Text>
             </View>
           )}
@@ -328,8 +325,8 @@ export default function CreateOrderScreen() {
           </View>
           {discount > 0 && (
             <View style={styles.totalRow}>
-              <Text style={[styles.totalLabel, { color: "#16A34A" }]}>Giảm giá</Text>
-              <Text style={[styles.totalValue, { color: "#16A34A" }]}>-{formatMoney(discount)}</Text>
+              <Text style={[styles.totalLabel, { color: colors.success }]}>Giảm giá</Text>
+              <Text style={[styles.totalValue, { color: colors.success }]}>-{formatMoney(discount)}</Text>
             </View>
           )}
           <View style={styles.divider} />
@@ -475,9 +472,9 @@ const styles = StyleSheet.create({
   couponRow: { flexDirection: "row", gap: 8 },
   couponInput: { flex: 1, backgroundColor: colors.cream, borderRadius: borderRadius.sm, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: colors.espresso },
   couponBtn: { minWidth: 80 },
-  errorText: { fontSize: 12, color: "#DC2626", marginTop: 6 },
+  errorText: { fontSize: 12, color: colors.danger, marginTop: 6 },
   couponSuccess: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 },
-  couponSuccessText: { fontSize: 12, color: "#16A34A", fontWeight: "600" },
+  couponSuccessText: { fontSize: 12, color: colors.success, fontWeight: "600" },
 
   // Totals
   totalSection: { backgroundColor: `${colors.blush}08` },

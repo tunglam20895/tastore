@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Switch, KeyboardAvoidingView, Platform, Image,
+  Switch, KeyboardAvoidingView, Platform,
 } from "react-native";
+import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { updateProduct, deleteProduct, getCategories, generateMoTa } from "@/src/api/san-pham";
@@ -226,9 +227,9 @@ export default function EditProductScreen() {
         {/* Image */}
         <View style={styles.imageSection}>
           {newImageUri ? (
-            <Image source={{ uri: newImageUri }} style={styles.image} resizeMode="cover" />
+            <Image source={{ uri: newImageUri }} style={styles.image} contentFit="cover" transition={200} cachePolicy="memory-disk" />
           ) : anhUri ? (
-            <Image source={{ uri: anhUri }} style={styles.image} resizeMode="cover" />
+            <Image source={{ uri: anhUri }} style={styles.image} contentFit="cover" transition={200} cachePolicy="memory-disk" />
           ) : (
             <View style={[styles.image, styles.noImage]}>
               <Ionicons name="image-outline" size={48} color={colors.stone[300]} />
@@ -263,8 +264,8 @@ export default function EditProductScreen() {
               </View>
             )}
             <View style={styles.stockInfo}>
-              <Ionicons name="cube-outline" size={14} color={totalStock > 0 ? '#16A34A' : '#DC2626'} />
-              <Text style={[styles.stockText, { color: totalStock > 0 ? '#16A34A' : '#DC2626' }]}>
+              <Ionicons name="cube-outline" size={14} color={totalStock > 0 ? colors.success : colors.danger} />
+              <Text style={[styles.stockText, { color: totalStock > 0 ? colors.success : colors.danger }]}>
                 {totalStock} SP
               </Text>
             </View>

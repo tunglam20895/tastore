@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 import { useAuthStore } from '@/src/store/authStore';
-import { NotificationContext } from '@/app/(admin)/_layout';
+import { NotificationContext } from '@/src/hooks/useNotifications';
 import { colors, shadows, borderRadius } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { logout } from '@/src/api/auth';
@@ -39,7 +39,7 @@ export default function BottomDrawer({ visible, onClose }: BottomDrawerProps) {
   const hasPermission = (quyen: string | null) => {
     if (!quyen) return true;
     if (quyen === 'admin-only') return isAdmin;
-    return isAdmin || staffQuyen.includes(quyen);
+    return isAdmin || staffQuyen.some(q => q.toLowerCase() === quyen?.toLowerCase());
   };
 
   const handleNavigate = (route: string) => {
@@ -112,7 +112,7 @@ export default function BottomDrawer({ visible, onClose }: BottomDrawerProps) {
           <View style={styles.drawerFooter}>
             <View style={styles.divider} />
             <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.6}>
-              <Ionicons name="log-out-outline" size={20} color="#DC2626" />
+              <Ionicons name="log-out-outline" size={20} color={colors.danger} />
               <Text style={styles.logoutText}>Đăng xuất</Text>
             </TouchableOpacity>
             <Text style={styles.versionText}>Trang Anh Store v1.0</Text>
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: '#DC2626',
+    backgroundColor: colors.danger,
     borderRadius: 8,
     minWidth: 16,
     height: 16,
@@ -211,6 +211,6 @@ const styles = StyleSheet.create({
   menuLabelSpecial: { color: colors.blush, fontWeight: '600' },
   drawerFooter: { paddingTop: 8 },
   logoutBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 20 },
-  logoutText: { fontSize: 15, color: '#DC2626', fontWeight: '600', marginLeft: 14 },
+  logoutText: { fontSize: 15, color: colors.danger, fontWeight: '600', marginLeft: 14 },
   versionText: { textAlign: 'center', fontSize: 11, color: colors.stone[300], marginTop: 4 },
 });

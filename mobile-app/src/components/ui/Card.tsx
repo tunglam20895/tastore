@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, type ViewStyle } from 'react-native';
 import { colors, shadows } from '@/src/theme';
 
 interface CardProps {
@@ -9,7 +9,17 @@ interface CardProps {
 }
 
 export default function Card({ children, style, onPress }: CardProps) {
-  const Container = onPress ? React.Fragment : View;
+  if (onPress) {
+    return (
+      <TouchableOpacity 
+        style={[styles.card, style]} 
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+        {children}
+      </TouchableOpacity>
+    );
+  }
 
   return (
     <View style={[styles.card, style]}>

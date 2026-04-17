@@ -4,32 +4,44 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9808f6dd-980e-420b-b86b-d604628d875d" name="Changes" comment="update chức năng 1304">
+    <list default="true" id="9808f6dd-980e-420b-b86b-d604628d875d" name="Changes" comment="update chức năng 1604">
+      <change afterPath="$PROJECT_DIR$/mobile-app/assets/logo-app.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CLAUDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/CLAUDE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(shop)/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(shop)/layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/admin/cai-dat/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/cai-dat/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/admin/dashboard/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/dashboard/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/admin/don-hang/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/don-hang/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/admin/khach-hang/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/khach-hang/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/admin/ma-giam-gia/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/ma-giam-gia/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/admin/nhan-vien/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/nhan-vien/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/admin/san-pham/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/san-pham/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/admin-chat/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/admin-chat/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/thong-ke/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/thong-ke/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/admin/AdminChat.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/admin/AdminChat.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/admin/AdminChatForLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/admin/AdminChatForLayout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/admin/OrderDetailModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/admin/OrderDetailModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/admin/OrderTable.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/admin/OrderTable.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/admin/ProductForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/admin/ProductForm.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/layout/Footer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/layout/Footer.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/layout/Header.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/layout/Header.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/qwen.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/qwen.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mobile-app/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/app.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/mobile-app/app/(admin)/_layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/app/(admin)/_layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/app/(admin)/ai-chat.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/app/(admin)/ai-chat.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/app/(admin)/cai-dat/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/app/(admin)/cai-dat/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/app/(admin)/dashboard/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/app/(admin)/dashboard/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/app/(admin)/don-hang/[id].tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/app/(admin)/don-hang/[id].tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/app/(admin)/don-hang/add.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/app/(admin)/don-hang/add.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/app/(admin)/don-hang/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/app/(admin)/don-hang/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/app/(admin)/khach-hang/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/app/(admin)/khach-hang/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/app/(admin)/ma-giam-gia/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/app/(admin)/ma-giam-gia/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/app/(admin)/more/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/app/(admin)/more/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/app/(admin)/nhan-vien/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/app/(admin)/nhan-vien/index.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/mobile-app/app/(admin)/san-pham/[id].tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/app/(admin)/san-pham/[id].tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mobile-app/app/(admin)/san-pham/add.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/app/(admin)/san-pham/add.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/next.config.mjs" beforeDir="false" afterPath="$PROJECT_DIR$/next.config.mjs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/app/(admin)/san-pham/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/app/(admin)/san-pham/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/app/(auth)/login.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/app/(auth)/login.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/app/_layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/app/_layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/assets/adaptive-icon.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/assets/favicon.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/assets/icon.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/assets/splash-icon.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/src/api/cai-dat.ts" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/src/api/cai-dat.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/src/api/don-hang.ts" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/src/api/don-hang.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/src/api/san-pham.ts" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/src/api/san-pham.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/src/components/admin/AdminDetailHeader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/src/components/admin/AdminDetailHeader.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/src/components/admin/AdminHeader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/src/components/admin/AdminHeader.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/src/components/admin/BottomDrawer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/src/components/admin/BottomDrawer.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/src/components/admin/PermissionGuard.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/src/components/ui/Badge.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/src/components/ui/Badge.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/src/components/ui/Button.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/src/components/ui/Button.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/src/components/ui/Card.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/src/components/ui/Card.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/src/components/ui/Input.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/src/components/ui/Input.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/src/hooks/useNotifications.ts" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/src/hooks/useNotifications.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile-app/src/theme/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/mobile-app/src/theme/index.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -92,6 +104,7 @@
 }</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="G:\TA_STORE\mobile-app\assets" />
       <recent name="G:\TA_STORE\public" />
     </key>
   </component>
@@ -159,7 +172,11 @@
       <workItem from="1775784876565" duration="19994000" />
       <workItem from="1776044558424" duration="9000000" />
       <workItem from="1776063963315" duration="12667000" />
-      <workItem from="1776130856338" duration="4186000" />
+      <workItem from="1776130856338" duration="13042000" />
+      <workItem from="1776220525961" duration="16431000" />
+      <workItem from="1776303526817" duration="15551000" />
+      <workItem from="1776390010709" duration="1365000" />
+      <workItem from="1776408838942" duration="4702000" />
     </task>
     <task id="LOCAL-00001" summary="update">
       <option name="closed" value="true" />
@@ -241,7 +258,31 @@
       <option name="project" value="LOCAL" />
       <updated>1776077369579</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="update chức năng 1404">
+      <option name="closed" value="true" />
+      <created>1776140901153</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1776140901153</updated>
+    </task>
+    <task id="LOCAL-00012" summary="update chức năng 1504">
+      <option name="closed" value="true" />
+      <created>1776304388022</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1776304388022</updated>
+    </task>
+    <task id="LOCAL-00013" summary="update chức năng 1604">
+      <option name="closed" value="true" />
+      <created>1776321382311</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1776321382311</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -265,14 +306,17 @@
     <MESSAGE value="update chức năng" />
     <MESSAGE value="update chức năng 0904" />
     <MESSAGE value="update chức năng 1304" />
-    <option name="LAST_COMMIT_MESSAGE" value="update chức năng 1304" />
+    <MESSAGE value="update chức năng 1404" />
+    <MESSAGE value="update chức năng 1504" />
+    <MESSAGE value="update chức năng 1604" />
+    <option name="LAST_COMMIT_MESSAGE" value="update chức năng 1604" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/next.config.mjs</url>
-          <line>18</line>
+          <line>23</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
       </breakpoints>
