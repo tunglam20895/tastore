@@ -10,6 +10,7 @@ import { updateProduct, deleteProduct, getCategories, generateMoTa } from "@/src
 import { uploadImage } from "@/src/utils/upload";
 import { showSuccess, showError, showInfo } from "@/src/utils/toast";
 import { colors, shadows, borderRadius } from "@/src/theme";
+import { legacyColors } from '@/src/theme/legacy-colors';
 import { QUICK_SIZES } from "@/src/utils/constants";
 import { formatMoney } from "@/src/utils/format";
 import Button from "@/src/components/ui/Button";
@@ -174,7 +175,7 @@ export default function EditProductScreen() {
       <View style={[styles.container, styles.center]}>
         <AdminDetailHeader title="Sản phẩm" showNotification onBack={handleBack} />
         <View style={styles.centerContent}>
-          <Ionicons name="shirt-outline" size={64} color={colors.stone[300]} />
+          <Ionicons name="shirt-outline" size={64} color={legacyColors.stone[300]} />
           <Text style={styles.centerText}>Không tìm thấy sản phẩm</Text>
           <TouchableOpacity style={styles.backButton} onPress={handleBack} activeOpacity={0.7}>
             <Text style={styles.backButtonText}>← Quay lại danh sách</Text>
@@ -200,7 +201,7 @@ export default function EditProductScreen() {
       <View style={[styles.container, styles.center]}>
         <AdminDetailHeader title="Sản phẩm" showNotification onBack={handleBack} />
         <View style={styles.centerContent}>
-          <Ionicons name="alert-circle-outline" size={64} color={colors.rose} />
+          <Ionicons name="alert-circle-outline" size={64} color={legacyColors.rose} />
           <Text style={styles.centerText}>Không tìm thấy sản phẩm</Text>
           <TouchableOpacity style={styles.backButton} onPress={handleBack} activeOpacity={0.7}>
             <Text style={styles.backButtonText}>← Quay lại danh sách</Text>
@@ -232,12 +233,12 @@ export default function EditProductScreen() {
             <Image source={{ uri: anhUri }} style={styles.image} contentFit="cover" transition={200} cachePolicy="memory-disk" />
           ) : (
             <View style={[styles.image, styles.noImage]}>
-              <Ionicons name="image-outline" size={48} color={colors.stone[300]} />
+              <Ionicons name="image-outline" size={48} color={legacyColors.stone[300]} />
               <Text style={styles.noImageText}>Chưa có ảnh</Text>
             </View>
           )}
           <TouchableOpacity style={styles.changeImageBtn} onPress={pickImage} activeOpacity={0.7}>
-            <Ionicons name="camera" size={16} color={colors.cream} />
+            <Ionicons name="camera" size={16} color={legacyColors.cream} />
             <Text style={styles.changeImageText}>Đổi ảnh</Text>
           </TouchableOpacity>
         </View>
@@ -322,8 +323,8 @@ export default function EditProductScreen() {
         <View style={styles.moTaHeader}>
           <Text style={styles.label}>Mô tả sản phẩm</Text>
           <TouchableOpacity onPress={handleGenerate} disabled={generating} style={styles.aiBtn} activeOpacity={0.7}>
-            <Ionicons name="sparkles" size={18} color={generating ? colors.stone[300] : colors.blush} />
-            <Text style={[styles.aiText, generating && { color: colors.stone[300] }]}>
+            <Ionicons name="sparkles" size={18} color={generating ? legacyColors.stone[300] : legacyColors.blush} />
+            <Text style={[styles.aiText, generating && { color: legacyColors.stone[300] }]}>
               {generating ? "Đang tạo..." : "AI tạo"}
             </Text>
           </TouchableOpacity>
@@ -336,7 +337,7 @@ export default function EditProductScreen() {
             <Text style={styles.switchLabel}>Còn hàng</Text>
             <Text style={styles.switchSub}>{conHang ? 'Sản phẩm đang bán' : 'Ngừng bán'}</Text>
           </View>
-          <Switch value={conHang} onValueChange={setConHang} trackColor={{ false: colors.stone[200], true: colors.blush }} thumbColor={conHang ? colors.espresso : colors.stone[300]} />
+          <Switch value={conHang} onValueChange={setConHang} trackColor={{ false: legacyColors.stone[200], true: legacyColors.blush }} thumbColor={conHang ? legacyColors.espresso : legacyColors.stone[300]} />
         </View>
 
         <Button title="💾 Cập nhật sản phẩm" onPress={handleSave} loading={saving} style={styles.saveBtn} />
@@ -356,51 +357,51 @@ export default function EditProductScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream },
+  container: { flex: 1, backgroundColor: legacyColors.cream },
   center: { justifyContent: "center", alignItems: "center" },
   centerContent: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 32 },
-  centerText: { fontSize: 14, color: colors.stone[400], marginTop: 12, textAlign: 'center' },
-  backButton: { marginTop: 24, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: colors.espresso, borderRadius: borderRadius.sm },
-  backButtonText: { color: colors.cream, fontWeight: '600' },
+  centerText: { fontSize: 14, color: legacyColors.stone[400], marginTop: 12, textAlign: 'center' },
+  backButton: { marginTop: 24, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: legacyColors.espresso, borderRadius: borderRadius.sm },
+  backButtonText: { color: legacyColors.cream, fontWeight: '600' },
   scroll: { padding: 12, paddingBottom: 20, gap: 16 },
   imageSection: { alignItems: 'center' },
   image: { width: '100%', height: 240, borderRadius: borderRadius.md },
-  noImage: { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.stone[200], justifyContent: 'center', alignItems: 'center' },
-  noImageText: { fontSize: 12, color: colors.stone[400], marginTop: 8 },
-  changeImageBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.espresso, paddingHorizontal: 16, paddingVertical: 8, borderRadius: borderRadius.sm, marginTop: 10 },
-  changeImageText: { fontSize: 12, color: colors.cream, fontWeight: '600' },
+  noImage: { backgroundColor: legacyColors.white, borderWidth: 1, borderColor: legacyColors.stone[200], justifyContent: 'center', alignItems: 'center' },
+  noImageText: { fontSize: 12, color: legacyColors.stone[400], marginTop: 8 },
+  changeImageBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: legacyColors.espresso, paddingHorizontal: 16, paddingVertical: 8, borderRadius: borderRadius.sm, marginTop: 10 },
+  changeImageText: { fontSize: 12, color: legacyColors.cream, fontWeight: '600' },
   uploadingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  uploadingText: { fontSize: 12, color: colors.stone[400] },
+  uploadingText: { fontSize: 12, color: legacyColors.stone[400] },
 
-  priceBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.white, borderRadius: borderRadius.sm, padding: 14 },
-  priceLabel: { fontSize: 10, textTransform: 'uppercase', color: colors.stone[400], fontWeight: '600', letterSpacing: 0.5 },
-  priceValue: { fontSize: 20, fontWeight: '800', color: colors.espresso, marginTop: 2 },
+  priceBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: legacyColors.white, borderRadius: borderRadius.sm, padding: 14 },
+  priceLabel: { fontSize: 10, textTransform: 'uppercase', color: legacyColors.stone[400], fontWeight: '600', letterSpacing: 0.5 },
+  priceValue: { fontSize: 20, fontWeight: '800', color: legacyColors.espresso, marginTop: 2 },
   priceRight: { alignItems: 'flex-end', gap: 2 },
-  oldPrice: { fontSize: 12, color: colors.stone[400], textDecorationLine: 'line-through' },
-  discountBadge: { backgroundColor: `${colors.rose}15`, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
-  discountText: { fontSize: 10, color: colors.rose, fontWeight: '700' },
+  oldPrice: { fontSize: 12, color: legacyColors.stone[400], textDecorationLine: 'line-through' },
+  discountBadge: { backgroundColor: `${legacyColors.rose}15`, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  discountText: { fontSize: 10, color: legacyColors.rose, fontWeight: '700' },
   stockInfo: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   stockText: { fontSize: 12, fontWeight: '600' },
 
-  label: { fontSize: 10, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: colors.stone[600], marginBottom: 6 },
-  labelValue: { textTransform: 'none', color: colors.espresso, fontWeight: '500' },
+  label: { fontSize: 10, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: legacyColors.stone[600], marginBottom: 6 },
+  labelValue: { textTransform: 'none', color: legacyColors.espresso, fontWeight: '500' },
   chipsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 8 },
-  chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: colors.stone[300], backgroundColor: colors.white },
-  chipActive: { backgroundColor: colors.espresso, borderColor: colors.espresso },
-  chipText: { fontSize: 11, color: colors.stone[500] },
-  chipTextActive: { color: colors.cream },
+  chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: legacyColors.stone[300], backgroundColor: legacyColors.white },
+  chipActive: { backgroundColor: legacyColors.espresso, borderColor: legacyColors.espresso },
+  chipText: { fontSize: 11, color: legacyColors.stone[500] },
+  chipTextActive: { color: legacyColors.cream },
 
   sizeRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 4 },
-  sizeLabelWrap: { width: 40, justifyContent: 'center', alignItems: 'center', backgroundColor: `${colors.blush}15`, borderRadius: 8, height: 38 },
-  sizeLabel: { fontSize: 13, fontWeight: "600", color: colors.espresso },
+  sizeLabelWrap: { width: 40, justifyContent: 'center', alignItems: 'center', backgroundColor: `${legacyColors.blush}15`, borderRadius: 8, height: 38 },
+  sizeLabel: { fontSize: 13, fontWeight: "600", color: legacyColors.espresso },
 
   moTaHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 },
   aiBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4 },
-  aiText: { fontSize: 11, color: colors.blush, fontWeight: '600' },
+  aiText: { fontSize: 11, color: legacyColors.blush, fontWeight: '600' },
 
-  switchRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 14, backgroundColor: colors.white, borderRadius: borderRadius.sm },
-  switchLabel: { fontSize: 14, fontWeight: "600", color: colors.espresso },
-  switchSub: { fontSize: 11, color: colors.stone[400] },
+  switchRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 14, backgroundColor: legacyColors.white, borderRadius: borderRadius.sm },
+  switchLabel: { fontSize: 14, fontWeight: "600", color: legacyColors.espresso },
+  switchSub: { fontSize: 11, color: legacyColors.stone[400] },
 
   saveBtn: { marginBottom: 20 },
 });

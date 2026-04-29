@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { useAuthStore } from "@/src/store/authStore";
 import { NotificationContext } from "@/src/hooks/useNotifications";
 import { colors } from "@/src/theme";
+import { legacyColors } from '@/src/theme/legacy-colors';
 import { Ionicons } from "@expo/vector-icons";
 import { logout } from "@/src/api/auth";
 
@@ -36,12 +37,12 @@ export default function MoreScreen() {
         return (
           <TouchableOpacity key={item.label} style={styles.menuItem}
             onPress={() => router.push(item.route as any)}>
-            <Ionicons name={item.icon as any} size={22} color={colors.espresso} />
+            <Ionicons name={item.icon as any} size={22} color={legacyColors.espresso} />
             <Text style={styles.menuLabel}>{item.label}</Text>
             {item.label === "Trợ lý AI" && (
-              <Ionicons name="sparkles" size={16} color={colors.blush} />
+              <Ionicons name="sparkles" size={16} color={legacyColors.blush} />
             )}
-            <Ionicons name="chevron-forward" size={18} color={colors.stone[300]} />
+            <Ionicons name="chevron-forward" size={18} color={legacyColors.stone[300]} />
           </TouchableOpacity>
         );
       })}
@@ -50,24 +51,24 @@ export default function MoreScreen() {
 
       {/* Navigation to main tabs */}
       <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/(admin)/dashboard")}>
-        <Ionicons name="stats-chart" size={22} color={colors.espresso} />
+        <Ionicons name="stats-chart" size={22} color={legacyColors.espresso} />
         <Text style={styles.menuLabel}>Dashboard</Text>
-        <Ionicons name="chevron-forward" size={18} color={colors.stone[300]} />
+        <Ionicons name="chevron-forward" size={18} color={legacyColors.stone[300]} />
       </TouchableOpacity>
       <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/(admin)/san-pham")}>
-        <Ionicons name="shirt" size={22} color={colors.espresso} />
+        <Ionicons name="shirt" size={22} color={legacyColors.espresso} />
         <Text style={styles.menuLabel}>Sản phẩm</Text>
-        <Ionicons name="chevron-forward" size={18} color={colors.stone[300]} />
+        <Ionicons name="chevron-forward" size={18} color={legacyColors.stone[300]} />
       </TouchableOpacity>
       <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/(admin)/don-hang")}>
-        <Ionicons name="receipt" size={22} color={colors.espresso} />
+        <Ionicons name="receipt" size={22} color={legacyColors.espresso} />
         <Text style={styles.menuLabel}>Đơn hàng</Text>
         {unreadCount > 0 && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
           </View>
         )}
-        <Ionicons name="chevron-forward" size={18} color={colors.stone[300]} />
+        <Ionicons name="chevron-forward" size={18} color={legacyColors.stone[300]} />
       </TouchableOpacity>
 
       <View style={styles.divider} />
@@ -81,13 +82,13 @@ export default function MoreScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream },
-  title: { fontSize: 20, fontWeight: "300", letterSpacing: 2, color: colors.espresso, padding: 16 },
-  menuItem: { flexDirection: "row", alignItems: "center", gap: 16, paddingVertical: 16, paddingHorizontal: 16, backgroundColor: colors.white, borderBottomWidth: 1, borderBottomColor: colors.stone[200] },
-  menuLabel: { flex: 1, fontSize: 16, color: colors.espresso },
-  divider: { height: 12, backgroundColor: colors.cream },
+  container: { flex: 1, backgroundColor: legacyColors.cream },
+  title: { fontSize: 20, fontWeight: "300", letterSpacing: 2, color: legacyColors.espresso, padding: 16 },
+  menuItem: { flexDirection: "row", alignItems: "center", gap: 16, paddingVertical: 16, paddingHorizontal: 16, backgroundColor: legacyColors.white, borderBottomWidth: 1, borderBottomColor: legacyColors.stone[200] },
+  menuLabel: { flex: 1, fontSize: 16, color: legacyColors.espresso },
+  divider: { height: 12, backgroundColor: legacyColors.cream },
   logoutBtn: { flexDirection: "row", alignItems: "center", gap: 16, paddingVertical: 16, paddingHorizontal: 16 },
   logoutText: { fontSize: 16, color: colors.danger, fontWeight: "600" },
   badge: { backgroundColor: colors.danger, borderRadius: 10, minWidth: 20, height: 20, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4, marginRight: 8 },
-  badgeText: { fontSize: 10, fontWeight: '700', color: colors.white },
+  badgeText: { fontSize: 10, fontWeight: '700', color: legacyColors.white },
 });

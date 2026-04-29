@@ -1,768 +1,480 @@
-import React, { useState, useCallback } from "react";
-import { useDebounce } from "@/src/hooks/useDebounce";
+import React, { useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity,
-  TextInput, RefreshControl, Modal, ScrollView,
-} from "react-native";
-import { showSuccess, showError } from "@/src/utils/toast";
-import { useRouter } from "expo-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getOrders, updateOrderStatus, bulkUpdateStatus } from "@/src/api/don-hang";
-import { colors, shadows, borderRadius } from "@/src/theme";
-import { LIMIT_DEFAULT, ORDER_STATUSES, STATUS_COLORS, STATUS_COLORS_BG } from "@/src/utils/constants";
-import { formatMoney, formatRelativeTime } from "@/src/utils/format";
-import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
-import EmptyState from "@/src/components/ui/EmptyState";
-import Button from "@/src/components/ui/Button";
-import ConfirmDialog from "@/src/components/ui/ConfirmDialog";
-import { Ionicons } from "@expo/vector-icons";
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
+import { TopAppBar } from '../../../src/components/ui/TopAppBar';
+import { SearchBar } from '../../../src/components/ui/SearchBar';
+import { colors, spacing, typography, borderRadius, shadows } from '../../../src/theme';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { Image } from 'expo-image';
+import { useQuery } from '@tanstack/react-query';
+import { getOrders } from '@/src/api/don-hang';
+import { formatMoney } from '@/src/utils/format';
 
-export default function OrdersScreen() {
+interface ApiOrder {
+  id: string;
+  tenKH?: string;
+  sdt?: string;
+  trangThai?: string;
+  tongTien?: number;
+  thoiGian?: string;
+  sanPham?: Array<{
+    ten?: string;
+    sizeChon?: string;
+    mauSac?: string;
+    soLuong?: number;
+    anhURL?: string;
+  }>;
+}
+
+interface OrderCardData {
+  id: string;
+  customerName: string;
+  orderCode: string;
+  status: 'new' | 'processing' | 'delivered' | 'cancelled';
+  items: number;
+  total: string;
+  time: string;
+  productName: string;
+  productVariant: string;
+  productImage?: string;
+}
+
+const STATUS_CONFIG = {
+  new: { label: 'Mới', color: '#3B82F6', bgColor: '#DBEAFE', borderColor: '#93C5FD' },
+  processing: { label: 'Đang xử lý', color: '#F59E0B', bgColor: '#FEF3C7', borderColor: '#FCD34D' },
+  delivered: { label: 'Đã giao', color: '#10B981', bgColor: '#D1FAE5', borderColor: '#6EE7B7' },
+  cancelled: { label: 'Huỷ', color: '#EF4444', bgColor: '#FEE2E2', borderColor: '#FCA5A5' },
+};
+
+const FILTER_TABS = [
+  { key: 'all', label: 'Tất cả' },
+  { key: 'new', label: 'Mới' },
+  { key: 'processing', label: 'Đang xử lý' },
+  { key: 'delivered', label: 'Đã giao' },
+  { key: 'cancelled', label: 'Huỷ' },
+];
+
+const normalizeStatus = (status?: string): OrderCardData['status'] => {
+  if (!status) return 'new';
+  if (status === 'Đã giao') return 'delivered';
+  if (status === 'Huỷ') return 'cancelled';
+  if (status === 'Mới') return 'new';
+  return 'processing';
+};
+
+const toOrderCard = (order: ApiOrder): OrderCardData => {
+  const firstProduct = order.sanPham?.[0];
+  const variantParts = [
+    firstProduct?.sizeChon ? `Size: ${firstProduct.sizeChon}` : null,
+    firstProduct?.mauSac ? `Màu: ${firstProduct.mauSac}` : null,
+  ].filter(Boolean);
+
+  return {
+    id: String(order.id),
+    customerName: order.tenKH || 'Khách lẻ',
+    orderCode: `#${order.id}`,
+    status: normalizeStatus(order.trangThai),
+    items: order.sanPham?.reduce((sum, p) => sum + (p.soLuong || 1), 0) || 0,
+    total: formatMoney(order.tongTien || 0),
+    time: order.thoiGian || '',
+    productName: firstProduct?.ten || 'Không có sản phẩm',
+    productVariant: variantParts.length > 0 ? variantParts.join(' | ') : '—',
+    productImage: firstProduct?.anhURL || undefined,
+  };
+};
+
+export default function DonHangScreen() {
   const router = useRouter();
-  const queryClient = useQueryClient();
-  const [page, setPage] = useState(1);
-  const [searchTen, setSearchTen] = useState("");
-  const [searchSdt, setSearchSdt] = useState("");
-  const [trangThai, setTrangThai] = useState("");
-  const [showFilter, setShowFilter] = useState(false);
-  const [tuNgay, setTuNgay] = useState<Date | null>(null);
-  const [denNgay, setDenNgay] = useState<Date | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
 
-  // Bulk select
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [bulkMode, setBulkMode] = useState(false);
-  const [bulkStatusModal, setBulkStatusModal] = useState(false);
-  const [bulkConfirm, setBulkConfirm] = useState(false);
-  
-  const debouncedSearchTen = useDebounce(searchTen, 500);
-  const debouncedSearchSdt = useDebounce(searchSdt, 500);
+  const { data, isLoading, isError, refetch, isRefetching } = useQuery({
+    queryKey: ['orders', 'list', { searchQuery, activeFilter }],
+    queryFn: async () => {
+      const params: any = {
+        page: 1,
+        limit: 50,
+      };
 
-  const { data, isLoading, isFetching, refetch } = useQuery({
-    queryKey: ["orders", page, debouncedSearchTen, debouncedSearchSdt, trangThai, tuNgay, denNgay],
-    queryFn: () => getOrders({
-      page, limit: LIMIT_DEFAULT,
-      search_ten: debouncedSearchTen, search_sdt: debouncedSearchSdt, trang_thai: trangThai,
-      tu_ngay: tuNgay ? tuNgay.toISOString().split('T')[0] : undefined,
-      den_ngay: denNgay ? denNgay.toISOString().split('T')[0] : undefined,
-    }),
+      if (searchQuery.trim()) {
+        params.search_ten = searchQuery.trim();
+      }
+
+      if (activeFilter !== 'all') {
+        const map: Record<string, string> = {
+          new: 'Mới',
+          processing: 'Đang xử lý',
+          delivered: 'Đã giao',
+          cancelled: 'Huỷ',
+        };
+        params.trang_thai = map[activeFilter];
+      }
+
+      return getOrders(params);
+    },
   });
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const orders = useMemo(() => {
+    const rawList = Array.isArray(data?.data)
+      ? data.data
+      : Array.isArray(data)
+      ? data
+      : [];
+
+    return rawList.map(toOrderCard);
+  }, [data]);
+
+  const filteredOrders = useMemo(() => {
+    if (activeFilter === 'all') return orders;
+    return orders.filter((o) => o.status === activeFilter);
+  }, [orders, activeFilter]);
+
+  const handleOrderPress = (order: OrderCardData) => {
+    router.push({
+      pathname: '/(admin)/don-hang/[id]' as any,
+      params: { id: order.id },
+    });
   };
 
-  const selectAll = () => {
-    if (data?.data) {
-      setSelectedIds(data.data.map((o: any) => o.id));
-    }
-  };
+  const renderOrderCard = (order: OrderCardData) => {
+    const statusConfig = STATUS_CONFIG[order.status];
+    const isCancelled = order.status === 'cancelled';
 
-  const clearSelection = () => {
-    setSelectedIds([]);
-    setBulkMode(false);
-  };
-
-  const handleBulkStatus = async (status: string) => {
-    if (selectedIds.length === 0) return;
-    try {
-      await bulkUpdateStatus(selectedIds, status);
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-      clearSelection();
-      setBulkStatusModal(false);
-    } catch {
-      showError("Không thể cập nhật trạng thái hàng loạt");
-    }
-  };
-
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
-
-  const renderItem = useCallback(({ item }: { item: any }) => (
-    <TouchableOpacity
-      style={[styles.card, shadows.card, bulkMode && styles.cardBulk]}
-      onPress={() => bulkMode ? toggleSelect(item.id) : router.push({
-        pathname: "/(admin)/don-hang/[id]",
-        params: { id: item.id, cachedData: JSON.stringify(item) },
-      })}
-      activeOpacity={0.7}
-    >
-      {bulkMode && (
-        <View style={[styles.checkbox, selectedIds.includes(item.id) && styles.checkboxChecked]}>
-          {selectedIds.includes(item.id) && <Ionicons name="checkmark" size={14} color={colors.cream} />}
-        </View>
-      )}
-
-      {/* Customer avatar */}
-      <View style={styles.cardLeft}>
-        <View style={styles.customerAvatar}>
-          <Text style={styles.customerAvatarText}>{getInitials(item.tenKH)}</Text>
-        </View>
-      </View>
-
-      {/* Card content */}
-      <View style={styles.cardContent}>
-        <View style={styles.cardTop}>
-          <View style={{ flex: 1 }}>
-            <View style={styles.cardTopRow}>
-              <Text style={styles.orderId}>#{item.id}</Text>
-              <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS_BG[item.trangThai] || `${colors.blush}15` }]}>
-                <Text style={[styles.statusText, { color: STATUS_COLORS[item.trangThai] || colors.stone[500] }]}>
-                  {item.trangThai}
-                </Text>
-              </View>
-            </View>
-            <Text style={styles.customerName} numberOfLines={1}>{item.tenKH}</Text>
-            <Text style={styles.phone}>{item.sdt}</Text>
+    return (
+      <TouchableOpacity
+        key={order.id}
+        style={[styles.orderCard, isCancelled && styles.orderCardCancelled]}
+        onPress={() => handleOrderPress(order)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.orderHeader}>
+          <View>
+            <Text style={styles.orderCode}>{order.orderCode}</Text>
+            <Text style={styles.customerName}>{order.customerName}</Text>
           </View>
-          <View style={styles.cardRight}>
-            <Text style={styles.total}>{formatMoney(item.tongTien)}</Text>
-            <Text style={styles.time}>{formatRelativeTime(item.thoiGian)}</Text>
-          </View>
-        </View>
-
-        {/* Product summary list */}
-        {item.sanPham && item.sanPham.length > 0 && (
-          <View style={styles.productSummary}>
-            {item.sanPham.map((sp: any, idx: number) => (
-              <View key={idx} style={styles.productSummaryRow}>
-                <Ionicons name="caret-forward" size={10} color={colors.stone[300]} />
-                <Text style={styles.productSummaryText} numberOfLines={1}>
-                  <Text style={{ fontWeight: '600' }}>{sp.ten}</Text>
-                  {sp.sizeChon ? ` (Size: ${sp.sizeChon})` : ''}
-                  <Text style={{ color: colors.rose }}> x{sp.soLuong}</Text>
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
-  ), [bulkMode, selectedIds, router]);
-
-  const activeFilterCount = (trangThai ? 1 : 0) + (tuNgay ? 1 : 0) + (denNgay ? 1 : 0) + (searchSdt ? 1 : 0);
-
-  return (
-    <View style={styles.container}>
-      {/* Page Header */}
-      <View style={styles.pageHeader}>
-        <Text style={styles.pageTitle}>Đơn hàng</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.addOrderBtn} onPress={() => router.push("/(admin)/don-hang/add")} activeOpacity={0.7}>
-            <Ionicons name="add" size={18} color={colors.cream} />
-            <Text style={styles.addOrderBtnText}>Tạo đơn</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-      {/* Search & Bulk bar */}
-      {bulkMode ? (
-        <View style={styles.bulkBar}>
-          <View style={styles.bulkLeft}>
-            <Ionicons name="checkbox" size={18} color={colors.espresso} />
-            <Text style={styles.bulkText}>{selectedIds.length} đã chọn</Text>
-          </View>
-          <View style={styles.bulkActions}>
-            <TouchableOpacity style={styles.bulkActionBtn} onPress={selectAll}>
-              <Ionicons name="checkmark-done" size={16} color={colors.espresso} />
-              <Text style={styles.bulkActionText}>Tất cả</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.bulkActionBtn, styles.bulkStatusBtn]} onPress={() => setBulkStatusModal(true)}>
-              <Ionicons name="swap-horizontal" size={16} color={colors.cream} />
-              <Text style={[styles.bulkActionText, { color: colors.cream }]}>Đổi TT</Text>
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity onPress={clearSelection} style={styles.bulkCloseBtn}>
-            <Ionicons name="close" size={20} color={colors.rose} />
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <View style={styles.header}>
-          <View style={styles.searchRow}>
-            <View style={styles.searchBox}>
-              <Ionicons name="search" size={18} color={colors.stone[400]} />
-              <TextInput
-                style={styles.searchInput}
-                value={searchTen}
-                onChangeText={(v) => { setSearchTen(v); setPage(1); }}
-                placeholder="Tìm tên khách..."
-                placeholderTextColor={colors.stone[400]}
-              />
-              {searchTen.length > 0 && (
-                <TouchableOpacity onPress={() => { setSearchTen(""); setPage(1); }}>
-                  <Ionicons name="close-circle" size={18} color={colors.stone[300]} />
-                </TouchableOpacity>
-              )}
-            </View>
-            <TouchableOpacity
-              style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
-              onPress={() => setShowFilter(!showFilter)}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="options-outline" size={18} color={activeFilterCount > 0 ? colors.white : colors.espresso} />
-              {activeFilterCount > 0 && (
-                <View style={styles.filterBadge}>
-                  <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.bulkBtn}
-              onPress={() => setBulkMode(true)}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="checkbox-outline" size={18} color={colors.espresso} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-
-      {/* Quick status filter chips */}
-      <View style={styles.quickFilters}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickFiltersInner}>
-          <TouchableOpacity
-            style={[styles.quickChip, !trangThai && styles.quickChipActive]}
-            onPress={() => { setTrangThai(""); setPage(1); }}
+          <View
+            style={[
+              styles.statusBadge,
+              {
+                backgroundColor: statusConfig.bgColor,
+                borderColor: statusConfig.borderColor,
+              },
+            ]}
           >
-            <Text style={[styles.quickChipText, !trangThai && styles.quickChipTextActive]}>Tất cả</Text>
-          </TouchableOpacity>
-          {ORDER_STATUSES.map(stt => (
-            <TouchableOpacity
-              key={stt}
-              style={[
-                styles.quickChip,
-                trangThai === stt && styles.quickChipActive,
-              ]}
-              onPress={() => { setTrangThai(stt); setPage(1); }}
-            >
-              <View style={[
-                styles.quickChipDot,
-                { backgroundColor: trangThai === stt ? colors.white : STATUS_COLORS[stt] },
-              ]} />
-              <Text style={[
-                styles.quickChipText,
-                trangThai === stt && styles.quickChipTextActive,
-                trangThai !== stt && { color: STATUS_COLORS[stt] },
-              ]}>{stt}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Advanced filter panel */}
-      {showFilter && (
-        <View style={styles.filterPanel}>
-          <View style={styles.dateRow}>
-            <View style={styles.dateInputBox}>
-              <Ionicons name="calendar-outline" size={16} color={colors.stone[400]} />
-              <TextInput
-                style={styles.dateInput}
-                value={tuNgay ? tuNgay.toISOString().split('T')[0] : ''}
-                onChangeText={(v) => {
-                  const cleaned = v.replace(/[^\d-]/g, '');
-                  if (cleaned.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                    setTuNgay(new Date(cleaned));
-                    setPage(1);
-                  } else if (v === '') {
-                    setTuNgay(null);
-                    setPage(1);
-                  }
-                }}
-                placeholder="Từ ngày"
-                placeholderTextColor={colors.stone[300]}
-              />
-            </View>
-            <View style={styles.dateInputBox}>
-              <Ionicons name="calendar-outline" size={16} color={colors.stone[400]} />
-              <TextInput
-                style={styles.dateInput}
-                value={denNgay ? denNgay.toISOString().split('T')[0] : ''}
-                onChangeText={(v) => {
-                  const cleaned = v.replace(/[^\d-]/g, '');
-                  if (cleaned.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                    setDenNgay(new Date(cleaned));
-                    setPage(1);
-                  } else if (v === '') {
-                    setDenNgay(null);
-                    setPage(1);
-                  }
-                }}
-                placeholder="Đến ngày"
-                placeholderTextColor={colors.stone[300]}
-              />
-            </View>
-            {(tuNgay || denNgay) && (
-              <TouchableOpacity onPress={() => { setTuNgay(null); setDenNgay(null); setPage(1); }}>
-                <Text style={styles.clearDateText}>Xóa</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-          <View style={styles.sdtBox}>
-            <Ionicons name="call-outline" size={16} color={colors.stone[400]} />
-            <TextInput
-              style={styles.sdtInput}
-              value={searchSdt}
-              onChangeText={(v) => { setSearchSdt(v); setPage(1); }}
-              placeholder="Tìm theo SĐT..."
-              placeholderTextColor={colors.stone[400]}
-              keyboardType="phone-pad"
-            />
-            {searchSdt.length > 0 && (
-              <TouchableOpacity onPress={() => { setSearchSdt(""); setPage(1); }}>
-                <Ionicons name="close-circle" size={18} color={colors.stone[300]} />
-              </TouchableOpacity>
-            )}
+            <Text style={[styles.statusText, { color: statusConfig.color }]}>
+              {statusConfig.label}
+            </Text>
           </View>
         </View>
-      )}
 
-      {/* Order count summary */}
-      {data && !isLoading && (
-        <View style={styles.countBar}>
-          <Text style={styles.countText}>
-            {data.data.length} đơn{data.totalPages > 1 ? ` (tổng ${data.totalPages} trang)` : ''}
+        <View style={styles.productSection}>
+          {order.productImage ? (
+            <Image
+              source={{ uri: order.productImage }}
+              style={styles.productImage}
+              contentFit="cover"
+              transition={150}
+              cachePolicy="memory-disk"
+            />
+          ) : (
+            <View style={styles.productImage}>
+              <MaterialIcons name="checkroom" size={32} color={colors['on-surface-variant']} />
+            </View>
+          )}
+          <View style={styles.productInfo}>
+            <Text
+              style={[styles.productName, isCancelled && styles.textCancelled]}
+              numberOfLines={1}
+            >
+              {order.productName}
+            </Text>
+            <Text style={styles.productVariant}>{order.productVariant}</Text>
+          </View>
+        </View>
+
+        <View style={styles.orderFooter}>
+          <Text style={styles.itemCount}>{order.items} sản phẩm</Text>
+          <Text
+            style={[
+              styles.orderTotal,
+              isCancelled && styles.orderTotalCancelled,
+            ]}
+          >
+            {order.total}
           </Text>
         </View>
-      )}
+      </TouchableOpacity>
+    );
+  };
 
-      {/* List */}
-      {isLoading && !data ? (
-        <LoadingSpinner size="full" label="Đang tải..." />
-      ) : !data?.data?.length ? (
-        <EmptyState
-          title="Không có đơn hàng"
-          description={activeFilterCount > 0 ? "Thử thay đổi bộ lọc" : "Chưa có đơn hàng nào"}
-        />
-      ) : (
-        <FlatList
-          data={data.data}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={isFetching} onRefresh={() => refetch()} tintColor={colors.blush} />}
-          onEndReached={() => { if (page < (data?.totalPages ?? 1)) setPage(p => p + 1); }}
-          onEndReachedThreshold={0.3}
-          windowSize={10}
-          maxToRenderPerBatch={10}
-          initialNumToRender={10}
-          removeClippedSubviews={true}
-          ListFooterComponent={isFetching ? <LoadingSpinner size="sm" /> : null}
-        />
-      )}
+  return (
+    <SafeAreaView style={styles.container}>
+      <TopAppBar
+        title="TRANG ANH"
+        showMenu
+        showNotifications
+      />
 
-      {/* Bulk status modal */}
-      <Modal visible={bulkStatusModal} transparent animationType="slide">
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setBulkStatusModal(false)}>
-          <View style={styles.modalOverlay} pointerEvents="none" />
-        </TouchableOpacity>
-        <View style={styles.modalContainer} pointerEvents={bulkStatusModal ? 'auto' : 'none'}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Đổi trạng thái {selectedIds.length} đơn</Text>
-            <View style={styles.statusGrid}>
-              {ORDER_STATUSES.map(stt => (
-                <TouchableOpacity
-                  key={stt}
-                  style={[styles.statusModalBtn, { borderColor: STATUS_COLORS[stt] }]}
-                  onPress={() => { setBulkStatusModal(false); handleBulkStatus(stt); }}
-                  activeOpacity={0.7}
+      <View style={styles.content}>
+        <View style={styles.searchSection}>
+          <SearchBar
+            placeholder="Tìm kiếm mã đơn, khách hàng..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterTabs}
+          >
+            {FILTER_TABS.map((tab) => (
+              <TouchableOpacity
+                key={tab.key}
+                style={[
+                  styles.filterTab,
+                  activeFilter === tab.key && styles.filterTabActive,
+                ]}
+                onPress={() => setActiveFilter(tab.key)}
+              >
+                <Text
+                  style={[
+                    styles.filterTabText,
+                    activeFilter === tab.key && styles.filterTabTextActive,
+                  ]}
                 >
-                  <View style={[styles.statusModalDot, { backgroundColor: STATUS_COLORS[stt] }]} />
-                  <Text style={styles.statusModalText}>{stt}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <Button title="Hủy" onPress={() => setBulkStatusModal(false)} variant="ghost" style={{ marginTop: 16 }} />
-          </View>
+                  {tab.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
-      </Modal>
-    </View>
+
+        {isLoading || isRefetching ? (
+          <View style={styles.centerState}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={styles.helperText}>Đang tải danh sách đơn hàng...</Text>
+          </View>
+        ) : isError ? (
+          <View style={styles.centerState}>
+            <MaterialIcons name="error-outline" size={42} color={colors.error} />
+            <Text style={styles.helperText}>Không tải được danh sách đơn hàng</Text>
+            <TouchableOpacity style={styles.retryBtn} onPress={() => refetch()}>
+              <Text style={styles.retryBtnText}>Thử lại</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <ScrollView
+            style={styles.scrollView}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.ordersList}
+          >
+            {filteredOrders.length === 0 ? (
+              <View style={styles.centerState}>
+                <MaterialIcons name="inbox" size={42} color={colors['on-surface-variant']} />
+                <Text style={styles.helperText}>Không có đơn hàng</Text>
+              </View>
+            ) : (
+              filteredOrders.map(renderOrderCard)
+            )}
+          </ScrollView>
+        )}
+      </View>
+
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => router.push('/(admin)/don-hang/add' as any)}
+        activeOpacity={0.8}
+      >
+        <MaterialIcons name="add" size={32} color={colors['on-primary']} />
+      </TouchableOpacity>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream },
-  pageHeader: {
-    flexDirection: 'row' as const,
-    justifyContent: 'space-between' as const,
-    alignItems: 'center' as const,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: `${colors.stone[200]}40`,
-  },
-  pageTitle: { fontSize: 18, fontWeight: '800' as const, color: colors.espresso },
-  pageCount: { fontSize: 12, color: colors.stone[400], fontWeight: '500' as const },
-  addOrderBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.espresso, paddingHorizontal: 12, paddingVertical: 8, borderRadius: borderRadius.sm },
-  addOrderBtnText: { fontSize: 12, fontWeight: '600', color: colors.cream },
-
-  // Header
-  header: {
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: `${colors.stone[200]}40`,
-  },
-  searchRow: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "center",
-    padding: 12,
-  },
-  searchBox: {
+  container: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.cream,
-    borderRadius: borderRadius.sm,
-    paddingHorizontal: 12,
-    height: 42,
+    backgroundColor: colors.brandBg,
   },
-  searchInput: {
+  content: {
     flex: 1,
-    fontSize: 14,
-    color: colors.espresso,
-    marginLeft: 8,
   },
-  filterBtn: {
-    width: 42,
-    height: 42,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: colors.cream,
-    borderRadius: borderRadius.sm,
-    position: 'relative',
+  searchSection: {
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.sm,
   },
-  filterBtnActive: {
-    backgroundColor: colors.espresso,
-  },
-  filterBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    backgroundColor: colors.danger,
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 3,
-  },
-  filterBadgeText: {
-    fontSize: 8,
-    fontWeight: '700',
-    color: colors.white,
-  },
-  bulkBtn: {
-    width: 42,
-    height: 42,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: colors.cream,
-    borderRadius: borderRadius.sm,
-  },
-
-  // Quick filters
-  quickFilters: {
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: `${colors.stone[200]}40`,
-    paddingVertical: 10,
-  },
-  quickFiltersInner: {
-    paddingHorizontal: 12,
-    gap: 8,
-  },
-  quickChip: {
+  filterTabs: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.stone[300],
-    backgroundColor: colors.white,
-    flexShrink: 0,
+    gap: spacing.md,
+    paddingBottom: spacing.xs,
   },
-  quickChipActive: {
-    backgroundColor: colors.espresso,
-    borderColor: colors.espresso,
+  filterTab: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
-  quickChipText: {
-    fontSize: 11,
-    color: colors.stone[500],
-    fontWeight: '500',
+  filterTabActive: {
+    borderBottomColor: colors.primary,
   },
-  quickChipTextActive: {
-    color: colors.cream,
+  filterTabText: {
+    fontFamily: typography.fontFamily['label-sm'],
+    fontSize: typography.fontSize['label-sm'],
     fontWeight: '600',
+    color: colors['on-surface-variant'],
+    textTransform: 'uppercase',
+    letterSpacing: typography.letterSpacing['label-sm'],
   },
-  quickChipDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+  filterTabTextActive: {
+    color: colors.primary,
   },
-
-  // Bulk bar
-  bulkBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 12,
-    backgroundColor: `${colors.espresso}08`,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.stone[200],
+  scrollView: {
+    flex: 1,
   },
-  bulkLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  ordersList: {
+    padding: spacing.sm,
+    gap: spacing.sm,
+    paddingBottom: 100,
   },
-  bulkText: { fontSize: 13, fontWeight: '700', color: colors.espresso },
-  bulkActions: { flexDirection: 'row', gap: 8 },
-  bulkActionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 8,
+  orderCard: {
+    backgroundColor: colors['surface-container-lowest'],
+    borderRadius: borderRadius.xl,
     borderWidth: 1,
-    borderColor: colors.stone[300],
-    backgroundColor: colors.white,
-  },
-  bulkStatusBtn: {
-    backgroundColor: colors.espresso,
-    borderColor: colors.espresso,
-  },
-  bulkActionText: { fontSize: 11, fontWeight: '600', color: colors.espresso },
-  bulkCloseBtn: {
-    padding: 4,
-  },
-
-  // Filter panel
-  filterPanel: {
-    padding: 12,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.stone[100],
-  },
-  dateRow: {
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  dateInputBox: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: colors.cream,
-    borderRadius: borderRadius.sm,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  dateInput: {
-    flex: 1,
-    fontSize: 12,
-    color: colors.espresso,
-  },
-  clearDateText: { fontSize: 12, color: colors.rose, fontWeight: '600' },
-  sdtBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: colors.cream,
-    borderRadius: borderRadius.sm,
-    paddingHorizontal: 12,
-    height: 42,
-  },
-  sdtInput: {
-    flex: 1,
-    fontSize: 14,
-    color: colors.espresso,
-  },
-
-  // Count bar
-  countBar: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: colors.cream,
-  },
-  countText: {
-    fontSize: 11,
-    color: colors.stone[400],
-    fontWeight: '500',
-  },
-
-  // List
-  list: { padding: 12, gap: 10, paddingBottom: 100 },
-
-  // Order card
-  card: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.md,
-    overflow: "hidden",
-    flexDirection: "row",
-  },
-  cardBulk: {
-    paddingLeft: 44,
-  },
-  cardLeft: {
-    width: 52,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: `${colors.blush}08`,
-    borderRightWidth: 1,
-    borderRightColor: `${colors.stone[100]}60`,
-  },
-  customerAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.espresso,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  customerAvatarText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.cream,
-  },
-  cardContent: {
-    flex: 1,
-    padding: 12,
-  },
-  cardTop: {
-    flex: 1,
-  },
-  cardTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  orderId: {
-    fontSize: 10,
-    color: colors.stone[400],
-    fontFamily: "monospace",
-    fontWeight: '600',
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  statusText: {
-    fontSize: 9,
-    fontWeight: "700",
-    letterSpacing: 0.3,
-  },
-  customerName: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: colors.espresso,
-    marginBottom: 2,
-  },
-  phone: {
-    fontSize: 12,
-    color: colors.stone[400],
-  },
-  cardRight: {
-    alignItems: 'flex-end',
-    marginTop: 6,
-  },
-  total: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: colors.espresso,
-  },
-  time: {
-    fontSize: 10,
-    color: colors.stone[300],
-    marginTop: 2,
-  },
-  checkbox: {
-    position: 'absolute',
-    left: 12,
-    top: 14,
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: colors.stone[300],
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkboxChecked: {
-    backgroundColor: colors.espresso,
-    borderColor: colors.espresso,
-  },
-
-  // Modal
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)" },
-  modalContainer: {
-    position: 'absolute',
-    bottom: 0, left: 0, right: 0,
-  },
-  modalContent: {
-    backgroundColor: colors.white,
-    borderRadius: 20,
-    padding: 24,
-    width: '100%',
-    maxWidth: 360,
-    alignSelf: 'center',
+    borderColor: colors['outline-variant'],
+    padding: spacing.sm,
+    gap: spacing.sm,
     ...shadows.card,
   },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: colors.espresso,
-    marginBottom: 16,
-    textAlign: 'center',
+  orderCardCancelled: {
+    opacity: 0.6,
   },
-  statusGrid: {
+  orderHeader: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  orderCode: {
+    fontFamily: typography.fontFamily['label-sm'],
+    fontSize: typography.fontSize['label-sm'],
+    color: colors['on-surface-variant'],
+    textTransform: 'uppercase',
+  },
+  customerName: {
+    fontFamily: typography.fontFamily.h2,
+    fontSize: 18,
+    fontWeight: '500',
+    color: colors.primary,
+    marginTop: 2,
+  },
+  statusBadge: {
+    paddingHorizontal: spacing.xs + 4,
+    paddingVertical: 4,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+  },
+  statusText: {
+    fontFamily: typography.fontFamily['label-sm'],
+    fontSize: 10,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  productSection: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: colors['surface-container'],
+  },
+  productImage: {
+    width: 64,
+    height: 64,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors['surface-container-low'],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  productInfo: {
+    flex: 1,
     justifyContent: 'center',
   },
-  statusModalBtn: {
+  productName: {
+    fontFamily: typography.fontFamily.body,
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors['on-surface'],
+    marginBottom: 2,
+  },
+  productVariant: {
+    fontFamily: typography.fontFamily['label-sm'],
+    fontSize: 12,
+    color: colors['on-surface-variant'],
+  },
+  textCancelled: {
+    textDecorationLine: 'line-through',
+    color: colors['on-surface-variant'],
+  },
+  orderFooter: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: colors.stone[300],
-    backgroundColor: colors.white,
-    minWidth: '45%',
   },
-  statusModalDot: { width: 8, height: 8, borderRadius: 4 },
-  statusModalText: { fontSize: 12, fontWeight: '600', color: colors.espresso },
-  
-  // Thêm định nghĩa cho headerActions
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  itemCount: {
+    fontFamily: typography.fontFamily['label-sm'],
+    fontSize: 12,
+    color: colors['on-surface-variant'],
   },
-  productSummary: {
-    marginTop: 10,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: `${colors.stone[200]}40`,
-    gap: 4,
+  orderTotal: {
+    fontFamily: typography.fontFamily.h3,
+    fontSize: 16,
+    color: colors.primary,
+    fontWeight: '600',
   },
-  productSummaryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  orderTotalCancelled: {
+    color: colors['on-surface-variant'],
+    textDecorationLine: 'line-through',
   },
-  productSummaryText: {
-    fontSize: 11,
-    color: colors.stone[500],
+  centerState: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+  },
+  helperText: {
+    fontFamily: typography.fontFamily.body,
+    color: colors['on-surface-variant'],
+  },
+  retryBtn: {
+    marginTop: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.primary,
+  },
+  retryBtnText: {
+    color: colors['on-primary'],
+    fontWeight: '600',
+  },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 90,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.floating,
   },
 });

@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TextInput, View, type TextStyle, type ViewStyle } from 'react-native';
-import { colors } from '@/src/theme';
+import { legacyColors } from '@/src/theme/legacy-colors';
 
 interface InputProps {
   value: string;
@@ -40,7 +40,7 @@ export default function Input({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={colors.stone[400]}
+        placeholderTextColor={legacyColors.stone[400]}
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
         multiline={multiline}
@@ -50,7 +50,7 @@ export default function Input({
         style={[
           styles.input,
           multiline && { height: Math.max(80, (numberOfLines || 3) * 24) },
-          error && { borderColor: colors.danger },
+          error && { borderColor: legacyColors.danger },
           !editable && { opacity: 0.6 },
           inputStyle,
         ]}
@@ -69,23 +69,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 1,
     textTransform: 'uppercase',
-    color: colors.stone[600],
+    color: legacyColors.stone[600],
     marginBottom: 4,
   },
   input: {
     borderWidth: 1,
-    borderColor: colors.stone[300],
+    borderColor: legacyColors.stone[300],
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
-    color: colors.espresso,
-    backgroundColor: colors.white,
+    color: legacyColors.espresso,
+    backgroundColor: legacyColors.white,
     textAlignVertical: 'top',
   },
   errorText: {
     fontSize: 12,
-    color: colors.danger,
+    color: legacyColors.danger,
     marginTop: 4,
   },
 });

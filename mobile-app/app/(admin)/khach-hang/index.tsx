@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { useDebounce } from "@/src/hooks/useDebounce";
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, RefreshControl, Modal, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
+import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, RefreshControl, Modal, KeyboardAvoidingView, Platform, ScrollView, SafeAreaView } from "react-native";
+import { TopAppBar } from "@/src/components/ui/TopAppBar";
 import { showSuccess, showError, showInfo } from "@/src/utils/toast";
 import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,6 +10,7 @@ import { getOrders } from "@/src/api/don-hang";
 import { Image } from "expo-image";
 import { useAuthStore } from "@/src/store/authStore";
 import { colors, shadows, borderRadius } from "@/src/theme";
+import { legacyColors } from '@/src/theme/legacy-colors';
 import { LIMIT_DEFAULT } from "@/src/utils/constants";
 import { formatMoney, formatNumber } from "@/src/utils/format";
 import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
@@ -96,18 +98,18 @@ export default function CustomersScreen() {
         <View style={styles.cardInfo}>
           <View style={styles.cardInfoRow}>
             <Text style={styles.name} numberOfLines={1}>{item.ten}</Text>
-            <View style={[styles.ttBadge, { backgroundColor: `${colors.blush}15` }]}>
-              <Text style={[styles.ttText, { color: colors.blush }]}>{item.trangThai}</Text>
+            <View style={[styles.ttBadge, { backgroundColor: `${legacyColors.blush}15` }]}>
+              <Text style={[styles.ttText, { color: legacyColors.blush }]}>{item.trangThai}</Text>
             </View>
           </View>
           <Text style={styles.sdt}>{item.sdt}</Text>
           <View style={styles.stats}>
             <View style={styles.statItem}>
-              <Ionicons name="cube-outline" size={12} color={colors.stone[400]} />
+              <Ionicons name="cube-outline" size={12} color={legacyColors.stone[400]} />
               <Text style={styles.stat}>{formatNumber(item.tongDon)} đơn</Text>
             </View>
             <View style={styles.statItem}>
-              <Ionicons name="cash-outline" size={12} color={colors.stone[400]} />
+              <Ionicons name="cash-outline" size={12} color={legacyColors.stone[400]} />
               <Text style={styles.stat}>{formatMoney(item.tongDoanhThu)}</Text>
             </View>
           </View>
@@ -115,31 +117,32 @@ export default function CustomersScreen() {
       </TouchableOpacity>
       <View style={styles.cardActions}>
         <TouchableOpacity style={styles.actionBtn} onPress={() => openModal(item)}>
-          <Ionicons name="pencil-outline" size={16} color={colors.stone[400]} />
+          <Ionicons name="pencil-outline" size={16} color={legacyColors.stone[400]} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionBtn} onPress={() => setDeleteKH(item.sdt)}>
-          <Ionicons name="trash-outline" size={16} color={colors.rose} />
+          <Ionicons name="trash-outline" size={16} color={legacyColors.rose} />
         </TouchableOpacity>
       </View>
     </View>
   ), [openModal, setDeleteKH]);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <TopAppBar title="TRANG ANH" showMenu showNotifications />
       {/* Search */}
       <View style={styles.header}>
         <View style={styles.searchBox}>
-          <Ionicons name="search" size={18} color={colors.stone[400]} />
+          <Ionicons name="search" size={18} color={legacyColors.stone[400]} />
           <TextInput
             style={styles.searchInput}
             value={search}
             onChangeText={(v) => { setSearch(v); setPage(1); }}
             placeholder="Tìm theo tên hoặc SĐT..."
-            placeholderTextColor={colors.stone[300]}
+            placeholderTextColor={legacyColors.stone[300]}
           />
           {search.length > 0 && (
             <TouchableOpacity onPress={() => { setSearch(""); setPage(1); }}>
-              <Ionicons name="close-circle" size={18} color={colors.stone[300]} />
+              <Ionicons name="close-circle" size={18} color={legacyColors.stone[300]} />
             </TouchableOpacity>
           )}
         </View>
@@ -167,7 +170,7 @@ export default function CustomersScreen() {
           keyExtractor={(item) => item.sdt}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={isFetching} onRefresh={() => refetch()} tintColor={colors.blush} />}
+          refreshControl={<RefreshControl refreshing={isFetching} onRefresh={() => refetch()} tintColor={legacyColors.blush} />}
           onEndReached={() => { if (page < (data?.totalPages ?? 1)) setPage(p => p + 1); }}
           onEndReachedThreshold={0.3}
           windowSize={10}
@@ -194,7 +197,7 @@ export default function CustomersScreen() {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Chi tiết khách hàng</Text>
                 <TouchableOpacity onPress={() => setModalVisible(false)}>
-                  <Ionicons name="close" size={24} color={colors.stone[500]} />
+                  <Ionicons name="close" size={24} color={legacyColors.stone[500]} />
                 </TouchableOpacity>
               </View>
               <ScrollView
@@ -215,12 +218,12 @@ export default function CustomersScreen() {
                     </View>
                     <View style={styles.modalStatsRow}>
                       <View style={styles.modalStatCard}>
-                        <Ionicons name="cube-outline" size={20} color={colors.blush} />
+                        <Ionicons name="cube-outline" size={20} color={legacyColors.blush} />
                         <Text style={styles.modalStatValue}>{formatNumber(selectedKH.tongDon)}</Text>
                         <Text style={styles.modalStatLabel}>Đơn hàng</Text>
                       </View>
                       <View style={styles.modalStatCard}>
-                        <Ionicons name="cash-outline" size={20} color={colors.rose} />
+                        <Ionicons name="cash-outline" size={20} color={legacyColors.rose} />
                         <Text style={styles.modalStatValue}>{formatMoney(selectedKH.tongDoanhThu)}</Text>
                         <Text style={styles.modalStatLabel}>Doanh thu</Text>
                       </View>
@@ -235,7 +238,7 @@ export default function CustomersScreen() {
                           onPress={() => setEditTrangThai(tt.ten)}
                           activeOpacity={0.7}
                         >
-                          <Text style={[styles.ttChipText, editTrangThai === tt.ten && { color: colors.cream }]}>{tt.ten}</Text>
+                          <Text style={[styles.ttChipText, editTrangThai === tt.ten && { color: legacyColors.cream }]}>{tt.ten}</Text>
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -279,7 +282,7 @@ export default function CustomersScreen() {
                                     />
                                   ) : (
                                     <View style={[styles.historyProductImg, styles.historyProductPlaceholder]}>
-                                      <Ionicons name="shirt-outline" size={14} color={colors.stone[300]} />
+                                      <Ionicons name="shirt-outline" size={14} color={legacyColors.stone[300]} />
                                     </View>
                                   )}
                                   <View style={styles.historyProductInfo}>
@@ -317,33 +320,33 @@ export default function CustomersScreen() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteKH(null)}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream },
-  header: { padding: 12, backgroundColor: colors.white, borderBottomWidth: 1, borderBottomColor: `${colors.stone[200]}40` },
+  container: { flex: 1, backgroundColor: legacyColors.cream },
+  header: { padding: 12, backgroundColor: legacyColors.white, borderBottomWidth: 1, borderBottomColor: `${legacyColors.stone[200]}40` },
   searchBox: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.cream,
+    backgroundColor: legacyColors.cream,
     borderRadius: borderRadius.sm,
     paddingHorizontal: 12,
     height: 42,
     marginBottom: 8,
   },
-  searchInput: { flex: 1, fontSize: 14, color: colors.espresso, marginLeft: 8 },
+  searchInput: { flex: 1, fontSize: 14, color: legacyColors.espresso, marginLeft: 8 },
   filterChips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  chip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: colors.stone[300], backgroundColor: colors.white },
-  chipActive: { backgroundColor: colors.espresso, borderColor: colors.espresso },
-  chipText: { fontSize: 10, color: colors.stone[500] },
-  chipTextActive: { color: colors.cream },
+  chip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: legacyColors.stone[300], backgroundColor: legacyColors.white },
+  chipActive: { backgroundColor: legacyColors.espresso, borderColor: legacyColors.espresso },
+  chipText: { fontSize: 10, color: legacyColors.stone[500] },
+  chipTextActive: { color: legacyColors.cream },
   list: { padding: 12, gap: 10, paddingBottom: 100 },
 
   // Card
   card: {
-    backgroundColor: colors.white,
+    backgroundColor: legacyColors.white,
     borderRadius: borderRadius.md,
     flexDirection: "row",
     alignItems: "center",
@@ -354,28 +357,28 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.espresso,
+    backgroundColor: legacyColors.espresso,
     justifyContent: "center",
     alignItems: "center",
     flexShrink: 0,
   },
-  avatarText: { fontSize: 14, fontWeight: '700', color: colors.cream },
+  avatarText: { fontSize: 14, fontWeight: '700', color: legacyColors.cream },
   cardInfo: { flex: 1, marginLeft: 12 },
   cardInfoRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  name: { fontSize: 14, fontWeight: "700", color: colors.espresso, flex: 1 },
+  name: { fontSize: 14, fontWeight: "700", color: legacyColors.espresso, flex: 1 },
   ttBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
   ttText: { fontSize: 9, fontWeight: "600" },
-  sdt: { fontSize: 12, color: colors.stone[400], marginTop: 2 },
+  sdt: { fontSize: 12, color: legacyColors.stone[400], marginTop: 2 },
   stats: { flexDirection: "row", gap: 12, marginTop: 6 },
   statItem: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  stat: { fontSize: 11, color: colors.stone[400] },
+  stat: { fontSize: 11, color: legacyColors.stone[400] },
   cardActions: { flexDirection: 'column', gap: 4, paddingRight: 12 },
-  actionBtn: { padding: 6, borderRadius: 8, backgroundColor: `${colors.stone[100]}80` },
+  actionBtn: { padding: 6, borderRadius: 8, backgroundColor: `${legacyColors.stone[100]}80` },
 
   // Modal
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" },
   modalContent: {
-    backgroundColor: colors.white,
+    backgroundColor: legacyColors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 24,
@@ -384,32 +387,32 @@ const styles = StyleSheet.create({
     ...shadows.card,
   },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  modalTitle: { fontSize: 18, fontWeight: "700", color: colors.espresso },
+  modalTitle: { fontSize: 18, fontWeight: "700", color: legacyColors.espresso },
   modalCustomerInfo: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16 },
-  modalAvatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.espresso, justifyContent: 'center', alignItems: 'center' },
-  modalAvatarText: { fontSize: 16, fontWeight: '700', color: colors.cream },
-  modalName: { fontSize: 16, fontWeight: "700", color: colors.espresso },
-  modalSdt: { fontSize: 13, color: colors.stone[500], marginTop: 2 },
+  modalAvatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: legacyColors.espresso, justifyContent: 'center', alignItems: 'center' },
+  modalAvatarText: { fontSize: 16, fontWeight: '700', color: legacyColors.cream },
+  modalName: { fontSize: 16, fontWeight: "700", color: legacyColors.espresso },
+  modalSdt: { fontSize: 13, color: legacyColors.stone[500], marginTop: 2 },
   modalStatsRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
-  modalStatCard: { flex: 1, backgroundColor: `${colors.blush}10`, borderRadius: borderRadius.sm, padding: 14, alignItems: 'center', gap: 4 },
-  modalStatValue: { fontSize: 16, fontWeight: "800", color: colors.espresso },
-  modalStatLabel: { fontSize: 10, color: colors.stone[400], fontWeight: '500' },
-  label: { fontSize: 10, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: colors.stone[600], marginBottom: 8 },
+  modalStatCard: { flex: 1, backgroundColor: `${legacyColors.blush}10`, borderRadius: borderRadius.sm, padding: 14, alignItems: 'center', gap: 4 },
+  modalStatValue: { fontSize: 16, fontWeight: "800", color: legacyColors.espresso },
+  modalStatLabel: { fontSize: 10, color: legacyColors.stone[400], fontWeight: '500' },
+  label: { fontSize: 10, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: legacyColors.stone[600], marginBottom: 8 },
   ttChips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 },
-  ttChip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, borderWidth: 1, borderColor: colors.stone[300] },
-  ttChipActive: { backgroundColor: colors.espresso, borderColor: colors.espresso },
-  ttChipText: { fontSize: 11, color: colors.stone[500] },
+  ttChip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, borderWidth: 1, borderColor: legacyColors.stone[300] },
+  ttChipActive: { backgroundColor: legacyColors.espresso, borderColor: legacyColors.espresso },
+  ttChipText: { fontSize: 11, color: legacyColors.stone[500] },
   modalButtons: { flexDirection: "row", gap: 12, marginTop: 16 },
 
   // Order history
-  noOrdersText: { fontSize: 12, color: colors.stone[400], fontStyle: 'italic', marginBottom: 16 },
+  noOrdersText: { fontSize: 12, color: legacyColors.stone[400], fontStyle: 'italic', marginBottom: 16 },
   orderHistoryList: { gap: 12, marginBottom: 16 },
   historyOrderCard: {
-    backgroundColor: colors.white,
+    backgroundColor: legacyColors.white,
     borderRadius: borderRadius.sm,
     padding: 12,
     borderWidth: 1,
-    borderColor: colors.stone[200],
+    borderColor: legacyColors.stone[200],
     ...shadows.card,
   },
   historyOrderHeader: {
@@ -419,15 +422,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: `${colors.stone[100]}80`,
+    borderBottomColor: `${legacyColors.stone[100]}80`,
   },
-  historyOrderId: { fontSize: 12, fontWeight: '700', color: colors.espresso },
-  historyOrderTotal: { fontSize: 13, fontWeight: '800', color: colors.rose },
+  historyOrderId: { fontSize: 12, fontWeight: '700', color: legacyColors.espresso },
+  historyOrderTotal: { fontSize: 13, fontWeight: '800', color: legacyColors.rose },
   historyProducts: { gap: 8 },
   historyProductRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  historyProductImg: { width: 36, height: 36, borderRadius: 6, backgroundColor: colors.stone[100] },
+  historyProductImg: { width: 36, height: 36, borderRadius: 6, backgroundColor: legacyColors.stone[100] },
   historyProductPlaceholder: { justifyContent: 'center', alignItems: 'center' },
   historyProductInfo: { flex: 1 },
-  historyProductName: { fontSize: 12, fontWeight: '600', color: colors.espresso },
-  historyProductMeta: { fontSize: 10, color: colors.stone[500], marginTop: 2 },
+  historyProductName: { fontSize: 12, fontWeight: '600', color: legacyColors.espresso },
+  historyProductMeta: { fontSize: 10, color: legacyColors.stone[500], marginTop: 2 },
 });

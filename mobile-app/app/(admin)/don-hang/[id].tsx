@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { updateOrderStatus, getOrder } from "@/src/api/don-hang";
 import { useAuthStore } from "@/src/store/authStore";
 import { colors, shadows, borderRadius } from "@/src/theme";
+import { legacyColors } from '@/src/theme/legacy-colors';
 import { ORDER_STATUSES, STATUS_COLORS, STATUS_COLORS_BG } from "@/src/utils/constants";
 import { formatMoney, formatDate } from "@/src/utils/format";
 import AdminDetailHeader from "@/src/components/admin/AdminDetailHeader";
@@ -36,25 +37,26 @@ export default function OrderDetailScreen() {
   const id = params?.id || "";
   const cached = params.cachedData ? (() => { try { return JSON.parse(params.cachedData!); } catch { return null; } })() : null;
 
-  // Check if cached data is complete (has sanPham array = came from order list)
-  // If not complete (came from notification), fetch from API
-  const isCachedComplete = cached && Array.isArray(cached.sanPham);
-
   useEffect(() => {
     if (!id || id === "undefined" || id === "null") return;
-    if (isCachedComplete) {
-      setOrderData(cached);
-      return;
-    }
-    // Fetch full order from API (e.g. navigated from notification)
+    // Always fetch from API to get full order detail
     const fetchOrder = async () => {
       setLoading(true);
       setFetchError(false);
       try {
+        // Debug log for web
+        console.log('[don-hang] fetching order detail:', id);
         const result = await getOrder(id);
+        console.log('[don-hang] order detail response:', result);
         setOrderData(result);
-      } catch {
-        setFetchError(true);
+      } catch (error) {
+        console.log('[don-hang] fetch order failed, fallback cached:', error);
+        // Fallback to cached data if API fails
+        if (cached) {
+          setOrderData(cached);
+        } else {
+          setFetchError(true);
+        }
       } finally {
         setLoading(false);
       }
@@ -101,7 +103,7 @@ export default function OrderDetailScreen() {
       <View style={[styles.container, styles.center]}>
         <AdminDetailHeader title="Đơn hàng" showNotification onBack={router.back} />
         <View style={styles.centerContent}>
-          <Ionicons name="receipt-outline" size={64} color={colors.stone[300]} />
+          <Ionicons name="receipt-outline" size={64} color={legacyColors.stone[300]} />
           <Text style={styles.centerText}>Không tìm thấy mã đơn hàng</Text>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
             <Text style={styles.backButtonText}>← Quay lại danh sách</Text>
@@ -117,7 +119,7 @@ export default function OrderDetailScreen() {
       <View style={styles.container}>
         <AdminDetailHeader title={`Đơn hàng #${id}`} showNotification onBack={router.back} />
         <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color={colors.blush} />
+          <ActivityIndicator size="large" color={legacyColors.blush} />
           <Text style={[styles.centerText, { marginTop: 12 }]}>Đang tải đơn hàng...</Text>
         </View>
       </View>
@@ -130,13 +132,13 @@ export default function OrderDetailScreen() {
       <View style={styles.container}>
         <AdminDetailHeader title={`Đơn hàng #${id}`} showNotification onBack={router.back} />
         <View style={styles.centerContent}>
-          <Ionicons name="alert-circle-outline" size={64} color={colors.rose} />
+          <Ionicons name="alert-circle-outline" size={64} color={legacyColors.rose} />
           <Text style={styles.centerText}>Không thể tải dữ liệu đơn hàng</Text>
           <TouchableOpacity style={styles.backButton} onPress={() => { setFetchError(false); setLoading(true); getOrder(id).then(setOrderData).catch(() => setFetchError(true)).finally(() => setLoading(false)); }} activeOpacity={0.7}>
             <Text style={styles.backButtonText}>↺ Thử lại</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.backButton, { marginTop: 8, backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.stone[300] }]} onPress={() => router.back()} activeOpacity={0.7}>
-            <Text style={[styles.backButtonText, { color: colors.stone[500] }]}>← Quay lại</Text>
+          <TouchableOpacity style={[styles.backButton, { marginTop: 8, backgroundColor: 'transparent', borderWidth: 1, borderColor: legacyColors.stone[300] }]} onPress={() => router.back()} activeOpacity={0.7}>
+            <Text style={[styles.backButtonText, { color: legacyColors.stone[500] }]}>← Quay lại</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -144,12 +146,12 @@ export default function OrderDetailScreen() {
   }
 
   // No data available
-  if (!data) {
+  if (!data || (data && !data.tenKH && !data.sdt && !Array.isArray(data.sanPham))) {
     return (
       <View style={[styles.container, styles.center]}>
         <AdminDetailHeader title={`Đơn hàng #${id}`} showNotification onBack={router.back} />
         <View style={styles.centerContent}>
-          <Ionicons name="alert-circle-outline" size={64} color={colors.rose} />
+          <Ionicons name="alert-circle-outline" size={64} color={legacyColors.rose} />
           <Text style={styles.centerText}>Không tìm thấy dữ liệu đơn hàng</Text>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
             <Text style={styles.backButtonText}>← Quay lại danh sách</Text>
@@ -181,7 +183,7 @@ export default function OrderDetailScreen() {
 
       <ScrollView
         style={styles.scrollView}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.blush} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={legacyColors.blush} />}
         contentContainerStyle={styles.scrollContent}
       >
         {/* Customer Info Card */}
@@ -195,11 +197,11 @@ export default function OrderDetailScreen() {
             <View style={styles.customerInfo}>
               <Text style={styles.customerName}>{safeData.tenKH}</Text>
               <View style={styles.customerMeta}>
-                <Ionicons name="call" size={12} color={colors.stone[400]} />
+                <Ionicons name="call" size={12} color={legacyColors.stone[400]} />
                 <Text style={styles.customerPhone}>{safeData.sdt}</Text>
               </View>
               <View style={styles.customerMeta}>
-                <Ionicons name="location" size={12} color={colors.stone[400]} />
+                <Ionicons name="location" size={12} color={legacyColors.stone[400]} />
                 <Text style={styles.customerAddress} numberOfLines={2}>{safeData.diaChi}</Text>
               </View>
             </View>
@@ -236,7 +238,7 @@ export default function OrderDetailScreen() {
         {/* Products List */}
         <View style={[styles.card, shadows.card]}>
           <Text style={styles.sectionTitle}>
-            <Ionicons name="cube-outline" size={16} color={colors.blush} /> Sản phẩm ({safeData.sanPham.length})
+            <Ionicons name="cube-outline" size={16} color={legacyColors.blush} /> Sản phẩm ({safeData.sanPham.length})
           </Text>
           {safeData.sanPham.length === 0 ? (
             <Text style={styles.emptyText}>Không có sản phẩm trong đơn</Text>
@@ -254,7 +256,7 @@ export default function OrderDetailScreen() {
                   />
                 ) : (
                   <View style={[styles.productImage, styles.productImagePlaceholder]}>
-                    <Ionicons name="shirt-outline" size={20} color={colors.stone[300]} />
+                    <Ionicons name="shirt-outline" size={20} color={legacyColors.stone[300]} />
                   </View>
                 )}
                 <View style={styles.productQty}>
@@ -264,7 +266,7 @@ export default function OrderDetailScreen() {
                   <Text style={styles.productName} numberOfLines={2}>{sp.ten || "—"}</Text>
                   {sp.sizeChon && (
                     <Text style={styles.productSize}>
-                      <Ionicons name="resize-outline" size={10} color={colors.stone[400]} /> {sp.sizeChon}
+                      <Ionicons name="resize-outline" size={10} color={legacyColors.stone[400]} /> {sp.sizeChon}
                     </Text>
                   )}
                 </View>
@@ -277,18 +279,18 @@ export default function OrderDetailScreen() {
         {/* Status Progress */}
         <View style={[styles.card, shadows.card]}>
           <Text style={styles.sectionTitle}>
-            <Ionicons name="swap-horizontal" size={16} color={colors.blush} /> Trạng thái đơn hàng
-            {updatingStatus && <ActivityIndicator size="small" color={colors.blush} style={{ marginLeft: 8 }} />}
+            <Ionicons name="swap-horizontal" size={16} color={legacyColors.blush} /> Trạng thái đơn hàng
+            {updatingStatus && <ActivityIndicator size="small" color={legacyColors.blush} style={{ marginLeft: 8 }} />}
           </Text>
           <View style={styles.statusProgress}>
             {ORDER_STATUSES.map((stt, i) => {
               const isActive = i <= currentStatusIdx;
               const isCurrent = i === currentStatusIdx;
-              const color = STATUS_COLORS[stt] || colors.stone[300];
+              const color = STATUS_COLORS[stt] || legacyColors.stone[300];
               return (
                 <TouchableOpacity key={stt} style={styles.statusStep} onPress={() => handleStatusChange(stt)} disabled={updatingStatus} activeOpacity={0.7}>
                   <View style={[styles.statusDot, isActive && { backgroundColor: color }, isCurrent && styles.statusDotCurrent]}>
-                    {isCurrent && <Ionicons name="checkmark" size={12} color={colors.cream} />}
+                    {isCurrent && <Ionicons name="checkmark" size={12} color={legacyColors.cream} />}
                   </View>
                   <Text style={[styles.statusStepText, isActive && { color }, isCurrent && { fontWeight: '700' }]} numberOfLines={1}>
                     {stt}
@@ -299,7 +301,7 @@ export default function OrderDetailScreen() {
           </View>
           <View style={styles.statusButtons}>
             {ORDER_STATUSES.map(stt => {
-              const color = STATUS_COLORS[stt] || colors.stone[300];
+              const color = STATUS_COLORS[stt] || legacyColors.stone[300];
               const isActive = safeData.trangThai === stt;
               return (
                 <TouchableOpacity
@@ -308,8 +310,8 @@ export default function OrderDetailScreen() {
                   onPress={() => handleStatusChange(stt)}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name={(statusIcons[stt] || 'ellipse-outline') as any} size={14} color={isActive ? colors.cream : color} />
-                  <Text style={[styles.statusBtnText, isActive && { color: colors.cream }]}>{stt}</Text>
+                  <Ionicons name={(statusIcons[stt] || 'ellipse-outline') as any} size={14} color={isActive ? legacyColors.cream : color} />
+                  <Text style={[styles.statusBtnText, isActive && { color: legacyColors.cream }]}>{stt}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -321,56 +323,56 @@ export default function OrderDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream },
+  container: { flex: 1, backgroundColor: legacyColors.cream },
   center: { justifyContent: "center", alignItems: "center" },
   centerContent: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 32 },
-  centerText: { fontSize: 14, color: colors.stone[400], marginTop: 12, textAlign: 'center' },
-  emptyText: { fontSize: 13, color: colors.stone[400], textAlign: 'center', padding: 20 },
-  backButton: { marginTop: 24, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: colors.espresso, borderRadius: borderRadius.sm },
-  backButtonText: { color: colors.cream, fontWeight: '600' },
+  centerText: { fontSize: 14, color: legacyColors.stone[400], marginTop: 12, textAlign: 'center' },
+  emptyText: { fontSize: 13, color: legacyColors.stone[400], textAlign: 'center', padding: 20 },
+  backButton: { marginTop: 24, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: legacyColors.espresso, borderRadius: borderRadius.sm },
+  backButtonText: { color: legacyColors.cream, fontWeight: '600' },
   scrollView: { flex: 1 },
   scrollContent: { padding: 12, paddingBottom: 20, gap: 12 },
 
-  card: { backgroundColor: colors.white, borderRadius: borderRadius.md, padding: 16 },
-  sectionTitle: { fontSize: 13, fontWeight: '700', color: colors.espresso, marginBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  divider: { height: 1, backgroundColor: colors.stone[100], marginVertical: 12 },
+  card: { backgroundColor: legacyColors.white, borderRadius: borderRadius.md, padding: 16 },
+  sectionTitle: { fontSize: 13, fontWeight: '700', color: legacyColors.espresso, marginBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  divider: { height: 1, backgroundColor: legacyColors.stone[100], marginVertical: 12 },
 
   customerHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  customerAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.espresso, justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
-  customerAvatarText: { fontSize: 15, fontWeight: '700', color: colors.cream },
+  customerAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: legacyColors.espresso, justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
+  customerAvatarText: { fontSize: 15, fontWeight: '700', color: legacyColors.cream },
   customerInfo: { flex: 1 },
-  customerName: { fontSize: 16, fontWeight: '700', color: colors.espresso, marginBottom: 4 },
+  customerName: { fontSize: 16, fontWeight: '700', color: legacyColors.espresso, marginBottom: 4 },
   customerMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
-  customerPhone: { fontSize: 13, color: colors.stone[500] },
-  customerAddress: { fontSize: 12, color: colors.stone[400], flex: 1 },
+  customerPhone: { fontSize: 13, color: legacyColors.stone[500] },
+  customerAddress: { fontSize: 12, color: legacyColors.stone[400], flex: 1 },
 
   infoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   infoItem: { flex: 1, minWidth: '45%' },
-  infoLabel: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5, color: colors.stone[400], fontWeight: '600', marginBottom: 2 },
-  infoValue: { fontSize: 13, color: colors.espresso, fontWeight: '600' },
+  infoLabel: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5, color: legacyColors.stone[400], fontWeight: '600', marginBottom: 2 },
+  infoValue: { fontSize: 13, color: legacyColors.espresso, fontWeight: '600' },
 
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: `${colors.blush}10`, borderRadius: borderRadius.sm, padding: 14, marginTop: 4 },
-  totalLabel: { fontSize: 13, fontWeight: '600', color: colors.espresso },
-  totalValue: { fontSize: 18, fontWeight: '800', color: colors.rose },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: `${legacyColors.blush}10`, borderRadius: borderRadius.sm, padding: 14, marginTop: 4 },
+  totalLabel: { fontSize: 13, fontWeight: '600', color: legacyColors.espresso },
+  totalValue: { fontSize: 18, fontWeight: '800', color: legacyColors.rose },
 
-  productRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: `${colors.stone[100]}60`, gap: 12 },
+  productRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: `${legacyColors.stone[100]}60`, gap: 12 },
   productImage: { width: 64, height: 64, borderRadius: 10, flexShrink: 0 },
-  productImagePlaceholder: { backgroundColor: `${colors.stone[100]}80`, justifyContent: 'center', alignItems: 'center' },
-  productQty: { width: 32, height: 32, borderRadius: 8, backgroundColor: `${colors.blush}15`, justifyContent: 'center', alignItems: 'center' },
-  productQtyText: { fontSize: 12, fontWeight: '700', color: colors.blush },
+  productImagePlaceholder: { backgroundColor: `${legacyColors.stone[100]}80`, justifyContent: 'center', alignItems: 'center' },
+  productQty: { width: 32, height: 32, borderRadius: 8, backgroundColor: `${legacyColors.blush}15`, justifyContent: 'center', alignItems: 'center' },
+  productQtyText: { fontSize: 12, fontWeight: '700', color: legacyColors.blush },
   productInfo: { flex: 1 },
-  productName: { fontSize: 14, fontWeight: '600', color: colors.espresso },
-  productSize: { fontSize: 11, color: colors.stone[400], marginTop: 2, flexDirection: 'row', alignItems: 'center', gap: 2 },
-  productPrice: { fontSize: 14, fontWeight: '700', color: colors.espresso, flexShrink: 0 },
+  productName: { fontSize: 14, fontWeight: '600', color: legacyColors.espresso },
+  productSize: { fontSize: 11, color: legacyColors.stone[400], marginTop: 2, flexDirection: 'row', alignItems: 'center', gap: 2 },
+  productPrice: { fontSize: 14, fontWeight: '700', color: legacyColors.espresso, flexShrink: 0 },
 
   statusProgress: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
   statusStep: { alignItems: 'center', flex: 1, gap: 4 },
-  statusDot: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: colors.stone[200], justifyContent: 'center', alignItems: 'center', backgroundColor: colors.stone[100] },
-  statusDotCurrent: { backgroundColor: colors.espresso, borderColor: colors.espresso },
-  statusStepText: { fontSize: 8, color: colors.stone[400], textAlign: 'center' },
+  statusDot: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: legacyColors.stone[200], justifyContent: 'center', alignItems: 'center', backgroundColor: legacyColors.stone[100] },
+  statusDotCurrent: { backgroundColor: legacyColors.espresso, borderColor: legacyColors.espresso },
+  statusStepText: { fontSize: 8, color: legacyColors.stone[400], textAlign: 'center' },
 
   statusButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   statusBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 8, borderRadius: borderRadius.sm, borderWidth: 1.5 },
   statusBtnActive: {},
-  statusBtnText: { fontSize: 10, fontWeight: '600', color: colors.stone[500] },
+  statusBtnText: { fontSize: 10, fontWeight: '600', color: legacyColors.stone[500] },
 });

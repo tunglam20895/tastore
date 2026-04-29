@@ -184,7 +184,7 @@ export function useNotifications() {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
 
     (async () => {
       console.log('🚀 Initializing notification system...');

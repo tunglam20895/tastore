@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/src/store/authStore';
 import { colors } from '@/src/theme';
+import { legacyColors } from '@/src/theme/legacy-colors';
 import { API_URL } from '@/src/utils/constants';
 import AdminDetailHeader from '@/src/components/admin/AdminDetailHeader';
 
@@ -146,7 +147,7 @@ export default function AIChatScreen() {
         {messages.length === 0 && (
           <View style={styles.welcome}>
             <View style={styles.welcomeAvatar}>
-              <Ionicons name="sparkles" size={40} color={colors.blush} />
+              <Ionicons name="sparkles" size={40} color={legacyColors.blush} />
             </View>
             <Text style={styles.welcomeTitle}>Xin chào! 👋</Text>
             <Text style={styles.welcomeText}>
@@ -173,7 +174,7 @@ export default function AIChatScreen() {
           <View key={i} style={[styles.messageBubble, msg.role === 'user' ? styles.userBubble : styles.assistantBubble]}>
             {msg.role === 'assistant' && (
               <View style={styles.assistantAvatar}>
-                <Ionicons name="sparkles" size={14} color={colors.blush} />
+                <Ionicons name="sparkles" size={14} color={legacyColors.blush} />
               </View>
             )}
             <Text style={[styles.messageText, msg.role === 'user' ? styles.userText : styles.assistantText]}>
@@ -185,7 +186,7 @@ export default function AIChatScreen() {
         {isLoading && (
           <View style={styles.loadingRow}>
             <View style={styles.assistantAvatar}>
-              <Ionicons name="sparkles" size={14} color={colors.blush} />
+              <Ionicons name="sparkles" size={14} color={legacyColors.blush} />
             </View>
             <View style={[styles.messageBubble, styles.assistantBubble]}>
               <View style={styles.dots}>
@@ -206,7 +207,7 @@ export default function AIChatScreen() {
           value={input}
           onChangeText={setInput}
           placeholder="Nhập câu hỏi cho AI..."
-          placeholderTextColor={colors.stone[400]}
+          placeholderTextColor={legacyColors.stone[400]}
           onSubmitEditing={handleSend}
           returnKeyType="send"
           editable={!isLoading}
@@ -218,7 +219,7 @@ export default function AIChatScreen() {
           disabled={!input.trim() || isLoading}
           activeOpacity={0.7}
         >
-          <Ionicons name="send" size={18} color={colors.cream} />
+          <Ionicons name="send" size={18} color={legacyColors.cream} />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -226,56 +227,56 @@ export default function AIChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream },
+  container: { flex: 1, backgroundColor: legacyColors.cream },
   messagesContainer: { flex: 1 },
   messagesContent: { padding: 16, gap: 12 },
   welcome: { alignItems: 'center', paddingVertical: 32, paddingHorizontal: 20 },
   welcomeAvatar: {
     width: 72, height: 72, borderRadius: 36,
-    backgroundColor: `${colors.blush}20`,
+    backgroundColor: `${legacyColors.blush}20`,
     justifyContent: 'center', alignItems: 'center', marginBottom: 16,
   },
-  welcomeTitle: { fontSize: 20, fontWeight: '700', color: colors.espresso, marginBottom: 8 },
-  welcomeText: { fontSize: 14, color: colors.stone[500], textAlign: 'center', lineHeight: 22, marginBottom: 20 },
+  welcomeTitle: { fontSize: 20, fontWeight: '700', color: legacyColors.espresso, marginBottom: 8 },
+  welcomeText: { fontSize: 14, color: legacyColors.stone[500], textAlign: 'center', lineHeight: 22, marginBottom: 20 },
   suggestions: { width: '100%', gap: 8 },
   suggestionChip: {
-    backgroundColor: colors.white, borderRadius: 12, padding: 12,
-    borderWidth: 1, borderColor: colors.stone[200],
+    backgroundColor: legacyColors.white, borderRadius: 12, padding: 12,
+    borderWidth: 1, borderColor: legacyColors.stone[200],
   },
-  suggestionText: { fontSize: 13, color: colors.espresso, fontWeight: '500' },
+  suggestionText: { fontSize: 13, color: legacyColors.espresso, fontWeight: '500' },
   messageBubble: {
     maxWidth: '85%', paddingHorizontal: 14, paddingVertical: 10,
     borderRadius: 16, flexDirection: 'row', alignItems: 'flex-start', gap: 8,
   },
   assistantAvatar: {
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: `${colors.blush}20`,
+    backgroundColor: `${legacyColors.blush}20`,
     justifyContent: 'center', alignItems: 'center', flexShrink: 0,
   },
-  userBubble: { alignSelf: 'flex-end', backgroundColor: colors.espresso, borderBottomRightRadius: 4 },
-  assistantBubble: { alignSelf: 'flex-start', backgroundColor: colors.white, borderBottomLeftRadius: 4, borderWidth: 1, borderColor: colors.stone[200] },
+  userBubble: { alignSelf: 'flex-end', backgroundColor: legacyColors.espresso, borderBottomRightRadius: 4 },
+  assistantBubble: { alignSelf: 'flex-start', backgroundColor: legacyColors.white, borderBottomLeftRadius: 4, borderWidth: 1, borderColor: legacyColors.stone[200] },
   messageText: { fontSize: 14, lineHeight: 22, flex: 1 },
-  userText: { color: colors.cream },
-  assistantText: { color: colors.espresso },
+  userText: { color: legacyColors.cream },
+  assistantText: { color: legacyColors.espresso },
   loadingRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, alignSelf: 'flex-start' },
   dots: { flexDirection: 'row', gap: 4, padding: 4, alignItems: 'center' },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.stone[300] },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: legacyColors.stone[300] },
   dotAnim1: { opacity: 1 },
   dotAnim2: { opacity: 0.5 },
   dotAnim3: { opacity: 0.2 },
   inputContainer: {
     flexDirection: 'row', alignItems: 'flex-end', gap: 8,
     paddingHorizontal: 12, paddingVertical: 10,
-    backgroundColor: colors.white, borderTopWidth: 1, borderTopColor: colors.stone[200],
+    backgroundColor: legacyColors.white, borderTopWidth: 1, borderTopColor: legacyColors.stone[200],
   },
   input: {
-    flex: 1, backgroundColor: colors.cream, borderRadius: 20,
-    paddingHorizontal: 16, paddingVertical: 10, fontSize: 14, color: colors.espresso,
+    flex: 1, backgroundColor: legacyColors.cream, borderRadius: 20,
+    paddingHorizontal: 16, paddingVertical: 10, fontSize: 14, color: legacyColors.espresso,
     maxHeight: 100, minHeight: 40,
   },
   sendBtn: {
-    width: 40, height: 40, borderRadius: 20, backgroundColor: colors.espresso,
+    width: 40, height: 40, borderRadius: 20, backgroundColor: legacyColors.espresso,
     justifyContent: 'center', alignItems: 'center', marginBottom: 0,
   },
-  sendBtnDisabled: { backgroundColor: colors.stone[300] },
+  sendBtnDisabled: { backgroundColor: legacyColors.stone[300] },
 });

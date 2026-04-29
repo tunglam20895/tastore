@@ -12,6 +12,7 @@ import { createOrder } from "@/src/api/don-hang";
 import { apiClient } from "@/src/api/client";
 import { useAuthStore } from "@/src/store/authStore";
 import { colors, shadows, borderRadius } from "@/src/theme";
+import { legacyColors } from '@/src/theme/legacy-colors';
 import { formatMoney } from "@/src/utils/format";
 import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
 import Button from "@/src/components/ui/Button";
@@ -187,7 +188,7 @@ export default function CreateOrderScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={24} color={colors.espresso} />
+          <Ionicons name="arrow-back" size={24} color={legacyColors.espresso} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Tạo đơn hàng</Text>
         <View style={{ width: 40 }} />
@@ -198,18 +199,18 @@ export default function CreateOrderScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>👤 Khách hàng</Text>
           <TouchableOpacity style={styles.searchBar} onPress={() => setShowCustomerSearch(true)} activeOpacity={0.7}>
-            <Ionicons name="search" size={18} color={colors.stone[400]} />
+            <Ionicons name="search" size={18} color={legacyColors.stone[400]} />
             <Text style={styles.searchText}>{tenKH || "Tìm khách hàng..."}</Text>
           </TouchableOpacity>
 
           <View style={styles.inputRow}>
-            <TextInput style={styles.input} value={tenKH} onChangeText={setTenKH} placeholder="Họ và tên" placeholderTextColor={colors.stone[300]} />
+            <TextInput style={styles.input} value={tenKH} onChangeText={setTenKH} placeholder="Họ và tên" placeholderTextColor={legacyColors.stone[300]} />
           </View>
           <View style={styles.inputRow}>
-            <TextInput style={styles.input} value={sdt} onChangeText={setSdt} placeholder="Số điện thoại" keyboardType="phone-pad" placeholderTextColor={colors.stone[300]} />
+            <TextInput style={styles.input} value={sdt} onChangeText={setSdt} placeholder="Số điện thoại" keyboardType="phone-pad" placeholderTextColor={legacyColors.stone[300]} />
           </View>
           <View style={styles.inputRow}>
-            <TextInput style={styles.input} value={diaChi} onChangeText={setDiaChi} placeholder="Địa chỉ giao hàng" placeholderTextColor={colors.stone[300]} multiline numberOfLines={2} />
+            <TextInput style={styles.input} value={diaChi} onChangeText={setDiaChi} placeholder="Địa chỉ giao hàng" placeholderTextColor={legacyColors.stone[300]} multiline numberOfLines={2} />
           </View>
         </View>
 
@@ -225,18 +226,18 @@ export default function CreateOrderScreen() {
           {/* Product search */}
           {searchProduct !== undefined && (
             <View style={styles.searchBar}>
-              <Ionicons name="search" size={18} color={colors.stone[400]} />
+              <Ionicons name="search" size={18} color={legacyColors.stone[400]} />
               <TextInput
                 style={styles.searchInput}
                 value={searchProduct}
                 onChangeText={setSearchProduct}
                 placeholder="Tìm sản phẩm..."
-                placeholderTextColor={colors.stone[300]}
+                placeholderTextColor={legacyColors.stone[300]}
                 autoFocus
               />
               {searchProduct.length > 0 && (
                 <TouchableOpacity onPress={() => setSearchProduct("")}>
-                  <Ionicons name="close-circle" size={18} color={colors.stone[300]} />
+                  <Ionicons name="close-circle" size={18} color={legacyColors.stone[300]} />
                 </TouchableOpacity>
               )}
             </View>
@@ -255,7 +256,7 @@ export default function CreateOrderScreen() {
                       <Image source={{ uri: sp.anhURL }} style={styles.productThumb} contentFit="cover" transition={200} cachePolicy="memory-disk" />
                     ) : (
                       <View style={[styles.productThumb, styles.productThumbPlaceholder]}>
-                        <Ionicons name="shirt-outline" size={24} color={colors.stone[300]} />
+                        <Ionicons name="shirt-outline" size={24} color={legacyColors.stone[300]} />
                       </View>
                     )}
                     <View style={styles.productInfo}>
@@ -278,7 +279,7 @@ export default function CreateOrderScreen() {
                     <Image source={{ uri: item.anhURL }} style={styles.cartThumb} contentFit="cover" transition={200} cachePolicy="memory-disk" />
                   ) : (
                     <View style={[styles.cartThumb, styles.cartThumbPlaceholder]}>
-                      <Ionicons name="shirt-outline" size={18} color={colors.stone[300]} />
+                      <Ionicons name="shirt-outline" size={18} color={legacyColors.stone[300]} />
                     </View>
                   )}
                   <View style={styles.cartInfo}>
@@ -305,7 +306,7 @@ export default function CreateOrderScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🏷️ Mã giảm giá</Text>
           <View style={styles.couponRow}>
-            <TextInput style={styles.couponInput} value={couponCode} onChangeText={setCouponCode} placeholder="Nhập mã giảm giá" placeholderTextColor={colors.stone[300]} />
+            <TextInput style={styles.couponInput} value={couponCode} onChangeText={setCouponCode} placeholder="Nhập mã giảm giá" placeholderTextColor={legacyColors.stone[300]} />
             <Button title={applyingCoupon ? "..." : "Áp dụng"} onPress={applyCoupon} disabled={!couponCode.trim() || applyingCoupon} style={styles.couponBtn} />
           </View>
           {couponError ? <Text style={styles.errorText}>{couponError}</Text> : null}
@@ -346,12 +347,12 @@ export default function CreateOrderScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Chọn khách hàng</Text>
               <TouchableOpacity onPress={() => setShowCustomerSearch(false)}>
-                <Ionicons name="close" size={24} color={colors.stone[500]} />
+                <Ionicons name="close" size={24} color={legacyColors.stone[500]} />
               </TouchableOpacity>
             </View>
             <View style={styles.searchBar}>
-              <Ionicons name="search" size={18} color={colors.stone[400]} />
-              <TextInput style={styles.searchInput} value={customerSearch} onChangeText={setCustomerSearch} placeholder="Tìm theo tên hoặc SĐT..." placeholderTextColor={colors.stone[300]} autoFocus />
+              <Ionicons name="search" size={18} color={legacyColors.stone[400]} />
+              <TextInput style={styles.searchInput} value={customerSearch} onChangeText={setCustomerSearch} placeholder="Tìm theo tên hoặc SĐT..." placeholderTextColor={legacyColors.stone[300]} autoFocus />
             </View>
             <FlatList
               data={customers}
@@ -376,7 +377,7 @@ export default function CreateOrderScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Chọn size</Text>
               <TouchableOpacity onPress={() => setShowProductModal(false)}>
-                <Ionicons name="close" size={24} color={colors.stone[500]} />
+                <Ionicons name="close" size={24} color={legacyColors.stone[500]} />
               </TouchableOpacity>
             </View>
             {selectedProduct && (
@@ -412,92 +413,92 @@ export default function CreateOrderScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream },
+  container: { flex: 1, backgroundColor: legacyColors.cream },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: colors.white,
+    backgroundColor: legacyColors.white,
     borderBottomWidth: 1,
-    borderBottomColor: `${colors.stone[200]}40`,
+    borderBottomColor: `${legacyColors.stone[200]}40`,
   },
   backBtn: { padding: 4 },
-  headerTitle: { fontSize: 16, fontWeight: "700", color: colors.espresso },
+  headerTitle: { fontSize: 16, fontWeight: "700", color: legacyColors.espresso },
   scroll: { padding: 12, paddingBottom: 32, gap: 12 },
-  section: { backgroundColor: colors.white, borderRadius: borderRadius.md, padding: 16, ...shadows.card },
-  sectionTitle: { fontSize: 14, fontWeight: "700", color: colors.espresso, marginBottom: 12 },
+  section: { backgroundColor: legacyColors.white, borderRadius: borderRadius.md, padding: 16, ...shadows.card },
+  sectionTitle: { fontSize: 14, fontWeight: "700", color: legacyColors.espresso, marginBottom: 12 },
   sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  addBtn: { padding: 8, backgroundColor: colors.espresso, borderRadius: borderRadius.sm },
+  addBtn: { padding: 8, backgroundColor: legacyColors.espresso, borderRadius: borderRadius.sm },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.cream,
+    backgroundColor: legacyColors.cream,
     borderRadius: borderRadius.sm,
     paddingHorizontal: 12,
     height: 42,
     marginBottom: 12,
     gap: 8,
   },
-  searchText: { fontSize: 14, color: colors.stone[400] },
-  searchInput: { flex: 1, fontSize: 14, color: colors.espresso },
+  searchText: { fontSize: 14, color: legacyColors.stone[400] },
+  searchInput: { flex: 1, fontSize: 14, color: legacyColors.espresso },
   inputRow: { marginBottom: 8 },
-  input: { backgroundColor: colors.cream, borderRadius: borderRadius.sm, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: colors.espresso },
-  emptyText: { fontSize: 13, color: colors.stone[400], textAlign: "center", padding: 16 },
+  input: { backgroundColor: legacyColors.cream, borderRadius: borderRadius.sm, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: legacyColors.espresso },
+  emptyText: { fontSize: 13, color: legacyColors.stone[400], textAlign: "center", padding: 16 },
 
   // Product list
   productList: { gap: 8, marginBottom: 8 },
-  productItem: { flexDirection: "row", alignItems: "center", gap: 12, padding: 10, backgroundColor: colors.cream, borderRadius: borderRadius.sm },
+  productItem: { flexDirection: "row", alignItems: "center", gap: 12, padding: 10, backgroundColor: legacyColors.cream, borderRadius: borderRadius.sm },
   productThumb: { width: 48, height: 48, borderRadius: 8 },
-  productThumbPlaceholder: { backgroundColor: `${colors.stone[100]}80`, justifyContent: "center", alignItems: "center" },
+  productThumbPlaceholder: { backgroundColor: `${legacyColors.stone[100]}80`, justifyContent: "center", alignItems: "center" },
   productInfo: { flex: 1 },
-  productName: { fontSize: 13, fontWeight: "600", color: colors.espresso },
-  productPrice: { fontSize: 12, color: colors.blush, fontWeight: "600" },
+  productName: { fontSize: 13, fontWeight: "600", color: legacyColors.espresso },
+  productPrice: { fontSize: 12, color: legacyColors.blush, fontWeight: "600" },
 
   // Cart
   cartList: { gap: 8 },
-  cartItem: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: `${colors.stone[100]}60` },
+  cartItem: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: `${legacyColors.stone[100]}60` },
   cartThumb: { width: 40, height: 40, borderRadius: 8 },
-  cartThumbPlaceholder: { backgroundColor: `${colors.stone[100]}80`, justifyContent: "center", alignItems: "center" },
+  cartThumbPlaceholder: { backgroundColor: `${legacyColors.stone[100]}80`, justifyContent: "center", alignItems: "center" },
   cartInfo: { flex: 1 },
-  cartName: { fontSize: 13, fontWeight: "600", color: colors.espresso },
-  cartSize: { fontSize: 11, color: colors.stone[400] },
-  cartPrice: { fontSize: 12, color: colors.blush, fontWeight: "600" },
+  cartName: { fontSize: 13, fontWeight: "600", color: legacyColors.espresso },
+  cartSize: { fontSize: 11, color: legacyColors.stone[400] },
+  cartPrice: { fontSize: 12, color: legacyColors.blush, fontWeight: "600" },
   qtyControl: { flexDirection: "row", alignItems: "center", gap: 8 },
   qtyBtn: { padding: 4 },
-  qtyText: { fontSize: 14, fontWeight: "700", color: colors.espresso, minWidth: 20, textAlign: "center" },
+  qtyText: { fontSize: 14, fontWeight: "700", color: legacyColors.espresso, minWidth: 20, textAlign: "center" },
 
   // Coupon
   couponRow: { flexDirection: "row", gap: 8 },
-  couponInput: { flex: 1, backgroundColor: colors.cream, borderRadius: borderRadius.sm, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: colors.espresso },
+  couponInput: { flex: 1, backgroundColor: legacyColors.cream, borderRadius: borderRadius.sm, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: legacyColors.espresso },
   couponBtn: { minWidth: 80 },
-  errorText: { fontSize: 12, color: colors.danger, marginTop: 6 },
+  errorText: { fontSize: 12, color: legacyColors.danger, marginTop: 6 },
   couponSuccess: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 },
-  couponSuccessText: { fontSize: 12, color: colors.success, fontWeight: "600" },
+  couponSuccessText: { fontSize: 12, color: legacyColors.success, fontWeight: "600" },
 
   // Totals
-  totalSection: { backgroundColor: `${colors.blush}08` },
+  totalSection: { backgroundColor: `${legacyColors.blush}08` },
   totalRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 6 },
-  divider: { height: 1, backgroundColor: colors.stone[200], marginVertical: 4 },
-  totalLabel: { fontSize: 13, color: colors.stone[500] },
-  totalValue: { fontSize: 13, fontWeight: "600", color: colors.espresso },
-  grandTotalLabel: { fontSize: 15, fontWeight: "700", color: colors.espresso },
-  grandTotalValue: { fontSize: 18, fontWeight: "800", color: colors.rose },
+  divider: { height: 1, backgroundColor: legacyColors.stone[200], marginVertical: 4 },
+  totalLabel: { fontSize: 13, color: legacyColors.stone[500] },
+  totalValue: { fontSize: 13, fontWeight: "600", color: legacyColors.espresso },
+  grandTotalLabel: { fontSize: 15, fontWeight: "700", color: legacyColors.espresso },
+  grandTotalValue: { fontSize: 18, fontWeight: "800", color: legacyColors.rose },
   submitBtn: { marginTop: 8 },
 
   // Modal
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" },
-  modalContent: { backgroundColor: colors.white, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, ...shadows.card },
+  modalContent: { backgroundColor: legacyColors.white, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, ...shadows.card },
   modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
-  modalTitle: { fontSize: 16, fontWeight: "700", color: colors.espresso },
-  modalProductName: { fontSize: 14, fontWeight: "600", color: colors.espresso, marginBottom: 12 },
-  customerItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: colors.stone[100] },
-  customerName: { fontSize: 14, fontWeight: "600", color: colors.espresso },
-  customerSdt: { fontSize: 12, color: colors.stone[400] },
+  modalTitle: { fontSize: 16, fontWeight: "700", color: legacyColors.espresso },
+  modalProductName: { fontSize: 14, fontWeight: "600", color: legacyColors.espresso, marginBottom: 12 },
+  customerItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: legacyColors.stone[100] },
+  customerName: { fontSize: 14, fontWeight: "600", color: legacyColors.espresso },
+  customerSdt: { fontSize: 12, color: legacyColors.stone[400] },
   sizeGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  sizeChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16, borderWidth: 1, borderColor: colors.stone[300], backgroundColor: colors.white },
-  sizeChipActive: { backgroundColor: colors.espresso, borderColor: colors.espresso },
-  sizeChipText: { fontSize: 12, color: colors.stone[500], fontWeight: "500" },
-  sizeChipTextActive: { color: colors.cream },
+  sizeChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16, borderWidth: 1, borderColor: legacyColors.stone[300], backgroundColor: legacyColors.white },
+  sizeChipActive: { backgroundColor: legacyColors.espresso, borderColor: legacyColors.espresso },
+  sizeChipText: { fontSize: 12, color: legacyColors.stone[500], fontWeight: "500" },
+  sizeChipTextActive: { color: legacyColors.cream },
 });

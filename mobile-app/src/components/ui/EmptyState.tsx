@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '@/src/theme';
+import { legacyColors } from '@/src/theme/legacy-colors';
 import Button from './Button';
 
 interface EmptyStateProps {
@@ -38,12 +38,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.stone[400],
+    color: legacyColors.stone[400],
     textAlign: 'center',
   },
   description: {
     fontSize: 14,
-    color: colors.stone[400],
+    color: legacyColors.stone[400],
     textAlign: 'center',
     marginTop: 8,
   },

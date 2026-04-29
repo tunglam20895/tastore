@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { colors } from '@/src/theme';
+import { legacyColors } from '@/src/theme/legacy-colors';
 import Button from './Button';
 
 interface ConfirmDialogProps {
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   dialog: {
-    backgroundColor: colors.white,
+    backgroundColor: legacyColors.white,
     borderRadius: 16,
     padding: 24,
     width: '100%',
@@ -61,12 +61,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.espresso,
+    color: legacyColors.espresso,
     marginBottom: 8,
   },
   message: {
     fontSize: 14,
-    color: colors.stone[500],
+    color: legacyColors.stone[500],
     marginBottom: 24,
     lineHeight: 20,
   },

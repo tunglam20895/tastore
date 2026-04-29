@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { colors } from '@/src/theme';
+import { legacyColors } from '@/src/theme/legacy-colors';
 
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg' | 'full';
@@ -25,7 +25,7 @@ export default function LoadingSpinner({ size = 'md', label }: LoadingSpinnerPro
   if (size === 'full') {
     return (
       <View style={styles.fullContainer}>
-        <ActivityIndicator size="large" color={colors.espresso} />
+        <ActivityIndicator size="large" color={legacyColors.espresso} />
         {label && <Text style={[styles.fullLabel, { fontSize }]}>{label}</Text>}
       </View>
     );
@@ -33,7 +33,7 @@ export default function LoadingSpinner({ size = 'md', label }: LoadingSpinnerPro
 
   return (
     <View style={styles.container}>
-      <ActivityIndicator size={sizes[size]} color={colors.espresso} />
+      <ActivityIndicator size={sizes[size]} color={legacyColors.espresso} />
       {label && <Text style={[styles.label, { fontSize }]}>{label}</Text>}
     </View>
   );
@@ -48,17 +48,17 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.cream,
+    backgroundColor: legacyColors.cream,
   },
   label: {
     marginTop: 8,
-    color: colors.stone[400],
+    color: legacyColors.stone[400],
     textTransform: 'uppercase',
     letterSpacing: 2,
   },
   fullLabel: {
     marginTop: 16,
-    color: colors.stone[400],
+    color: legacyColors.stone[400],
     textTransform: 'uppercase',
     letterSpacing: 2,
   },

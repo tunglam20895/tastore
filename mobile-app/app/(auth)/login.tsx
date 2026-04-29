@@ -15,6 +15,7 @@ import { useRouter } from "expo-router";
 import { loginAdmin, loginStaff } from "@/src/api/auth";
 import { useAuthStore } from "@/src/store/authStore";
 import { colors, borderRadius, shadows } from "@/src/theme";
+import { legacyColors } from '@/src/theme/legacy-colors';
 import { Ionicons } from "@expo/vector-icons";
 
 // Thứ tự ưu tiên màn hình theo quyền
@@ -114,7 +115,7 @@ export default function LoginScreen() {
             <Ionicons
               name={mode === "admin" ? "shield-checkmark" : "shield-checkmark-outline"}
               size={18}
-              color={mode === "admin" ? colors.cream : colors.stone[500]}
+              color={mode === "admin" ? legacyColors.cream : legacyColors.stone[500]}
             />
             <Text style={[styles.modeText, mode === "admin" && styles.modeTextActive]}>
               Admin
@@ -128,7 +129,7 @@ export default function LoginScreen() {
             <Ionicons
               name={mode === "staff" ? "person" : "person-outline"}
               size={18}
-              color={mode === "staff" ? colors.cream : colors.stone[500]}
+              color={mode === "staff" ? legacyColors.cream : legacyColors.stone[500]}
             />
             <Text style={[styles.modeText, mode === "staff" && styles.modeTextActive]}>
               Nhân viên
@@ -142,13 +143,13 @@ export default function LoginScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Tên đăng nhập</Text>
               <View style={styles.inputWrap}>
-                <Ionicons name="person-outline" size={18} color={colors.stone[400]} style={styles.inputIcon} />
+                <Ionicons name="person-outline" size={18} color={legacyColors.stone[400]} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   value={username}
                   onChangeText={setUsername}
                   placeholder="Nhập tên đăng nhập"
-                  placeholderTextColor={colors.stone[300]}
+                  placeholderTextColor={legacyColors.stone[300]}
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
@@ -161,13 +162,13 @@ export default function LoginScreen() {
               {mode === "admin" ? "Mật khẩu admin" : "Mật khẩu"}
             </Text>
             <View style={styles.inputWrap}>
-              <Ionicons name="lock-closed-outline" size={18} color={colors.stone[400]} style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={18} color={legacyColors.stone[400]} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Nhập mật khẩu"
-                placeholderTextColor={colors.stone[300]}
+                placeholderTextColor={legacyColors.stone[300]}
                 secureTextEntry
                 autoCapitalize="none"
                 onSubmitEditing={handleLogin}
@@ -178,7 +179,7 @@ export default function LoginScreen() {
 
           {error ? (
             <View style={styles.errorBox}>
-              <Ionicons name="alert-circle" size={16} color={colors.danger} />
+              <Ionicons name="alert-circle" size={16} color={legacyColors.danger} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           ) : null}
@@ -197,7 +198,7 @@ export default function LoginScreen() {
               </View>
             ) : (
               <>
-                <Ionicons name="log-in-outline" size={20} color={colors.cream} />
+                <Ionicons name="log-in-outline" size={20} color={legacyColors.cream} />
                 <Text style={styles.buttonText}>Đăng nhập</Text>
               </>
             )}
@@ -211,7 +212,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.cream,
+    backgroundColor: legacyColors.cream,
   },
   scrollContent: {
     flexGrow: 1,
@@ -236,7 +237,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "800",
     letterSpacing: 4,
-    color: colors.espresso,
+    color: legacyColors.espresso,
     marginTop: 8,
     textTransform: "uppercase",
   },
@@ -244,7 +245,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "500",
     letterSpacing: 2,
-    color: colors.stone[400],
+    color: legacyColors.stone[400],
     textTransform: "uppercase",
     marginTop: 4,
   },
@@ -252,12 +253,12 @@ const styles = StyleSheet.create({
   // Mode toggle
   modeToggle: {
     flexDirection: "row",
-    backgroundColor: colors.white,
+    backgroundColor: legacyColors.white,
     borderRadius: borderRadius.md,
     padding: 4,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: colors.stone[200],
+    borderColor: legacyColors.stone[200],
     ...shadows.card,
   },
   modeTab: {
@@ -270,17 +271,17 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
   },
   modeTabActive: {
-    backgroundColor: colors.espresso,
+    backgroundColor: legacyColors.espresso,
   },
   modeText: {
     fontSize: 12,
     fontWeight: "600",
     letterSpacing: 1,
     textTransform: "uppercase",
-    color: colors.stone[500],
+    color: legacyColors.stone[500],
   },
   modeTextActive: {
-    color: colors.cream,
+    color: legacyColors.cream,
   },
 
   // Form
@@ -295,14 +296,14 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: 1,
     textTransform: "uppercase",
-    color: colors.stone[500],
+    color: legacyColors.stone[500],
   },
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: legacyColors.white,
     borderWidth: 1,
-    borderColor: colors.stone[200],
+    borderColor: legacyColors.stone[200],
     borderRadius: borderRadius.sm,
     paddingHorizontal: 12,
     height: 48,
@@ -313,7 +314,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 14,
-    color: colors.espresso,
+    color: legacyColors.espresso,
     height: 48,
   },
 
@@ -322,20 +323,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: `${colors.danger}10`,
+    backgroundColor: `${legacyColors.danger}10`,
     borderRadius: borderRadius.sm,
     padding: 12,
   },
   errorText: {
     fontSize: 13,
-    color: colors.danger,
+    color: legacyColors.danger,
     flex: 1,
     fontWeight: '500',
   },
 
   // Button
   button: {
-    backgroundColor: colors.espresso,
+    backgroundColor: legacyColors.espresso,
     paddingVertical: 14,
     borderRadius: borderRadius.sm,
     alignItems: "center",
@@ -351,7 +352,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
     letterSpacing: 1,
-    color: colors.cream,
+    color: legacyColors.cream,
     textTransform: "uppercase",
   },
   loadingRow: {
@@ -363,6 +364,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.cream,
+    backgroundColor: legacyColors.cream,
   },
 });

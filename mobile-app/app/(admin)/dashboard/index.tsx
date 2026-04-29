@@ -1,540 +1,520 @@
-import React, { useCallback } from "react";
+import React, { useMemo } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity,
-  Dimensions, Platform,
-} from "react-native";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { colors, shadows, borderRadius } from "@/src/theme";
-import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
-import { formatMoney, formatNumber } from "@/src/utils/format";
-import { BarChart } from "react-native-gifted-charts";
-import { Ionicons } from "@expo/vector-icons";
-import { getDashboardStats } from "@/src/api/cai-dat";
-import NotificationPermissionBanner from "@/src/components/admin/NotificationPermissionBanner";
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
+import { TopAppBar } from '../../../src/components/ui/TopAppBar';
+import { StatCard } from '../../../src/components/ui/StatCard';
+import { colors, spacing, typography, borderRadius, shadows } from '../../../src/theme';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
+import { getOrders } from '@/src/api/don-hang';
+import { getProducts } from '@/src/api/san-pham';
+import { getNotifications } from '@/src/api/thong-bao';
+import { formatMoney, formatDate } from '@/src/utils/format';
+import type { OrderNotif } from '@/src/types';
 
-type ThongKe = {
-  doanhThu: {
-    homNay: number; thangNay: number; thangTruoc: number; tongCong: number;
-    phanTramTangTruong: number | null;
-  };
-  donHang: {
-    tongCong: number; homNay: number; moiChua: number; choTotLenDon: number;
-    daLenDon: number; dangXuLy: number; daGiao: number; huy: number; tiLeHuy: number;
-  };
-  sanPham: {
-    dangBan: number; hetHang: number;
-    topBanChay?: Array<{ ten: string; soLuong: number }>;
-    topDanhMuc?: Array<{ ten: string; soLuong: number }>;
-  };
-  tracking: {
-    homNay: number; thangNay: number; tongCong: number;
-    last7Days?: Array<{ date: string; count: number }>;
-  };
-  donTheoNhanVien?: Array<{ ten: string; soDon: number; doanhThu: number }>;
-  nhanVien: {
-    tongSo: number; conHoatDong: number; tongLuongChiTra: number;
-  };
-  khachHang: {
-    tongSo: number; tongDoanhThu: number;
-    topKhachHang?: Array<{ ten: string; tongDon: number; tongDoanhThu: number }>;
-  };
-  donHang7Ngay?: Array<{ date: string; count: number }>;
-};
-
-// Quick stat mini card (inline top bar)
-function QuickStat({ icon, value, label, iconColor }: {
-  icon: string; value: string; label: string; iconColor: string;
-}) {
-  return (
-    <View style={styles.quickStat}>
-      <View style={[styles.quickStatIcon, { backgroundColor: `${iconColor}15` }]}>
-        <Ionicons name={icon as any} size={16} color={iconColor} />
-      </View>
-      <View style={styles.quickStatText}>
-        <Text style={styles.quickStatValue}>{value}</Text>
-        <Text style={styles.quickStatLabel}>{label}</Text>
-      </View>
-    </View>
-  );
-}
-
-// KPI Card with shadow and gradient accent
-function KpiCard({ label, value, sub, icon, accent = colors.espresso }: {
-  label: string; value: string; sub?: string; icon: string; accent?: string;
-}) {
-  return (
-    <View style={[styles.kpiCard, styles.cardShadow]}>
-      <View style={[styles.kpiAccent, { backgroundColor: accent }]} />
-      <View style={[styles.kpiIconWrap, { backgroundColor: `${accent}12` }]}>
-        <Ionicons name={icon as any} size={18} color={accent} />
-      </View>
-      <Text style={styles.kpiLabel}>{label}</Text>
-      <Text style={[styles.kpiValue, { color: accent }]}>{value}</Text>
-      {sub && <Text style={styles.kpiSub}>{sub}</Text>}
-    </View>
-  );
-}
-
-function StatCard({ label, value, color = colors.espresso, icon }: {
-  label: string; value: string; color?: string; icon: string;
-}) {
-  return (
-    <View style={[styles.statCard, styles.cardShadow]}>
-      <Ionicons name={icon as any} size={14} color={color} />
-      <Text style={[styles.statValue, { color }]}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
-
-function Section({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
-  return (
-    <View style={[styles.section, styles.cardShadow]}>
-      <View style={styles.sectionHeader}>
-        <View style={styles.sectionTitleRow}>
-          <Ionicons name={icon as any} size={16} color={colors.blush} />
-          <Text style={styles.sectionTitle}>{title}</Text>
-        </View>
-      </View>
-      {children}
-    </View>
-  );
-}
+const today = new Date();
+const todayStr = today.toISOString().slice(0, 10); // yyyy-MM-dd
+const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
 
 export default function DashboardScreen() {
-  const queryClient = useQueryClient();
-  
-  const { data, isLoading, isFetching, refetch } = useQuery({
-    queryKey: ["dashboard"],
-    queryFn: () => getDashboardStats(),
-    staleTime: 60000, // 1 minute
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
+  const router = useRouter();
+
+  // Lấy đơn hàng tháng này để tính doanh thu + đơn hôm nay
+  const { data: ordersData, isLoading: loadingOrders } = useQuery({
+    queryKey: ['dashboard', 'orders-month'],
+    queryFn: () => getOrders({ page: 1, limit: 500, tu_ngay: firstDayOfMonth }),
+    staleTime: 2 * 60 * 1000,
   });
 
-  const onRefresh = useCallback(() => {
-    refetch();
-  }, [refetch]);
+  // Lấy sản phẩm đang bán
+  const { data: sanPhamData, isLoading: loadingSP } = useQuery({
+    queryKey: ['dashboard', 'san-pham'],
+    queryFn: () => getProducts({ page: 1, limit: 1 }),
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const d = data?.data || data;
+  // Lấy thông báo / hoạt động gần đây
+  const { data: notifications, isLoading: loadingNotif } = useQuery({
+    queryKey: ['dashboard', 'notifications'],
+    queryFn: getNotifications,
+    staleTime: 60 * 1000,
+  });
 
-  if (isLoading && !d) {
-    return <LoadingSpinner size="full" label="Đang tải dữ liệu..." />;
-  }
+  // Tính toán thống kê từ dữ liệu API
+  const stats = useMemo(() => {
+    const rawOrders: any[] = Array.isArray(ordersData?.data)
+      ? ordersData.data
+      : Array.isArray(ordersData)
+      ? ordersData
+      : [];
 
-  if (!d || !d.doanhThu) {
-    return (
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        refreshControl={<RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor={colors.blush} />}
-      >
-        <Ionicons name="warning-outline" size={48} color={colors.stone[300]} />
-        <Text style={{ marginTop: 16, color: colors.stone[500] }}>Không thể tải dữ liệu thống kê.</Text>
-      </ScrollView>
-    );
-  }
+    // Đơn hôm nay
+    const donHomNay = rawOrders.filter((o: any) => {
+      if (!o.thoiGian) return false;
+      return o.thoiGian.slice(0, 10) === todayStr;
+    }).length;
 
-  const growth = d.doanhThu.phanTramTangTruong;
-  const growthColor = growth == null ? colors.stone[400]
-    : growth > 0 ? colors.success : growth < 0 ? "#A8705F" : colors.stone[400];
-  const growthIcon = growth == null ? "remove-outline" : growth > 0 ? "trending-up" : "trending-down";
-  const growthText = growth == null ? "N/A" : growth > 0 ? `+${growth}%` : `${growth}%`;
+    // Doanh thu tháng (chỉ tính đơn Đã giao)
+    const doanhThuThang = rawOrders
+      .filter((o: any) => o.trangThai === 'Đã giao')
+      .reduce((sum: number, o: any) => sum + (o.tongTien || 0), 0);
 
-  // Prepare chart data
-  const trackingData = d?.tracking?.last7Days?.map((item: { date: string; count: number }) => ({
-    value: item.count,
-    label: item?.date ? item.date.slice(5) : "",
-    frontColor: colors.blush,
-  })) || [];
+    // Tổng đơn tháng
+    const tongDonThang = rawOrders.length;
 
-  const orderData = d?.donHang7Ngay?.map((item: { date: string; count: number }) => ({
-    value: item.count,
-    label: item?.date ? item.date.slice(5) : "",
-    frontColor: colors.espresso,
-  })) || [];
+    // Sản phẩm đang bán
+    const soSanPham = sanPhamData?.total ?? sanPhamData?.data?.length ?? 0;
+
+    return { donHomNay, doanhThuThang, tongDonThang, soSanPham };
+  }, [ordersData, sanPhamData]);
+
+  // Hoạt động gần đây từ notifications
+  const recentActivities: OrderNotif[] = useMemo(() => {
+    if (!Array.isArray(notifications)) return [];
+    return notifications.slice(0, 5);
+  }, [notifications]);
+
+  const getActivityIcon = (loai: string) => {
+    switch (loai) {
+      case 'don_moi': return 'add-shopping-cart';
+      case 'chuyen_trang_thai': return 'local-shipping';
+      default: return 'notifications';
+    }
+  };
+
+  const getActivityText = (item: OrderNotif) => {
+    if (item.loai === 'don_moi') {
+      return `Đơn hàng mới #${item.donHangId} - ${item.tenKH}`;
+    }
+    if (item.loai === 'chuyen_trang_thai') {
+      return `Đơn #${item.donHangId} → ${item.trangThaiMoi}`;
+    }
+    return item.tenSP || 'Hoạt động mới';
+  };
+
+  const getActivitySub = (item: OrderNotif) => {
+    const parts: string[] = [];
+    if (item.thoiGian) parts.push(formatDate(item.thoiGian));
+    if (item.tongTien) parts.push(formatMoney(item.tongTien));
+    if (item.nguoiXuLy) parts.push(item.nguoiXuLy);
+    return parts.join(' • ') || '—';
+  };
+
+  const isLoading = loadingOrders || loadingSP;
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor={colors.blush} />}
-    >
-      {/* Notification Permission Banner */}
-      <NotificationPermissionBanner />
+    <SafeAreaView style={styles.container}>
+      <TopAppBar
+        title="TRANG ANH"
+        showMenu
+        showNotifications
+        onNotificationPress={() => {}}
+      />
 
-      {/* Quick Stats Bar */}
-      <View style={styles.quickStatsBar}>
-        <QuickStat icon="cash" value={formatMoney(d?.doanhThu?.homNay || 0)} label="Hôm nay" iconColor={colors.espresso} />
-        <QuickStat icon="trending-up" value={growthText} label="Tăng trưởng" iconColor={growthColor} />
-        <QuickStat icon="cash-outline" value={formatMoney(d?.doanhThu?.tongCong || 0)} label="Tổng DT" iconColor={colors.blush} />
-      </View>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Welcome */}
+        <View style={styles.welcomeSection}>
+          <Text style={styles.welcomeLabel}>TỔNG QUAN HÔM NAY</Text>
+          <Text style={styles.welcomeTitle}>Chào buổi sáng, Admin</Text>
+        </View>
 
-      {/* KPI Cards */}
-      <View style={styles.kpiGrid}>
-        <KpiCard label="Doanh thu tháng" value={formatMoney(d?.doanhThu?.thangNay || 0)} sub={`Tháng trước: ${formatMoney(d?.doanhThu?.thangTruoc || 0)}`} icon="cash" accent={colors.espresso} />
-        <KpiCard label="Đơn hôm nay" value={formatNumber(d?.donHang?.homNay || 0)} sub={`Tổng: ${formatNumber(d?.donHang?.tongCong || 0)} đơn`} icon="cube" accent={colors.rose} />
-        <KpiCard label="Lượt truy cập" value={formatNumber(d?.tracking?.homNay || 0)} sub={`Hôm nay`} icon="eye" accent={colors.stone[500]} />
-        <KpiCard label="SP đang bán" value={formatNumber(d?.sanPham?.dangBan || 0)} sub={`Hết: ${formatNumber(d?.sanPham?.hetHang || 0)}`} icon="shirt" accent={colors.stone[400]} />
-      </View>
+        {/* Stats Grid */}
+        <View style={styles.statsGrid}>
+          {/* Doanh thu tháng */}
+          <View style={styles.statsRowFull}>
+            {isLoading ? (
+              <View style={styles.loadingCard}>
+                <ActivityIndicator color={colors.primary} />
+              </View>
+            ) : (
+              <StatCard
+                title="Doanh thu tháng"
+                value={formatMoney(stats.doanhThuThang)}
+                icon="shopping-bag"
+                trend={`${stats.tongDonThang} đơn trong tháng`}
+                trendUp={stats.tongDonThang > 0}
+                variant="large"
+              />
+            )}
+          </View>
 
-      {/* Order status cards */}
-      <View style={styles.statGrid}>
-        <StatCard label="Đơn mới" value={formatNumber(d?.donHang?.moiChua || 0)} color={colors.info} icon="document-outline" />
-        <StatCard label="Chốt lên đơn" value={formatNumber(d?.donHang?.choTotLenDon || 0)} color="#8B5CF6" icon="clipboard-outline" />
-        <StatCard label="Đang xử lý" value={formatNumber(d?.donHang?.dangXuLy || 0)} color={colors.warning} icon="time-outline" />
-        <StatCard label="Đã giao" value={formatNumber(d?.donHang?.daGiao || 0)} color="#22C55E" icon="checkmark-circle-outline" />
-        <StatCard label="Huỷ" value={formatNumber(d?.donHang?.huy || 0)} color={colors.rose} icon="close-circle-outline" />
-      </View>
-
-      {/* Order statuses with progress bars */}
-      <Section title="Đơn hàng theo trạng thái" icon="bar-chart">
-        {[
-          { label: "Mới", count: d?.donHang?.moiChua || 0, color: colors.info, icon: "document-outline" },
-          { label: "Chốt lên đơn", count: d?.donHang?.choTotLenDon || 0, color: "#8B5CF6", icon: "clipboard-outline" },
-          { label: "Đã lên đơn", count: d?.donHang?.daLenDon || 0, color: "#14B8A6", icon: "send-outline" },
-          { label: "Đang xử lý", count: d?.donHang?.dangXuLy || 0, color: "#F59E0B", icon: "time-outline" },
-          { label: "Đã giao", count: d?.donHang?.daGiao || 0, color: "#22C55E", icon: "checkmark-circle-outline" },
-          { label: "Huỷ", count: d?.donHang?.huy || 0, color: colors.rose, icon: "close-circle-outline" },
-        ].map((s, i) => {
-          const max = Math.max(1, d?.donHang?.moiChua || 0, d?.donHang?.choTotLenDon || 0, d?.donHang?.daLenDon || 0, d?.donHang?.dangXuLy || 0, d?.donHang?.daGiao || 0, d?.donHang?.huy || 0);
-          const pct = Math.round((s.count / max) * 100);
-          return (
-            <View key={i} style={styles.statusRow}>
-              <View style={[styles.statusDot, { backgroundColor: s.color }]} />
-              <View style={styles.statusInfo}>
-                <View style={styles.statusRowInner}>
-                  <Text style={styles.statusLabel}>{s.label}</Text>
-                  <Text style={[styles.statusCount, { color: s.color }]}>{formatNumber(s.count)}</Text>
+          {/* Đơn hôm nay + Tổng đơn tháng */}
+          <View style={styles.statsRow}>
+            <View style={styles.statsCol}>
+              {isLoading ? (
+                <View style={styles.loadingCard}>
+                  <ActivityIndicator color={colors.primary} />
                 </View>
-                <View style={styles.progressBarBg}>
-                  <View style={[styles.progressBar, { width: `${pct}%`, backgroundColor: s.color }]} />
+              ) : (
+                <StatCard
+                  title="Đơn hôm nay"
+                  value={String(stats.donHomNay)}
+                  icon="receipt-long"
+                />
+              )}
+            </View>
+            <View style={styles.statsCol}>
+              {isLoading ? (
+                <View style={styles.loadingCard}>
+                  <ActivityIndicator color={colors.primary} />
                 </View>
+              ) : (
+                <StatCard
+                  title="Đơn tháng này"
+                  value={String(stats.tongDonThang)}
+                  icon="bar-chart"
+                />
+              )}
+            </View>
+          </View>
+
+          {/* Sản phẩm đang bán */}
+          <TouchableOpacity
+            style={styles.productCard}
+            onPress={() => router.push('/(admin)/san-pham')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.productCardContent}>
+              <View style={styles.productIcon}>
+                <MaterialIcons name="checkroom" size={24} color={colors.primary} />
+              </View>
+              <View style={styles.productInfo}>
+                <Text style={styles.productLabel}>Sản phẩm đang bán</Text>
+                {loadingSP ? (
+                  <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 4 }} />
+                ) : (
+                  <Text style={styles.productValue}>{stats.soSanPham} mặt hàng</Text>
+                )}
+              </View>
+              <MaterialIcons name="chevron-right" size={24} color={colors.outline} />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Chart placeholder */}
+        <View style={styles.chartSection}>
+          <View style={styles.chartHeader}>
+            <View>
+              <Text style={styles.chartTitle}>Hiệu quả kinh doanh</Text>
+              <Text style={styles.chartSubtitle}>7 ngày gần nhất</Text>
+            </View>
+            <View style={styles.chartLegend}>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
+                <Text style={styles.legendText}>Đơn hàng</Text>
               </View>
             </View>
-          );
-        })}
-      </Section>
-
-      {/* Charts - Tracking 7 days */}
-      {trackingData.length > 0 && (
-        <Section title="Lượt truy cập 7 ngày" icon="bar-chart-outline">
-          <View style={styles.chartContainer}>
-            <BarChart
-              data={trackingData}
-              barWidth={20}
-              spacing={20}
-              roundedTop
-              roundedBottom
-              hideRules
-              hideYAxisText
-              yAxisColor={colors.stone[200]}
-              xAxisColor={colors.stone[200]}
-              noOfSections={3}
-              backgroundColor="transparent"
-              labelWidth={40}
-              initialSpacing={10}
-            />
           </View>
-        </Section>
-      )}
-
-      {/* Charts - Orders 7 days */}
-      {orderData.length > 0 && (
-        <Section title="Đơn hàng 7 ngày" icon="cart-outline">
-          <View style={styles.chartContainer}>
-            <BarChart
-              data={orderData}
-              barWidth={20}
-              spacing={20}
-              roundedTop
-              roundedBottom
-              hideRules
-              hideYAxisText
-              yAxisColor={colors.stone[200]}
-              xAxisColor={colors.stone[200]}
-              noOfSections={3}
-              backgroundColor="transparent"
-              labelWidth={40}
-              initialSpacing={10}
-            />
+          <View style={styles.chartPlaceholder}>
+            <Text style={styles.chartPlaceholderText}>Biểu đồ sẽ hiển thị ở đây</Text>
           </View>
-        </Section>
-      )}
-
-      {/* Top sản phẩm bán chạy */}
-      {d?.sanPham?.topBanChay && d.sanPham.topBanChay.length > 0 && (
-        <Section title="Top sản phẩm bán chạy" icon="flame">
-          {d.sanPham.topBanChay.slice(0, 5).map((sp: { ten: string; soLuong: number }, i: number) => {
-            const max = d.sanPham.topBanChay![0]?.soLuong || 1;
-            const pct = Math.round((sp.soLuong / max) * 100);
-            const medalColor = i === 0 ? "#FFD700" : i === 1 ? "#C0C0C0" : i === 2 ? "#CD7F32" : colors.stone[300];
-            return (
-              <View key={i} style={styles.topItemRow}>
-                <View style={[styles.topRankBadge, { backgroundColor: `${medalColor}20` }]}>
-                  <Text style={[styles.topRank, { color: medalColor }]}>#{i + 1}</Text>
-                </View>
-                <View style={styles.topItemInfo}>
-                  <Text style={styles.topItemName} numberOfLines={1}>{sp.ten}</Text>
-                  <View style={styles.progressBarBg}>
-                    <View style={[styles.progressBar, { width: `${pct}%`, backgroundColor: colors.blush }]} />
-                  </View>
-                </View>
-                <Text style={styles.topItemCount}>{formatNumber(sp.soLuong)}</Text>
-              </View>
-            );
-          })}
-        </Section>
-      )}
-
-      {/* Top danh mục */}
-      {d?.sanPham?.topDanhMuc && d.sanPham.topDanhMuc.length > 0 && (
-        <Section title="Top danh mục" icon="pricetags">
-          {d.sanPham.topDanhMuc.slice(0, 5).map((dm: { ten: string; soLuong: number }, i: number) => {
-            const max = d.sanPham.topDanhMuc![0]?.soLuong || 1;
-            const pct = Math.round((dm.soLuong / max) * 100);
-            return (
-              <View key={i} style={styles.topItemRow}>
-                <View style={[styles.topRankBadge, { backgroundColor: `${colors.rose}15` }]}>
-                  <Text style={[styles.topRank, { color: colors.rose }]}>#{i + 1}</Text>
-                </View>
-                <View style={styles.topItemInfo}>
-                  <Text style={styles.topItemName} numberOfLines={1}>{dm.ten}</Text>
-                  <View style={styles.progressBarBg}>
-                    <View style={[styles.progressBar, { width: `${pct}%`, backgroundColor: colors.rose }]} />
-                  </View>
-                </View>
-                <Text style={styles.topItemCount}>{formatNumber(dm.soLuong)}</Text>
-              </View>
-            );
-          })}
-        </Section>
-      )}
-
-      {/* Đơn hàng theo nhân viên */}
-      {d?.donTheoNhanVien && d.donTheoNhanVien.length > 0 && (
-        <Section title="Đơn hàng theo nhân viên" icon="people">
-          {d.donTheoNhanVien.map((nv: { ten: string; soDon: number; doanhThu: number }, i: number) => {
-            const max = Math.max(1, ...d.donTheoNhanVien!.map((n: { soDon: number }) => n.soDon));
-            const pct = Math.round((nv.soDon / max) * 100);
-            return (
-              <View key={i} style={styles.staffRow}>
-                <View style={styles.staffAvatar}>
-                  <Text style={styles.staffAvatarText}>{nv.ten ? nv.ten.charAt(0).toUpperCase() : "?"}</Text>
-                </View>
-                <View style={styles.staffInfo}>
-                  <Text style={styles.staffName}>{nv.ten}</Text>
-                  <View style={styles.progressBarBg}>
-                    <View style={[styles.progressBar, { width: `${pct}%`, backgroundColor: colors.espresso }]} />
-                  </View>
-                </View>
-                <View style={styles.staffStats}>
-                  <Text style={styles.staffDonCount}>{formatNumber(nv.soDon)} đơn</Text>
-                  <Text style={styles.staffDoanhThu}>{formatMoney(nv.doanhThu)}</Text>
-                </View>
-              </View>
-            );
-          })}
-        </Section>
-      )}
-
-      {/* Top khách hàng */}
-      {d?.khachHang?.topKhachHang && d.khachHang.topKhachHang.length > 0 && (
-        <Section title="Top khách hàng" icon="heart">
-          {d.khachHang.topKhachHang.slice(0, 5).map((kh: { ten: string; tongDon: number; tongDoanhThu: number }, i: number) => (
-            <View key={i} style={styles.customerRow}>
-              <View style={[styles.topRankBadge, { backgroundColor: `${colors.blush}15` }]}>
-                <Text style={[styles.topRank, { color: colors.blush }]}>#{i + 1}</Text>
-              </View>
-              <View style={styles.customerInfo}>
-                <Text style={styles.customerName}>{kh.ten}</Text>
-                <Text style={styles.customerDon}>{formatNumber(kh.tongDon)} đơn</Text>
-              </View>
-              <Text style={styles.customerDoanhThu}>{formatMoney(kh.tongDoanhThu)}</Text>
-            </View>
-          ))}
-        </Section>
-      )}
-
-      {/* Staff & salary */}
-      <Section title="Nhân viên & Lương" icon="wallet">
-        <View style={styles.summaryRow}>
-          <View style={[styles.summaryCard, { backgroundColor: `${colors.blush}12` }]}>
-            <Ionicons name="people-outline" size={20} color={colors.espresso} />
-            <Text style={styles.summaryValue}>{formatNumber(d?.nhanVien?.tongSo || 0)}</Text>
-            <Text style={styles.summaryLabel}>Tổng NV</Text>
-          </View>
-          <View style={[styles.summaryCard, { backgroundColor: `${colors.rose}10` }]}>
-            <Ionicons name="cash-outline" size={20} color={colors.rose} />
-            <Text style={[styles.summaryValue, { color: colors.rose }]}>{formatMoney(d?.nhanVien?.tongLuongChiTra || 0)}</Text>
-            <Text style={styles.summaryLabel}>Tổng lương</Text>
-          </View>
-          <View style={[styles.summaryCard, { backgroundColor: `${colors.blush}15` }]}>
-            <Ionicons name="checkmark-circle-outline" size={20} color={colors.blush} />
-            <Text style={[styles.summaryValue, { color: colors.blush }]}>{formatNumber(d?.nhanVien?.conHoatDong || 0)}</Text>
-            <Text style={styles.summaryLabel}>Đang HĐ</Text>
+          <View style={styles.chartLabels}>
+            {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((day) => (
+              <Text key={day} style={styles.chartLabel}>{day}</Text>
+            ))}
           </View>
         </View>
-      </Section>
 
-      {/* Customers */}
-      <Section title="Khách hàng" icon="happy-outline">
-        <View style={styles.summaryRow}>
-          <View style={[styles.summaryCard, { backgroundColor: `${colors.blush}12` }]}>
-            <Ionicons name="person-outline" size={20} color={colors.espresso} />
-            <Text style={styles.summaryValue}>{formatNumber(d?.khachHang?.tongSo || 0)}</Text>
-            <Text style={styles.summaryLabel}>Tổng KH</Text>
+        {/* Hoạt động gần đây */}
+        <View style={styles.activitySection}>
+          <View style={styles.activityHeader}>
+            <Text style={styles.activityTitle}>Hoạt động gần đây</Text>
+            <TouchableOpacity onPress={() => router.push('/(admin)/don-hang')}>
+              <Text style={styles.viewAllText}>Xem tất cả</Text>
+            </TouchableOpacity>
           </View>
-          <View style={[styles.summaryCard, { backgroundColor: `${colors.rose}10` }]}>
-            <Ionicons name="cart-outline" size={20} color={colors.rose} />
-            <Text style={[styles.summaryValue, { color: colors.rose }]}>{formatMoney(d?.khachHang?.tongDoanhThu || 0)}</Text>
-            <Text style={styles.summaryLabel}>Doanh thu KH</Text>
+
+          <View style={styles.activityList}>
+            {loadingNotif ? (
+              <View style={styles.loadingCard}>
+                <ActivityIndicator color={colors.primary} />
+              </View>
+            ) : recentActivities.length === 0 ? (
+              <View style={styles.emptyActivity}>
+                <MaterialIcons name="inbox" size={32} color={colors['on-surface-variant']} />
+                <Text style={styles.emptyText}>Chưa có hoạt động nào</Text>
+              </View>
+            ) : (
+              recentActivities.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.activityItem}
+                  onPress={() => router.push({
+                    pathname: '/(admin)/don-hang/[id]' as any,
+                    params: { id: item.donHangId },
+                  })}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.activityIcon, !item.daDoc && styles.activityIconUnread]}>
+                    <MaterialIcons
+                      name={getActivityIcon(item.loai) as any}
+                      size={20}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <View style={styles.activityContent}>
+                    <Text style={[styles.activityText, !item.daDoc && { fontWeight: '700' }]}>
+                      {getActivityText(item)}
+                    </Text>
+                    <Text style={styles.activityTime}>{getActivitySub(item)}</Text>
+                  </View>
+                  {!item.daDoc && <View style={styles.unreadDot} />}
+                </TouchableOpacity>
+              ))
+            )}
           </View>
         </View>
-      </Section>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream },
-  content: { padding: 12, paddingBottom: 100 },
-
-  // Quick stats bar
-  quickStatsBar: {
+  container: {
+    flex: 1,
+    backgroundColor: colors.brandBg,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.sm,
+    paddingBottom: 100,
+  },
+  welcomeSection: {
+    marginTop: spacing.md,
+    marginBottom: spacing.md,
+  },
+  welcomeLabel: {
+    fontFamily: typography.fontFamily['label-sm'],
+    fontSize: typography.fontSize['label-sm'],
+    fontWeight: '600',
+    color: colors.secondary,
+    textTransform: 'uppercase',
+    letterSpacing: typography.letterSpacing['label-sm'],
+    marginBottom: 4,
+  },
+  welcomeTitle: {
+    fontFamily: typography.fontFamily.h1,
+    fontSize: typography.fontSize.h1,
+    fontWeight: typography.fontWeight.h1,
+    color: colors.primary,
+  },
+  statsGrid: {
+    gap: spacing.sm,
+  },
+  statsRowFull: {
+    width: '100%',
+  },
+  statsRow: {
     flexDirection: 'row',
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.md,
-    padding: 12,
-    marginBottom: 12,
+    gap: spacing.sm,
+  },
+  statsCol: {
+    flex: 1,
+  },
+  loadingCard: {
+    backgroundColor: colors['surface-container-lowest'],
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: colors['outline-variant'],
+    padding: spacing.md,
+    height: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
     ...shadows.card,
   },
-  quickStat: {
-    flex: 1,
+  productCard: {
+    backgroundColor: colors['surface-container-lowest'],
+    padding: spacing.md,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: colors['outline-variant'],
+    ...shadows.card,
+  },
+  productCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
-  quickStatIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
+  productIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors['surface-container-low'],
     justifyContent: 'center',
     alignItems: 'center',
   },
-  quickStatText: { flex: 1 },
-  quickStatValue: { fontSize: 12, fontWeight: '700', color: colors.espresso },
-  quickStatLabel: { fontSize: 8, textTransform: 'uppercase', letterSpacing: 0.5, color: colors.stone[400] },
-
-  // KPI Cards
-  kpiGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  kpiCard: {
+  productInfo: {
     flex: 1,
-    minWidth: "47%",
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.md,
-    padding: 14,
-    position: "relative",
-    overflow: "hidden",
   },
-  cardShadow: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+  productLabel: {
+    fontFamily: typography.fontFamily['label-sm'],
+    fontSize: typography.fontSize['label-sm'],
+    color: colors['on-surface-variant'],
+    textTransform: 'uppercase',
   },
-  kpiAccent: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 3,
+  productValue: {
+    fontFamily: typography.fontFamily.h2,
+    fontSize: 18,
+    fontWeight: '500',
+    color: colors.primary,
+    marginTop: 2,
   },
-  kpiIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    justifyContent: 'center',
+  chartSection: {
+    backgroundColor: colors['surface-container-lowest'],
+    padding: spacing.md,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: colors['outline-variant'],
+    marginTop: spacing.md,
+    ...shadows.card,
+  },
+  chartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.md,
+  },
+  chartTitle: {
+    fontFamily: typography.fontFamily.h2,
+    fontSize: 18,
+    fontWeight: '500',
+    color: colors.primary,
+  },
+  chartSubtitle: {
+    fontFamily: typography.fontFamily['label-sm'],
+    fontSize: typography.fontSize['label-sm'],
+    color: colors['on-surface-variant'],
+    marginTop: 2,
+  },
+  chartLegend: {
+    gap: spacing.sm,
+  },
+  legendItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
-  },
-  kpiLabel: { fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: colors.stone[500], marginBottom: 4, fontWeight: '500' },
-  kpiValue: { fontSize: 17, fontWeight: "800" },
-  kpiSub: { fontSize: 10, color: colors.stone[500], marginTop: 4 },
-
-  // Stat cards
-  statGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 },
-  statCard: {
-    width: "31%",
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.sm,
-    padding: 10,
-    alignItems: "center",
     gap: 4,
   },
-  statValue: { fontSize: 14, fontWeight: "800" },
-  statLabel: { fontSize: 8, textTransform: "uppercase", letterSpacing: 0.5, color: colors.stone[500], fontWeight: '500' },
-
-  // Sections
-  section: { marginTop: 16, backgroundColor: colors.white, borderRadius: borderRadius.md, padding: 16, overflow: 'hidden' },
-  sectionHeader: { marginBottom: 14 },
-  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  sectionTitle: { fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: colors.espresso, fontWeight: "700" },
-
-  // Status rows
-  statusRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 },
-  statusDot: { width: 8, height: 8, borderRadius: 4 },
-  statusInfo: { flex: 1 },
-  statusRowInner: { flexDirection: "row", justifyContent: "space-between", marginBottom: 5 },
-  statusLabel: { fontSize: 13, fontWeight: "600", color: colors.espresso },
-  statusCount: { fontSize: 13, fontWeight: "700" },
-  progressBarBg: { height: 6, backgroundColor: `${colors.stone[200]}50`, borderRadius: 3 },
-  progressBar: { height: 6, borderRadius: 3 },
-
-  // Charts
-  chartContainer: { padding: 8, minHeight: 180 },
-
-  // Summary cards
-  summaryRow: { flexDirection: "row", gap: 10 },
-  summaryCard: {
-    flex: 1,
-    borderRadius: borderRadius.sm,
-    padding: 14,
-    alignItems: "center",
-    gap: 6,
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
-  summaryValue: { fontSize: 15, fontWeight: "800", color: colors.espresso },
-  summaryLabel: { fontSize: 9, textTransform: "uppercase", letterSpacing: 0.5, color: colors.stone[500], fontWeight: '500' },
-
-  // Top items
-  topItemRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 },
-  topRankBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
+  legendText: {
+    fontFamily: typography.fontFamily['label-sm'],
+    fontSize: 10,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  chartPlaceholder: {
+    height: 160,
+    backgroundColor: colors['surface-container-low'],
+    borderRadius: borderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  chartPlaceholderText: {
+    fontFamily: typography.fontFamily['body-md'],
+    fontSize: typography.fontSize['body-md'],
+    color: colors['on-surface-variant'],
+  },
+  chartLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.xs,
+  },
+  chartLabel: {
+    fontFamily: typography.fontFamily['label-sm'],
+    fontSize: 10,
+    color: colors['on-surface-variant'],
+  },
+  activitySection: {
+    marginTop: spacing.md,
+  },
+  activityHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  activityTitle: {
+    fontFamily: typography.fontFamily.h2,
+    fontSize: 18,
+    fontWeight: '500',
+    color: colors.primary,
+  },
+  viewAllText: {
+    fontFamily: typography.fontFamily['label-sm'],
+    fontSize: typography.fontSize['label-sm'],
+    color: colors.secondary,
+    textTransform: 'uppercase',
+  },
+  activityList: {
+    gap: spacing.sm,
+  },
+  activityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors['surface-container-lowest'],
+    padding: spacing.sm,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: colors['outline-variant'],
+  },
+  activityIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors['surface-container-low'],
     justifyContent: 'center',
     alignItems: 'center',
   },
-  topRank: { fontSize: 11, fontWeight: "800" },
-  topItemInfo: { flex: 1 },
-  topItemName: { fontSize: 13, fontWeight: "600", color: colors.espresso, marginBottom: 5 },
-  topItemCount: { fontSize: 13, fontWeight: "700", color: colors.stone[500] },
-
-  // Staff rows
-  staffRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 },
-  staffAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.espresso, justifyContent: "center", alignItems: "center" },
-  staffAvatarText: { fontSize: 13, fontWeight: "700", color: colors.cream },
-  staffInfo: { flex: 1 },
-  staffName: { fontSize: 13, fontWeight: "600", color: colors.espresso, marginBottom: 4 },
-  staffStats: { alignItems: "flex-end" },
-  staffDonCount: { fontSize: 11, color: colors.stone[500] },
-  staffDoanhThu: { fontSize: 12, fontWeight: "700", color: colors.espresso },
-
-  // Customer rows
-  customerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: `${colors.stone[100]}80` },
-  customerInfo: { flex: 1 },
-  customerName: { fontSize: 13, fontWeight: "600", color: colors.espresso },
-  customerDon: { fontSize: 11, color: colors.stone[400] },
-  customerDoanhThu: { fontSize: 13, fontWeight: "700", color: colors.rose },
+  activityIconUnread: {
+    backgroundColor: colors['surface-container'],
+  },
+  activityContent: {
+    flex: 1,
+  },
+  activityText: {
+    fontFamily: typography.fontFamily['body-md'],
+    fontSize: typography.fontSize['body-md'],
+    fontWeight: '500',
+    color: colors['on-surface'],
+  },
+  activityTime: {
+    fontFamily: typography.fontFamily['body-md'],
+    fontSize: 12,
+    color: colors['on-surface-variant'],
+    marginTop: 2,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary,
+  },
+  emptyActivity: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+    gap: 8,
+  },
+  emptyText: {
+    fontFamily: typography.fontFamily['body-md'],
+    color: colors['on-surface-variant'],
+  },
 });

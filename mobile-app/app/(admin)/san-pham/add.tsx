@@ -11,6 +11,7 @@ import { createProduct, getCategories, generateMoTa } from "@/src/api/san-pham";
 import { uploadImage } from "@/src/utils/upload";
 import { showSuccess, showError, showInfo } from "@/src/utils/toast";
 import { colors } from "@/src/theme";
+import { legacyColors } from "@/src/theme/legacy-colors";
 import { QUICK_SIZES } from "@/src/utils/constants";
 import Button from "@/src/components/ui/Button";
 import Input from "@/src/components/ui/Input";
@@ -145,17 +146,17 @@ export default function AddProductScreen() {
             <Image source={{ uri: anhUri }} style={styles.imagePreview} contentFit="cover" />
           ) : (
             <>
-              <Ionicons name="image-outline" size={32} color={colors.stone[400]} />
+              <Ionicons name="image-outline" size={32} color={legacyColors.stone[400]} />
               <Text style={styles.imageText}>Chọn ảnh sản phẩm</Text>
             </>
           )}
           {/* Camera icon overlay */}
           <TouchableOpacity style={styles.cameraBtn} onPress={takePhoto}>
-            <Ionicons name="camera" size={18} color={colors.cream} />
+            <Ionicons name="camera" size={18} color={legacyColors.cream} />
           </TouchableOpacity>
           {anhUri && (
             <TouchableOpacity style={styles.removeImageBtn} onPress={() => setAnhUri(null)}>
-              <Ionicons name="close" size={18} color={colors.cream} />
+              <Ionicons name="close" size={18} color={legacyColors.cream} />
             </TouchableOpacity>
           )}
         </TouchableOpacity>
@@ -219,8 +220,9 @@ export default function AddProductScreen() {
         <View style={styles.moTaHeader}>
           <Text style={styles.label}>Mô tả</Text>
           <TouchableOpacity onPress={handleGenerate} disabled={generating} style={styles.aiBtn}>
-            <Ionicons name="sparkles" size={18} color={generating ? colors.stone[300] : colors.blush} />
-            <Text style={[styles.aiText, generating && { color: colors.stone[300] }]}>
+            <Ionicons name="sparkles" size={18} color={generating ? legacyColors.stone[300] : legacyColors.blush} />
+            <Text style={[styles.aiText, generating && { color: legacyColors.stone[300] }]}>
+
               {generating ? "Đang tạo..." : "AI tạo"}
             </Text>
           </TouchableOpacity>
@@ -240,27 +242,27 @@ export default function AddProductScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream },
+  container: { flex: 1, backgroundColor: legacyColors.cream },
   scroll: { padding: 16 },
-  imagePicker: { height: 220, backgroundColor: colors.white, borderRadius: 12, borderWidth: 1, borderColor: colors.stone[300], justifyContent: "center", alignItems: "center", marginBottom: 16, overflow: 'hidden' },
+  imagePicker: { height: 220, backgroundColor: legacyColors.white, borderRadius: 12, borderWidth: 1, borderColor: legacyColors.stone[300], justifyContent: "center", alignItems: "center", marginBottom: 16, overflow: 'hidden' },
   imagePreview: { width: '100%', height: '100%' },
-  imageText: { fontSize: 12, color: colors.stone[400], marginTop: 8 },
-  cameraBtn: { position: 'absolute', top: 8, right: 8, width: 32, height: 32, borderRadius: 16, backgroundColor: colors.espresso, justifyContent: 'center', alignItems: 'center' },
-  removeImageBtn: { position: 'absolute', top: 8, left: 8, width: 32, height: 32, borderRadius: 16, backgroundColor: colors.rose, justifyContent: 'center', alignItems: 'center' },
+  imageText: { fontSize: 12, color: legacyColors.stone[400], marginTop: 8 },
+  cameraBtn: { position: 'absolute', top: 8, right: 8, width: 32, height: 32, borderRadius: 16, backgroundColor: legacyColors.espresso, justifyContent: 'center', alignItems: 'center' },
+  removeImageBtn: { position: 'absolute', top: 8, left: 8, width: 32, height: 32, borderRadius: 16, backgroundColor: legacyColors.rose, justifyContent: 'center', alignItems: 'center' },
   uploadingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 },
-  uploadingText: { fontSize: 12, color: colors.stone[400] },
-  label: { fontSize: 10, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: colors.stone[600], marginBottom: 6 },
+  uploadingText: { fontSize: 12, color: legacyColors.stone[400] },
+  label: { fontSize: 10, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: legacyColors.stone[600], marginBottom: 6 },
   filterChips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 },
-  chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: colors.stone[300], backgroundColor: colors.white },
-  chipActive: { backgroundColor: colors.espresso, borderColor: colors.espresso },
-  chipText: { fontSize: 11, color: colors.stone[500] },
-  chipTextActive: { color: colors.cream },
+  chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: legacyColors.stone[300], backgroundColor: legacyColors.white },
+  chipActive: { backgroundColor: legacyColors.espresso, borderColor: legacyColors.espresso },
+  chipText: { fontSize: 11, color: legacyColors.stone[500] },
+  chipTextActive: { color: legacyColors.cream },
   sizeQtySection: { marginBottom: 16 },
   sizeQtyRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 8 },
-  sizeQtyLabel: { fontSize: 14, fontWeight: "600", color: colors.espresso, width: 40 },
+  sizeQtyLabel: { fontSize: 14, fontWeight: "600", color: legacyColors.espresso, width: 40 },
   moTaHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 },
   aiBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4 },
-  aiText: { fontSize: 11, color: colors.blush, fontWeight: '600' },
+  aiText: { fontSize: 11, color: legacyColors.blush, fontWeight: '600' },
   switchRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 },
   saveBtn: { marginBottom: 32 },
 });

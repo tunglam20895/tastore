@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { NotificationContext } from '@/src/hooks/useNotifications';
 import { useAuthStore } from '@/src/store/authStore';
 import { colors, shadows } from '@/src/theme';
+import { legacyColors } from '@/src/theme/legacy-colors';
 import { formatMoney, formatRelativeTime } from '@/src/utils/format';
 import { STATUS_COLORS } from '@/src/utils/constants';
 import BottomDrawer from './BottomDrawer';
@@ -55,7 +56,7 @@ export default function AdminHeader() {
 
   const renderNotifItem = useCallback(({ item }: { item: any }) => {
     const isNew = item.loai === 'don_moi';
-    const statusColor = isNew ? '#22C55E' : (STATUS_COLORS[item.trangThaiMoi] || colors.blush);
+    const statusColor = isNew ? '#22C55E' : (STATUS_COLORS[item.trangThaiMoi] || legacyColors.blush);
 
     return (
       <TouchableOpacity
@@ -99,7 +100,7 @@ export default function AdminHeader() {
           onPress={() => setShowDrawer(true)}
           activeOpacity={0.7}
         >
-          <Ionicons name="menu" size={24} color={colors.espresso} />
+          <Ionicons name="menu" size={24} color={legacyColors.espresso} />
         </TouchableOpacity>
 
         <View style={styles.brandSection}>
@@ -116,7 +117,7 @@ export default function AdminHeader() {
             onPress={() => router.push('/(admin)/ai-chat' as any)}
             activeOpacity={0.7}
           >
-            <Ionicons name="sparkles" size={20} color={colors.blush} />
+            <Ionicons name="sparkles" size={20} color={legacyColors.blush} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -125,7 +126,7 @@ export default function AdminHeader() {
             activeOpacity={0.7}
           >
             <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-              <Ionicons name="notifications-outline" size={22} color={colors.espresso} />
+              <Ionicons name="notifications-outline" size={22} color={legacyColors.espresso} />
             </Animated.View>
             {unreadCount > 0 && (
               <View style={styles.badge}>
@@ -157,14 +158,14 @@ export default function AdminHeader() {
                   </TouchableOpacity>
                 )}
                 <TouchableOpacity onPress={() => setShowNotif(false)}>
-                  <Ionicons name="close" size={24} color={colors.stone[500]} />
+                  <Ionicons name="close" size={24} color={legacyColors.stone[500]} />
                 </TouchableOpacity>
               </View>
             </View>
 
             {notifications.length === 0 ? (
               <View style={styles.emptyState}>
-                <Ionicons name="notifications-off" size={48} color={colors.stone[200]} />
+                <Ionicons name="notifications-off" size={48} color={legacyColors.stone[200]} />
                 <Text style={styles.emptyText}>Không có thông báo</Text>
               </View>
             ) : (
@@ -188,22 +189,22 @@ export default function AdminHeader() {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: colors.white,
+    backgroundColor: legacyColors.white,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: colors.white,
+    backgroundColor: legacyColors.white,
     borderBottomWidth: 1,
-    borderBottomColor: `${colors.stone[200]}60`,
+    borderBottomColor: `${legacyColors.stone[200]}60`,
     minHeight: 44,
   },
   hamburgerBtn: {
     padding: 8,
     borderRadius: 10,
-    backgroundColor: `${colors.blush}12`,
+    backgroundColor: `${legacyColors.blush}12`,
     marginRight: 10,
   },
   brandSection: {
@@ -214,11 +215,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
     letterSpacing: 1.5,
-    color: colors.espresso,
+    color: legacyColors.espresso,
   },
   roleBadge: {
     fontSize: 10,
-    color: colors.stone[400],
+    color: legacyColors.stone[400],
     marginTop: 1,
   },
   rightSection: {
@@ -229,15 +230,15 @@ const styles = StyleSheet.create({
   iconBtn: {
     padding: 8,
     borderRadius: 10,
-    backgroundColor: `${colors.blush}12`,
+    backgroundColor: `${legacyColors.blush}12`,
     position: 'relative',
   },
   badge: {
     position: 'absolute', top: -2, right: -2,
-    backgroundColor: colors.danger, borderRadius: 8,
+    backgroundColor: legacyColors.danger, borderRadius: 8,
     minWidth: 16, height: 16, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4,
   },
-  badgeText: { fontSize: 8, fontWeight: '700', color: colors.white },
+  badgeText: { fontSize: 8, fontWeight: '700', color: legacyColors.white },
 
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
     bottom: 0, left: 0, right: 0,
   },
   modalContent: {
-    backgroundColor: colors.white,
+    backgroundColor: legacyColors.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: SCREEN_HEIGHT * 0.7,
@@ -259,27 +260,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.stone[100],
+    borderBottomColor: legacyColors.stone[100],
   },
-  modalTitle: { fontSize: 16, fontWeight: '700', color: colors.espresso },
+  modalTitle: { fontSize: 16, fontWeight: '700', color: legacyColors.espresso },
   modalActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   markReadBtn: { paddingHorizontal: 8, paddingVertical: 4 },
-  markReadText: { fontSize: 12, color: colors.blush, fontWeight: '600' },
+  markReadText: { fontSize: 12, color: legacyColors.blush, fontWeight: '600' },
   notifList: { maxHeight: SCREEN_HEIGHT * 0.55 },
   notifItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.stone[100],
+    borderBottomColor: legacyColors.stone[100],
   },
-  notifItemUnread: { backgroundColor: `${colors.blush}08` },
+  notifItemUnread: { backgroundColor: `${legacyColors.blush}08` },
   notifIcon: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   notifContent: { flex: 1 },
-  notifTitle: { fontSize: 13, fontWeight: '600', color: colors.espresso, marginBottom: 4 },
-  notifBody: { fontSize: 12, color: colors.stone[500], lineHeight: 18 },
-  notifTime: { fontSize: 10, color: colors.stone[300], marginTop: 4 },
-  notifDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.blush, marginTop: 8 },
+  notifTitle: { fontSize: 13, fontWeight: '600', color: legacyColors.espresso, marginBottom: 4 },
+  notifBody: { fontSize: 12, color: legacyColors.stone[500], lineHeight: 18 },
+  notifTime: { fontSize: 10, color: legacyColors.stone[300], marginTop: 4 },
+  notifDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: legacyColors.blush, marginTop: 8 },
   emptyState: { alignItems: 'center', paddingVertical: 48 },
-  emptyText: { fontSize: 14, color: colors.stone[400], marginTop: 12 },
+  emptyText: { fontSize: 14, color: legacyColors.stone[400], marginTop: 12 },
 });

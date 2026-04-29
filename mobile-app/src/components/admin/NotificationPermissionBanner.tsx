@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet, Linking, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '@/src/theme';
+import { legacyColors } from '@/src/theme/legacy-colors';
 import { useContext, useState } from 'react';
 import { NotificationContext } from '@/src/hooks/useNotifications';
 
@@ -30,7 +30,7 @@ export default function NotificationPermissionBanner() {
   return (
     <View style={s.container}>
       <View style={s.iconContainer}>
-        <Ionicons name="notifications-off-outline" size={24} color={colors.danger} />
+        <Ionicons name="notifications-off-outline" size={24} color={legacyColors.danger} />
       </View>
       
       <View style={s.textContainer}>
@@ -54,7 +54,7 @@ export default function NotificationPermissionBanner() {
           onPress={() => setDismissed(true)}
           activeOpacity={0.7}
         >
-          <Ionicons name="close" size={20} color={colors.stone[400]} />
+          <Ionicons name="close" size={20} color={legacyColors.stone[400]} />
         </TouchableOpacity>
       </View>
     </View>
@@ -71,7 +71,7 @@ const s = StyleSheet.create({
     marginTop: 12,
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: colors.danger,
+    borderLeftColor: legacyColors.danger,
     gap: 12,
   },
   iconContainer: {
@@ -89,11 +89,11 @@ const s = StyleSheet.create({
   title: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.espresso,
+    color: legacyColors.espresso,
   },
   subtitle: {
     fontSize: 12,
-    color: colors.stone[600],
+    color: legacyColors.stone[600],
     lineHeight: 16,
   },
   actions: {
@@ -102,13 +102,13 @@ const s = StyleSheet.create({
     gap: 8,
   },
   btnSettings: {
-    backgroundColor: colors.espresso,
+    backgroundColor: legacyColors.espresso,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
   },
   btnSettingsText: {
-    color: colors.white,
+    color: legacyColors.white,
     fontSize: 12,
     fontWeight: '600',
   },

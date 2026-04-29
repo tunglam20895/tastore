@@ -6,6 +6,7 @@ import { getTrangThaiDH, updateTrangThaiDH } from "@/src/api/trang-thai-dh";
 import { getTrangThaiKH } from "@/src/api/khach-hang";
 import { useAuthStore } from "@/src/store/authStore";
 import { colors, shadows, borderRadius } from "@/src/theme";
+import { legacyColors } from '@/src/theme/legacy-colors';
 import { DEFAULT_TRANG_THAI_DH } from "@/src/types";
 import { uploadImage } from "@/src/utils/upload";
 import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
@@ -137,7 +138,7 @@ export default function SettingsScreen() {
   if (!isAdmin) {
     return (
       <View style={styles.center}>
-        <Ionicons name="lock-closed" size={48} color={colors.stone[300]} />
+        <Ionicons name="lock-closed" size={48} color={legacyColors.stone[300]} />
         <Text style={styles.centerText}>Chỉ Admin mới có quyền truy cập</Text>
       </View>
     );
@@ -168,7 +169,7 @@ export default function SettingsScreen() {
           <Image source={{ uri: logoURL }} style={styles.logoPreview} contentFit="contain" />
         ) : (
           <>
-            <Ionicons name="image-outline" size={40} color={colors.stone[300]} />
+            <Ionicons name="image-outline" size={40} color={legacyColors.stone[300]} />
             <Text style={styles.logoText}>Nhấn để chọn logo</Text>
           </>
         )}
@@ -191,9 +192,9 @@ export default function SettingsScreen() {
           onPress={() => openEditColor(tt)}
           activeOpacity={0.7}
         >
-          <View style={[styles.ttDot, { backgroundColor: tt.mau || colors.stone[300] }]} />
+          <View style={[styles.ttDot, { backgroundColor: tt.mau || legacyColors.stone[300] }]} />
           <Text style={styles.ttText}>{tt.ten}</Text>
-          <Ionicons name="color-palette-outline" size={16} color={colors.stone[400]} />
+          <Ionicons name="color-palette-outline" size={16} color={legacyColors.stone[400]} />
         </TouchableOpacity>
       ))}
 
@@ -203,7 +204,7 @@ export default function SettingsScreen() {
           <Text style={styles.sectionTitle}>Trạng thái khách hàng</Text>
           {trangThaiKH.map((tt: any) => (
             <View key={tt.id} style={styles.ttRow}>
-              <View style={[styles.ttDot, { backgroundColor: tt.mau || colors.stone[300] }]} />
+              <View style={[styles.ttDot, { backgroundColor: tt.mau || legacyColors.stone[300] }]} />
               <Text style={styles.ttText}>{tt.ten}</Text>
             </View>
           ))}
@@ -245,7 +246,7 @@ export default function SettingsScreen() {
                       style={[styles.presetColor, { backgroundColor: c }, editColor === c && styles.presetColorSelected]}
                       onPress={() => setEditColor(c)}
                     >
-                      {editColor === c && <Ionicons name="checkmark" size={14} color="#fff" />}
+                      {editColor === c && <Ionicons name="checkmark" size={14} color={legacyColors.white} />}
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -264,53 +265,53 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream },
+  container: { flex: 1, backgroundColor: legacyColors.cream },
   scroll: { padding: 16, paddingBottom: 100 },
   sectionTitle: {
     fontSize: 11,
     fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 1.5,
-    color: colors.espresso,
+    color: legacyColors.espresso,
     marginBottom: 12,
     marginTop: 20,
   },
   saveBtn: { marginTop: 12 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  centerText: { fontSize: 14, color: colors.stone[400], marginTop: 16 },
+  centerText: { fontSize: 14, color: legacyColors.stone[400], marginTop: 16 },
   logoPicker: {
     height: 140,
-    backgroundColor: colors.white,
+    backgroundColor: legacyColors.white,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.stone[200],
+    borderColor: legacyColors.stone[200],
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 4,
     ...shadows.card,
   },
   logoPreview: { width: 100, height: 100 },
-  logoText: { fontSize: 12, color: colors.stone[400], marginTop: 8 },
+  logoText: { fontSize: 12, color: legacyColors.stone[400], marginTop: 8 },
   ttRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingVertical: 12,
     paddingHorizontal: 14,
-    backgroundColor: colors.white,
+    backgroundColor: legacyColors.white,
     borderRadius: borderRadius.sm,
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: colors.stone[100],
+    borderColor: legacyColors.stone[100],
   },
   ttDot: { width: 12, height: 12, borderRadius: 6 },
-  ttText: { fontSize: 14, color: colors.espresso, flex: 1, fontWeight: '500' },
+  ttText: { fontSize: 14, color: legacyColors.espresso, flex: 1, fontWeight: '500' },
   label: {
     fontSize: 10,
     fontWeight: "600",
     letterSpacing: 1,
     textTransform: "uppercase",
-    color: colors.stone[600],
+    color: legacyColors.stone[600],
     marginBottom: 6,
   },
   modalOverlay: {
@@ -321,7 +322,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   modalContent: {
-    backgroundColor: colors.white,
+    backgroundColor: legacyColors.white,
     borderRadius: borderRadius.lg,
     padding: 24,
     width: '100%',
@@ -332,7 +333,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: colors.espresso,
+    color: legacyColors.espresso,
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -343,14 +344,14 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: colors.stone[200],
+    borderColor: legacyColors.stone[200],
   },
   presetLabel: {
     fontSize: 10,
     fontWeight: "600",
     letterSpacing: 1,
     textTransform: "uppercase",
-    color: colors.stone[600],
+    color: legacyColors.stone[600],
     marginBottom: 8,
   },
   presetColors: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
@@ -363,5 +364,5 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  presetColorSelected: { borderColor: colors.espresso, borderWidth: 2 },
+  presetColorSelected: { borderColor: legacyColors.espresso, borderWidth: 2 },
 });

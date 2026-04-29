@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Switch, RefreshCont
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCoupons, createCoupon, toggleCoupon, deleteCoupon } from "@/src/api/ma-giam-gia";
 import { colors } from "@/src/theme";
+import { legacyColors } from '@/src/theme/legacy-colors';
 import { LIMIT_DEFAULT } from "@/src/utils/constants";
 import { formatMoney, formatDate } from "@/src/utils/format";
 import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
@@ -88,7 +89,7 @@ export default function CouponsScreen() {
         <View style={styles.rightSide}>
           <Switch value={item.conHieuLuc} onValueChange={() => handleToggle(item.id, item.conHieuLuc)} />
           <TouchableOpacity onPress={() => setDeleteId(item.id)}>
-            <Ionicons name="trash" size={16} color={colors.rose} style={{ marginTop: 4 }} />
+            <Ionicons name="trash" size={16} color={legacyColors.rose} style={{ marginTop: 4 }} />
           </TouchableOpacity>
         </View>
       </View>
@@ -105,7 +106,7 @@ export default function CouponsScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Mã giảm giá</Text>
         <TouchableOpacity style={styles.addBtn} onPress={() => { generateCode(); setShowAdd(true); }}>
-          <Ionicons name="add" size={20} color={colors.cream} />
+          <Ionicons name="add" size={20} color={legacyColors.cream} />
         </TouchableOpacity>
       </View>
 
@@ -146,15 +147,15 @@ export default function CouponsScreen() {
                 <View style={styles.codeRow}>
                   <Input value={ma} onChangeText={setMa} placeholder="Mã giảm giá" style={{ flex: 1 }} />
                   <TouchableOpacity style={styles.genBtn} onPress={generateCode}>
-                    <Ionicons name="shuffle" size={20} color={colors.cream} />
+                    <Ionicons name="shuffle" size={20} color={legacyColors.cream} />
                   </TouchableOpacity>
                 </View>
                 <View style={styles.typeRow}>
                   <TouchableOpacity style={[styles.typeBtn, loai === "phan_tram" && styles.typeBtnActive]} onPress={() => setLoai("phan_tram")}>
-                    <Text style={[styles.typeBtnText, loai === "phan_tram" && { color: colors.cream }]}>Phần trăm</Text>
+                    <Text style={[styles.typeBtnText, loai === "phan_tram" && { color: legacyColors.cream }]}>Phần trăm</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={[styles.typeBtn, loai === "so_tien" && styles.typeBtnActive]} onPress={() => setLoai("so_tien")}>
-                    <Text style={[styles.typeBtnText, loai === "so_tien" && { color: colors.cream }]}>Số tiền</Text>
+                    <Text style={[styles.typeBtnText, loai === "so_tien" && { color: legacyColors.cream }]}>Số tiền</Text>
                   </TouchableOpacity>
                 </View>
                 <Input label="Giá trị" value={giaTri} onChangeText={setGiaTri} keyboardType="numeric" />
@@ -177,28 +178,28 @@ export default function CouponsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 16, backgroundColor: colors.white, borderBottomWidth: 1, borderBottomColor: colors.stone[200] },
-  title: { fontSize: 18, fontWeight: "300", letterSpacing: 2, color: colors.espresso },
-  addBtn: { padding: 10, backgroundColor: colors.espresso, borderRadius: 8 },
+  container: { flex: 1, backgroundColor: legacyColors.cream },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 16, backgroundColor: legacyColors.white, borderBottomWidth: 1, borderBottomColor: legacyColors.stone[200] },
+  title: { fontSize: 18, fontWeight: "300", letterSpacing: 2, color: legacyColors.espresso },
+  addBtn: { padding: 10, backgroundColor: legacyColors.espresso, borderRadius: 8 },
   list: { padding: 12, gap: 12 },
-  card: { backgroundColor: colors.white, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.stone[300] },
+  card: { backgroundColor: legacyColors.white, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: legacyColors.stone[300] },
   cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  code: { fontSize: 14, fontWeight: "700", color: colors.espresso, fontFamily: "monospace" },
-  type: { fontSize: 16, fontWeight: "700", color: colors.rose, marginTop: 4 },
+  code: { fontSize: 14, fontWeight: "700", color: legacyColors.espresso, fontFamily: "monospace" },
+  type: { fontSize: 16, fontWeight: "700", color: legacyColors.rose, marginTop: 4 },
   rightSide: { alignItems: "flex-end", gap: 4 },
   cardFooter: { marginTop: 8, gap: 4 },
-  usage: { fontSize: 11, color: colors.stone[500] },
-  minOrder: { fontSize: 11, color: colors.stone[500] },
-  expiry: { fontSize: 11, color: colors.stone[400] },
+  usage: { fontSize: 11, color: legacyColors.stone[500] },
+  minOrder: { fontSize: 11, color: legacyColors.stone[500] },
+  expiry: { fontSize: 11, color: legacyColors.stone[400] },
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
-  modalContent: { backgroundColor: colors.white, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24 },
-  modalTitle: { fontSize: 18, fontWeight: "600", color: colors.espresso, marginBottom: 16 },
+  modalContent: { backgroundColor: legacyColors.white, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24 },
+  modalTitle: { fontSize: 18, fontWeight: "600", color: legacyColors.espresso, marginBottom: 16 },
   codeRow: { flexDirection: "row", gap: 8, alignItems: "flex-start" },
-  genBtn: { padding: 10, backgroundColor: colors.blush, borderRadius: 8, alignSelf: "flex-end" },
+  genBtn: { padding: 10, backgroundColor: legacyColors.blush, borderRadius: 8, alignSelf: "flex-end" },
   typeRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
-  typeBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: colors.stone[300], alignItems: "center" },
-  typeBtnActive: { backgroundColor: colors.espresso, borderColor: colors.espresso },
-  typeBtnText: { fontSize: 12, fontWeight: "600", color: colors.stone[500] },
+  typeBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: legacyColors.stone[300], alignItems: "center" },
+  typeBtnActive: { backgroundColor: legacyColors.espresso, borderColor: legacyColors.espresso },
+  typeBtnText: { fontSize: 12, fontWeight: "600", color: legacyColors.stone[500] },
   modalButtons: { flexDirection: "row", gap: 12, marginTop: 16 },
 });

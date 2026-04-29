@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, type ViewStyle } from 'react-native';
-import { colors, shadows } from '@/src/theme';
+import { shadows } from '@/src/theme';
+import { legacyColors } from '@/src/theme/legacy-colors';
 
 interface CardProps {
   children: React.ReactNode;
@@ -30,10 +31,10 @@ export default function Card({ children, style, onPress }: CardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.white,
+    backgroundColor: legacyColors.white,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.stone[300],
+    borderColor: legacyColors.stone[300],
     padding: 16,
     ...shadows.card,
   },

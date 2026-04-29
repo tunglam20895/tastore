@@ -6,7 +6,8 @@ import {
 import { usePathname, useRouter } from 'expo-router';
 import { useAuthStore } from '@/src/store/authStore';
 import { NotificationContext } from '@/src/hooks/useNotifications';
-import { colors, shadows, borderRadius } from '@/src/theme';
+import { shadows, borderRadius } from '@/src/theme';
+import { legacyColors } from '@/src/theme/legacy-colors';
 import { Ionicons } from '@expo/vector-icons';
 import { logout } from '@/src/api/auth';
 
@@ -78,7 +79,7 @@ export default function BottomDrawer({ visible, onClose }: BottomDrawerProps) {
               <Text style={styles.userRole}>{roleLabel}</Text>
             </View>
             <TouchableOpacity style={styles.closeBtn} onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <Ionicons name="close" size={22} color={colors.stone[400]} />
+              <Ionicons name="close" size={22} color={legacyColors.stone[400]} />
             </TouchableOpacity>
           </View>
 
@@ -95,7 +96,7 @@ export default function BottomDrawer({ visible, onClose }: BottomDrawerProps) {
                 activeOpacity={0.6}
               >
                 <View style={[styles.menuIconWrap, item.isSpecial && styles.menuIconWrapSpecial]}>
-                  <Ionicons name={item.icon} size={20} color={item.isSpecial ? colors.blush : colors.espresso} />
+                  <Ionicons name={item.icon} size={20} color={item.isSpecial ? legacyColors.blush : legacyColors.espresso} />
                   {item.label === 'Đơn hàng' && unreadCount > 0 && (
                     <View style={styles.menuBadge}>
                       <Text style={styles.menuBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
@@ -103,7 +104,7 @@ export default function BottomDrawer({ visible, onClose }: BottomDrawerProps) {
                   )}
                 </View>
                 <Text style={[styles.menuLabel, item.isSpecial && styles.menuLabelSpecial]}>{item.label}</Text>
-                <Ionicons name="chevron-forward" size={18} color={colors.stone[300]} />
+                <Ionicons name="chevron-forward" size={18} color={legacyColors.stone[300]} />
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -112,7 +113,7 @@ export default function BottomDrawer({ visible, onClose }: BottomDrawerProps) {
           <View style={styles.drawerFooter}>
             <View style={styles.divider} />
             <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.6}>
-              <Ionicons name="log-out-outline" size={20} color={colors.danger} />
+              <Ionicons name="log-out-outline" size={20} color={legacyColors.danger} />
               <Text style={styles.logoutText}>Đăng xuất</Text>
             </TouchableOpacity>
             <Text style={styles.versionText}>Trang Anh Store v1.0</Text>
@@ -130,7 +131,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   drawer: {
-    backgroundColor: colors.white,
+    backgroundColor: legacyColors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: DRAWER_HEIGHT,
@@ -147,27 +148,27 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.espresso,
+    backgroundColor: legacyColors.espresso,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.cream,
+    color: legacyColors.cream,
     letterSpacing: 1,
   },
   userInfo: { flex: 1, marginLeft: 12 },
-  userName: { fontSize: 17, fontWeight: '700', color: colors.espresso },
-  userRole: { fontSize: 12, color: colors.stone[400], marginTop: 2 },
-  closeBtn: { padding: 8, borderRadius: 20, backgroundColor: `${colors.stone[100]}80` },
-  divider: { height: 1, backgroundColor: colors.stone[100] },
+  userName: { fontSize: 17, fontWeight: '700', color: legacyColors.espresso },
+  userRole: { fontSize: 12, color: legacyColors.stone[400], marginTop: 2 },
+  closeBtn: { padding: 8, borderRadius: 20, backgroundColor: `${legacyColors.stone[100]}80` },
+  divider: { height: 1, backgroundColor: legacyColors.stone[100] },
   menuList: { paddingVertical: 8 },
   menuSectionTitle: {
     fontSize: 10,
     textTransform: 'uppercase',
     letterSpacing: 2,
-    color: colors.stone[400],
+    color: legacyColors.stone[400],
     fontWeight: '600',
     paddingHorizontal: 20,
     paddingVertical: 12,
@@ -182,17 +183,17 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: `${colors.blush}15`,
+    backgroundColor: `${legacyColors.blush}15`,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
-  menuIconWrapSpecial: { backgroundColor: `${colors.blush}25` },
+  menuIconWrapSpecial: { backgroundColor: `${legacyColors.blush}25` },
   menuBadge: {
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: colors.danger,
+    backgroundColor: legacyColors.danger,
     borderRadius: 8,
     minWidth: 16,
     height: 16,
@@ -200,17 +201,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 3,
   },
-  menuBadgeText: { fontSize: 8, fontWeight: '700', color: colors.white },
+  menuBadgeText: { fontSize: 8, fontWeight: '700', color: legacyColors.white },
   menuLabel: {
     flex: 1,
     fontSize: 15,
     fontWeight: '500',
-    color: colors.espresso,
+    color: legacyColors.espresso,
     marginLeft: 14,
   },
-  menuLabelSpecial: { color: colors.blush, fontWeight: '600' },
+  menuLabelSpecial: { color: legacyColors.blush, fontWeight: '600' },
   drawerFooter: { paddingTop: 8 },
   logoutBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 20 },
-  logoutText: { fontSize: 15, color: colors.danger, fontWeight: '600', marginLeft: 14 },
-  versionText: { textAlign: 'center', fontSize: 11, color: colors.stone[300], marginTop: 4 },
+  logoutText: { fontSize: 15, color: legacyColors.danger, fontWeight: '600', marginLeft: 14 },
+  versionText: { textAlign: 'center', fontSize: 11, color: legacyColors.stone[300], marginTop: 4 },
 });

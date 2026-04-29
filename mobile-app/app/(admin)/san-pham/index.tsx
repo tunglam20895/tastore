@@ -2,15 +2,17 @@ import React, { useCallback, useState } from "react";
 import { useDebounce } from "@/src/hooks/useDebounce";
 import {
   View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity,
-  RefreshControl, Modal, ScrollView,
+  RefreshControl, Modal, ScrollView, SafeAreaView,
 } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import { TopAppBar } from "@/src/components/ui/TopAppBar";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getProducts, deleteProduct } from "@/src/api/san-pham";
 import { getCategories } from "@/src/api/san-pham";
 import { LIMIT_DEFAULT } from "@/src/utils/constants";
-import { colors, shadows, borderRadius } from "@/src/theme";
+import { shadows, borderRadius } from "@/src/theme";
+import { legacyColors } from "@/src/theme/legacy-colors";
 import { formatMoney, formatNumber } from "@/src/utils/format";
 import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
 import EmptyState from "@/src/components/ui/EmptyState";
@@ -55,19 +57,18 @@ export default function ProductsScreen() {
   };
 
   const getStockLabel = (soLuong: number) => {
-    if (soLuong === 0) return { text: "Hết hàng", color: colors.danger, bg: `${colors.danger}12` };
-    if (soLuong <= 30) return { text: `Còn ${soLuong}`, color: colors.rose, bg: `${colors.rose}12` };
-    return { text: `Còn ${soLuong}`, color: colors.success, bg: `${colors.success}12` };
+    if (soLuong === 0) return { text: "Hết hàng", color: legacyColors.danger, bg: `${legacyColors.danger}12` };
+    if (soLuong <= 30) return { text: `Còn ${soLuong}`, color: legacyColors.rose, bg: `${legacyColors.rose}12` };
+    return { text: `Còn ${soLuong}`, color: legacyColors.success, bg: `${legacyColors.success}12` };
   };
 
   const renderItem = useCallback(({ item }: { item: any }) => {
     const stock = getStockLabel(item.soLuong || 0);
-    const stockColor = item.soLuong === 0 ? colors.danger : item.soLuong <= 30 ? colors.rose : colors.success;
+    const stockColor = item.soLuong === 0 ? legacyColors.danger : item.soLuong <= 30 ? legacyColors.rose : legacyColors.success;
     return (
       <TouchableOpacity
         style={[styles.card, shadows.card]}
         onPress={() => {
-          // Pass full item via query cache + route params
           router.push({
             pathname: "/(admin)/san-pham/[id]",
             params: { id: item.id, cachedData: JSON.stringify(item) },
@@ -75,10 +76,8 @@ export default function ProductsScreen() {
         }}
         activeOpacity={0.7}
       >
-        {/* Left accent bar */}
         <View style={[styles.cardAccent, { backgroundColor: stockColor }]} />
 
-        {/* Image */}
         {item.anhURL ? (
           <Image
             source={{ uri: item.anhURL }}
@@ -89,12 +88,11 @@ export default function ProductsScreen() {
           />
         ) : (
           <View style={[styles.productImage, styles.productImagePlaceholder]}>
-            <Ionicons name="image-outline" size={28} color={colors.stone[300]} />
+            <Ionicons name="image-outline" size={28} color={legacyColors.stone[300]} />
           </View>
         )}
 
         <View style={styles.cardContent}>
-          {/* Header */}
           <View style={styles.cardHeader}>
             <View style={{ flex: 1, paddingRight: 8 }}>
               <Text style={styles.cardTitle} numberOfLines={1}>{item.ten}</Text>
@@ -110,18 +108,17 @@ export default function ProductsScreen() {
                   params: { id: item.id, cachedData: JSON.stringify(item) },
                 })}
               >
-                <Ionicons name="pencil-outline" size={16} color={colors.stone[400]} />
+                <Ionicons name="pencil-outline" size={16} color={legacyColors.stone[400]} />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.actionBtn}
                 onPress={() => { setDeleteId(item.id); setDeleteName(item.ten); }}
               >
-                <Ionicons name="trash-outline" size={16} color={colors.rose} />
+                <Ionicons name="trash-outline" size={16} color={legacyColors.rose} />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Price & Stock row */}
           <View style={styles.cardBody}>
             <View>
               <Text style={styles.price}>{formatMoney(item.giaHienThi || item.giaGoc || 0)}</Text>
@@ -142,7 +139,6 @@ export default function ProductsScreen() {
             </View>
           </View>
 
-          {/* Sizes */}
           {item.sizes && item.sizes.length > 0 && (
             <View style={styles.sizesRow}>
               {item.sizes.slice(0, 6).map((s: any, i: number) => (
@@ -163,38 +159,37 @@ export default function ProductsScreen() {
   }, [router]);
 
   return (
-    <View style={styles.container}>
-      {/* Search Bar */}
+    <SafeAreaView style={styles.container}>
+      <TopAppBar title="TRANG ANH" showMenu showNotifications />
       <View style={styles.header}>
         <View style={styles.searchRow}>
           <View style={styles.searchBox}>
-            <Ionicons name="search" size={18} color={colors.stone[400]} />
+            <Ionicons name="search" size={18} color={legacyColors.stone[400]} />
             <TextInput
               style={styles.searchInput}
               value={search}
               onChangeText={(v) => { setSearch(v); setPage(1); }}
               placeholder="Tìm sản phẩm..."
-              placeholderTextColor={colors.stone[400]}
+              placeholderTextColor={legacyColors.stone[400]}
             />
             {search.length > 0 && (
               <TouchableOpacity onPress={() => { setSearch(""); setPage(1); }} style={styles.clearBtn}>
-                <Ionicons name="close-circle" size={18} color={colors.stone[300]} />
+                <Ionicons name="close-circle" size={18} color={legacyColors.stone[300]} />
               </TouchableOpacity>
             )}
           </View>
           <TouchableOpacity style={styles.filterBtn} onPress={() => setShowFilter(!showFilter)} activeOpacity={0.7}>
-            <Ionicons name="options-outline" size={20} color={colors.espresso} />
+            <Ionicons name="options-outline" size={20} color={legacyColors.espresso} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.addBtn}
             onPress={() => router.push("/(admin)/san-pham/add")}
             activeOpacity={0.8}
           >
-            <Ionicons name="add" size={22} color={colors.cream} />
+            <Ionicons name="add" size={22} color={legacyColors.cream} />
           </TouchableOpacity>
         </View>
 
-        {/* Filter panel */}
         {showFilter && (
           <View style={styles.filterPanel}>
             <Text style={styles.filterLabel}>Danh mục</Text>
@@ -221,7 +216,6 @@ export default function ProductsScreen() {
         )}
       </View>
 
-      {/* List */}
       {isLoading && !data ? (
         <LoadingSpinner size="full" label="Đang tải..." />
       ) : !data?.data?.length ? (
@@ -233,7 +227,7 @@ export default function ProductsScreen() {
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           refreshControl={
-            <RefreshControl refreshing={isFetching} onRefresh={() => refetch()} tintColor={colors.blush} />
+            <RefreshControl refreshing={isFetching} onRefresh={() => refetch()} tintColor={legacyColors.blush} />
           }
           onEndReached={() => {
             if (page < (data?.totalPages ?? 1)) setPage((p) => p + 1);
@@ -258,16 +252,16 @@ export default function ProductsScreen() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream },
+  container: { flex: 1, backgroundColor: legacyColors.cream },
   header: {
-    backgroundColor: colors.white,
+    backgroundColor: legacyColors.white,
     borderBottomWidth: 1,
-    borderBottomColor: `${colors.stone[200]}40`,
+    borderBottomColor: `${legacyColors.stone[200]}40`,
   },
   searchRow: {
     flexDirection: "row",
@@ -279,7 +273,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.cream,
+    backgroundColor: legacyColors.cream,
     borderRadius: borderRadius.sm,
     paddingHorizontal: 12,
     height: 42,
@@ -287,7 +281,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: colors.espresso,
+    color: legacyColors.espresso,
     marginLeft: 8,
   },
   clearBtn: {
@@ -298,7 +292,7 @@ const styles = StyleSheet.create({
     height: 42,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: colors.cream,
+    backgroundColor: legacyColors.cream,
     borderRadius: borderRadius.sm,
   },
   addBtn: {
@@ -306,7 +300,7 @@ const styles = StyleSheet.create({
     height: 42,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: colors.espresso,
+    backgroundColor: legacyColors.espresso,
     borderRadius: borderRadius.sm,
   },
   filterPanel: {
@@ -317,7 +311,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     textTransform: "uppercase",
     letterSpacing: 1,
-    color: colors.stone[600],
+    color: legacyColors.stone[600],
     marginBottom: 8,
     fontWeight: "600",
   },
@@ -330,23 +324,19 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.stone[300],
-    backgroundColor: colors.white,
+    borderColor: legacyColors.stone[300],
+    backgroundColor: legacyColors.white,
     flexShrink: 0,
   },
   chipActive: {
-    backgroundColor: colors.espresso,
-    borderColor: colors.espresso,
+    backgroundColor: legacyColors.espresso,
+    borderColor: legacyColors.espresso,
   },
-  chipText: { fontSize: 11, color: colors.stone[500], fontWeight: '500' },
-  chipTextActive: { color: colors.cream, fontWeight: '600' },
-
-  // List
+  chipText: { fontSize: 11, color: legacyColors.stone[500], fontWeight: '500' },
+  chipTextActive: { color: legacyColors.cream, fontWeight: '600' },
   list: { padding: 12, gap: 10, paddingBottom: 100 },
-
-  // Product card
   card: {
-    backgroundColor: colors.white,
+    backgroundColor: legacyColors.white,
     borderRadius: borderRadius.md,
     overflow: "hidden",
     flexDirection: "row",
@@ -361,7 +351,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   productImagePlaceholder: {
-    backgroundColor: `${colors.stone[100]}80`,
+    backgroundColor: `${legacyColors.stone[100]}80`,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -378,11 +368,11 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 14,
     fontWeight: "700",
-    color: colors.espresso,
+    color: legacyColors.espresso,
   },
   categoryBadge: {
     fontSize: 10,
-    color: colors.blush,
+    color: legacyColors.blush,
     fontWeight: '600',
     marginTop: 2,
   },
@@ -393,7 +383,7 @@ const styles = StyleSheet.create({
   actionBtn: {
     padding: 6,
     borderRadius: 8,
-    backgroundColor: `${colors.stone[100]}80`,
+    backgroundColor: `${legacyColors.stone[100]}80`,
   },
   cardBody: {
     flexDirection: "row",
@@ -404,7 +394,7 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 16,
     fontWeight: "800",
-    color: colors.espresso,
+    color: legacyColors.espresso,
   },
   discountRow: {
     flexDirection: "row",
@@ -414,18 +404,18 @@ const styles = StyleSheet.create({
   },
   oldPrice: {
     fontSize: 11,
-    color: colors.stone[400],
+    color: legacyColors.stone[400],
     textDecorationLine: "line-through",
   },
   discountBadge: {
-    backgroundColor: `${colors.rose}15`,
+    backgroundColor: `${legacyColors.rose}15`,
     borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
   discountText: {
     fontSize: 10,
-    color: colors.rose,
+    color: legacyColors.rose,
     fontWeight: "700",
   },
   noDiscountSpacer: { height: 16 },
@@ -457,12 +447,12 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: `${colors.stone[200]}80`,
-    backgroundColor: `${colors.stone[100]}40`,
+    borderColor: `${legacyColors.stone[200]}80`,
+    backgroundColor: `${legacyColors.stone[100]}40`,
   },
   sizeTagText: {
     fontSize: 10,
-    color: colors.stone[500],
+    color: legacyColors.stone[500],
     fontWeight: '500',
   },
 });

@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '@/src/theme';
+import { legacyColors } from '@/src/theme/legacy-colors';
 
 interface BadgeProps {
   text: string;
@@ -10,11 +10,11 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<string, { color: string; bgColor: string }> = {
-  success: { color: colors.success, bgColor: '#DCFCE7' },
-  warning: { color: colors.warning, bgColor: '#FEF3C7' },
-  danger: { color: colors.danger, bgColor: '#FEE2E2' },
-  info: { color: colors.info, bgColor: '#DBEAFE' },
-  custom: { color: colors.stone[500], bgColor: colors.stone[100] },
+  success: { color: legacyColors.success, bgColor: '#DCFCE7' },
+  warning: { color: legacyColors.warning, bgColor: '#FEF3C7' },
+  danger: { color: legacyColors.danger, bgColor: '#FEE2E2' },
+  info: { color: legacyColors.info, bgColor: '#DBEAFE' },
+  custom: { color: legacyColors.stone[500], bgColor: legacyColors.stone[100] },
 };
 
 export default function Badge({ text, color, bgColor, variant = 'custom' }: BadgeProps) {

@@ -33,7 +33,7 @@ export default function AdminDetailHeader({
       <View style={styles.header}>
         {/* Left: Back + Title */}
         <TouchableOpacity style={styles.backBtn} onPress={handleBack} activeOpacity={0.7} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <Ionicons name="arrow-back" size={22} color={colors.espresso} />
+          <Ionicons name="arrow-back" size={22} color={colors.primary} />
         </TouchableOpacity>
         <View style={styles.titleContainer}>
           <Text style={styles.title} numberOfLines={1}>{title}</Text>
@@ -43,17 +43,17 @@ export default function AdminDetailHeader({
         <View style={styles.rightSection}>
           {showAI && (
             <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/(admin)/ai-chat' as any)} activeOpacity={0.7}>
-              <Ionicons name="sparkles" size={20} color={colors.blush} />
+              <Ionicons name="sparkles" size={20} color={colors.secondary} />
             </TouchableOpacity>
           )}
           {showNotification && (
             <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/(admin)/don-hang' as any)} activeOpacity={0.7}>
-              <Ionicons name="notifications-outline" size={20} color={colors.espresso} />
+              <Ionicons name="notifications-outline" size={20} color={colors.primary} />
             </TouchableOpacity>
           )}
           {rightAction && (
             <TouchableOpacity style={styles.iconBtn} onPress={rightAction.onPress} activeOpacity={0.7}>
-              <Ionicons name={rightAction.icon as any} size={20} color={colors.espresso} />
+              <Ionicons name={rightAction.icon as any} size={20} color={colors.primary} />
             </TouchableOpacity>
           )}
         </View>
@@ -64,23 +64,23 @@ export default function AdminDetailHeader({
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: colors.white,
+    backgroundColor: colors['surface-container-lowest'],
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: colors.white,
+    backgroundColor: colors['surface-container-lowest'],
     borderBottomWidth: 1,
-    borderBottomColor: `${colors.stone[200]}60`,
+    borderBottomColor: colors['outline-variant'],
     minHeight: 44,
   },
   backBtn: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: `${colors.blush}12`,
+    backgroundColor: colors['surface-container'],
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.espresso,
+    color: colors.primary,
   },
   rightSection: {
     flexDirection: 'row',
@@ -101,6 +101,6 @@ const styles = StyleSheet.create({
   iconBtn: {
     padding: 8,
     borderRadius: 10,
-    backgroundColor: `${colors.blush}12`,
+    backgroundColor: colors['surface-container'],
   },
 });

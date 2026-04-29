@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Switch, RefreshCont
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getStaff, createStaff, updateStaff, deleteStaff } from "@/src/api/nhan-vien";
 import { colors } from "@/src/theme";
+import { legacyColors } from "@/src/theme/legacy-colors";
 import { ALL_QUYEN } from "@/src/types";
 import { formatMoney } from "@/src/utils/format";
 import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
@@ -107,7 +108,7 @@ export default function StaffScreen() {
       <View style={styles.cardFooter}>
         <Text style={styles.salary}>Lương: {formatMoney(item.luong || 0)}</Text>
         <TouchableOpacity onPress={() => setDeleteId(item.id)}>
-          <Ionicons name="trash" size={16} color={colors.rose} />
+          <Ionicons name="trash" size={16} color={legacyColors.rose} />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -118,7 +119,7 @@ export default function StaffScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Nhân viên</Text>
         <TouchableOpacity style={styles.addBtn} onPress={openAdd}>
-          <Ionicons name="add" size={20} color={colors.cream} />
+          <Ionicons name="add" size={20} color={legacyColors.cream} />
         </TouchableOpacity>
       </View>
 
@@ -189,28 +190,28 @@ export default function StaffScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 16, backgroundColor: colors.white, borderBottomWidth: 1, borderBottomColor: colors.stone[200] },
-  title: { fontSize: 18, fontWeight: "300", letterSpacing: 2, color: colors.espresso },
-  addBtn: { padding: 10, backgroundColor: colors.espresso, borderRadius: 8 },
+  container: { flex: 1, backgroundColor: legacyColors.cream },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 16, backgroundColor: legacyColors.white, borderBottomWidth: 1, borderBottomColor: legacyColors.stone[200] },
+  title: { fontSize: 18, fontWeight: "300", letterSpacing: 2, color: legacyColors.espresso },
+  addBtn: { padding: 10, backgroundColor: legacyColors.espresso, borderRadius: 8 },
   list: { padding: 12, gap: 12 },
-  card: { backgroundColor: colors.white, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.stone[300] },
+  card: { backgroundColor: legacyColors.white, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: legacyColors.stone[300] },
   cardHeader: { flexDirection: "row", alignItems: "center" },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.espresso, justifyContent: "center", alignItems: "center" },
-  avatarText: { fontSize: 16, fontWeight: "700", color: colors.cream },
-  name: { fontSize: 14, fontWeight: "600", color: colors.espresso },
-  username: { fontSize: 12, color: colors.stone[400] },
+  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: legacyColors.espresso, justifyContent: "center", alignItems: "center" },
+  avatarText: { fontSize: 16, fontWeight: "700", color: legacyColors.cream },
+  name: { fontSize: 14, fontWeight: "600", color: legacyColors.espresso },
+  username: { fontSize: 12, color: legacyColors.stone[400] },
   quyenRow: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 8 },
   cardFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8 },
-  salary: { fontSize: 12, fontWeight: "600", color: colors.espresso },
+  salary: { fontSize: 12, fontWeight: "600", color: legacyColors.espresso },
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
-  modalContent: { backgroundColor: colors.white, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24 },
-  modalTitle: { fontSize: 18, fontWeight: "600", color: colors.espresso, marginBottom: 16 },
-  label: { fontSize: 10, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: colors.stone[600], marginBottom: 6 },
+  modalContent: { backgroundColor: legacyColors.white, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24 },
+  modalTitle: { fontSize: 18, fontWeight: "600", color: legacyColors.espresso, marginBottom: 16 },
+  label: { fontSize: 10, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: legacyColors.stone[600], marginBottom: 6 },
   quyenGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 },
-  quyenChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: colors.stone[300] },
-  quyenChipActive: { backgroundColor: colors.espresso, borderColor: colors.espresso },
-  quyenChipText: { fontSize: 11, color: colors.stone[500] },
+  quyenChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: legacyColors.stone[300] },
+  quyenChipActive: { backgroundColor: legacyColors.espresso, borderColor: legacyColors.espresso },
+  quyenChipText: { fontSize: 11, color: legacyColors.stone[500] },
   switchRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   modalButtons: { flexDirection: "row", gap: 12, marginTop: 8 },
 });

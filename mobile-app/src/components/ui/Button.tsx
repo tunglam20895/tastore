@@ -7,7 +7,7 @@ import {
   View,
   type ViewStyle,
 } from 'react-native';
-import { colors } from '@/src/theme';
+import { legacyColors } from '@/src/theme/legacy-colors';
 
 interface ButtonProps {
   title: string;
@@ -29,17 +29,17 @@ export default function Button({
   const isDisabled = disabled || loading;
 
   const bgColors: Record<string, string> = {
-    primary: colors.espresso,
-    secondary: colors.blush,
+    primary: legacyColors.espresso,
+    secondary: legacyColors.blush,
     ghost: 'transparent',
-    danger: colors.danger,
+    danger: legacyColors.danger,
   };
 
   const textColors: Record<string, string> = {
-    primary: colors.cream,
-    secondary: colors.espresso,
-    ghost: colors.stone[500],
-    danger: colors.white,
+    primary: legacyColors.cream,
+    secondary: legacyColors.espresso,
+    ghost: legacyColors.stone[500],
+    danger: legacyColors.white,
   };
 
   return (
@@ -51,7 +51,7 @@ export default function Button({
         {
           backgroundColor: bgColors[variant],
           borderWidth: variant === 'ghost' ? 1 : 0,
-          borderColor: variant === 'ghost' ? colors.stone[300] : 'transparent',
+          borderColor: variant === 'ghost' ? legacyColors.stone[300] : 'transparent',
           opacity: isDisabled ? 0.5 : 1,
         },
         style,
