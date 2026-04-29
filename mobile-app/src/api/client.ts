@@ -47,8 +47,10 @@ apiClient.interceptors.response.use(
     if (error?.response?.status === 401) {
       const url: string = error.config?.url || '';
       const isAuthEndpoint = url.includes('/api/authenticate');
-      if (!isAuthEndpoint) {
-        // Token hết hạn hoặc không hợp lệ → logout
+      const isOptionalNotificationEndpoint = url.includes('/api/thong-bao');
+      // Không logout vì lỗi quyền thông báo: thông báo là tính năng phụ, không phải auth core.
+      // Logout chỉ khi token thật sự hết hạn/không hợp lệ ở API nghiệp vụ chính.
+      if (!isAuthEndpoint && !isOptionalNotificationEndpoint) {
         const { logout } = useAuthStore.getState();
         logout().catch(() => {});
       }

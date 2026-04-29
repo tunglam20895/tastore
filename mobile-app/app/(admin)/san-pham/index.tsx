@@ -7,6 +7,7 @@ import {
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { TopAppBar } from "@/src/components/ui/TopAppBar";
+import { useRequireQuyen } from "@/src/hooks/useRequireQuyen";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getProducts, deleteProduct } from "@/src/api/san-pham";
 import { getCategories } from "@/src/api/san-pham";
@@ -23,6 +24,7 @@ import { showSuccess, showError, showInfo } from "@/src/utils/toast";
 const IMAGE_W = 70;
 
 export default function ProductsScreen() {
+  useRequireQuyen('san-pham');
   const router = useRouter();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);

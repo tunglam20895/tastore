@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useRequireQuyen } from "@/src/hooks/useRequireQuyen";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, KeyboardAvoidingView, Platform } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSettings, updateSettings } from "@/src/api/cai-dat";
@@ -18,6 +19,7 @@ import * as ImagePicker from "expo-image-picker";
 import { showSuccess, showError, showInfo } from "@/src/utils/toast";
 
 export default function SettingsScreen() {
+  useRequireQuyen(); // admin only
   const { role } = useAuthStore();
   const isAdmin = role === "admin";
   const queryClient = useQueryClient();

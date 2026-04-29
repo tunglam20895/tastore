@@ -1,14 +1,50 @@
-import { Stack } from "expo-router";
+import { Stack, usePathname, useRouter } from "expo-router";
 import { useAuthStore } from "@/src/store/authStore";
 import { useNotifications, NotificationContext } from "@/src/hooks/useNotifications";
 import { colors } from "@/src/theme";
-import { View, Platform, StyleSheet, SafeAreaView } from "react-native";
+import { View, Platform, StyleSheet, SafeAreaView, BackHandler } from "react-native";
 import { BottomNavBar } from "@/src/components/ui/BottomNavBar";
+import { useEffect } from "react";
 
 const isWeb = Platform.OS === "web";
 
+// Các màn hình "root" của admin — không cho back ra ngoài
+const ROOT_ROUTES = [
+  "/(admin)/dashboard",
+  "/(admin)/don-hang",
+  "/(admin)/san-pham",
+  "/(admin)/khach-hang",
+  "/(admin)/more",
+];
+
 export default function AdminLayout() {
   const notifHook = useNotifications();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // Chặn nút back vật lý Android khi đang ở root admin
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+
+    const onBack = () => {
+      const isRoot = ROOT_ROUTES.some((r) => pathname.startsWith(r.replace("/(admin)", "")));
+      if (isRoot) {
+        // Đang ở root → không cho thoát ra login
+        return true; // chặn
+      }
+      // Các màn detail (san-pham/[id], don-hang/[id]...) → cho back về list
+      if (router.canGoBack()) {
+        router.back();
+        return true;
+      }
+      // Fallback: về dashboard thay vì auth
+      router.replace("/(admin)/dashboard" as any);
+      return true;
+    };
+
+    const sub = BackHandler.addEventListener("hardwareBackPress", onBack);
+    return () => sub.remove();
+  }, [pathname, router]);
 
   return (
     <NotificationContext.Provider value={notifHook}>

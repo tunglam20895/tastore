@@ -2,6 +2,7 @@ import React, { useState, useCallback } from "react";
 import { useDebounce } from "@/src/hooks/useDebounce";
 import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, RefreshControl, Modal, KeyboardAvoidingView, Platform, ScrollView, SafeAreaView } from "react-native";
 import { TopAppBar } from "@/src/components/ui/TopAppBar";
+import { useRequireQuyen } from "@/src/hooks/useRequireQuyen";
 import { showSuccess, showError, showInfo } from "@/src/utils/toast";
 import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -21,6 +22,7 @@ import ConfirmDialog from "@/src/components/ui/ConfirmDialog";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function CustomersScreen() {
+  useRequireQuyen('khach-hang');
   const router = useRouter();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);

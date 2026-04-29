@@ -14,6 +14,7 @@ import { colors, spacing, typography, borderRadius, shadows } from '../../../src
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
+import { useRequireQuyen } from '@/src/hooks/useRequireQuyen';
 import { useQuery } from '@tanstack/react-query';
 import { getOrders } from '@/src/api/don-hang';
 import { formatMoney } from '@/src/utils/format';
@@ -92,6 +93,7 @@ const toOrderCard = (order: ApiOrder): OrderCardData => {
 };
 
 export default function DonHangScreen() {
+  useRequireQuyen('don-hang');
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');

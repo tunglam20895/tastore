@@ -1,15 +1,29 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { verifyAccess } from '@/lib/auth'
+import { verifyAdminPassword } from '@/lib/auth'
+import { verifyStaffToken } from '@/lib/staff-auth'
 import { CORS_HEADERS, handleOptions } from "@/lib/cors";
 export const dynamic = "force-dynamic";
 
 export async function OPTIONS() { return handleOptions(); }
 
+// Thông báo là quyền mặc định cho mọi user đã đăng nhập.
+// Không phụ thuộc quyền màn hình (dashboard/sản phẩm/đơn hàng...).
+async function verifyNotificationAccess(request: NextRequest): Promise<boolean> {
+  const pw = request.headers.get('x-admin-password');
+  if (pw && verifyAdminPassword(pw)) return true;
+
+  const token = request.headers.get('staff-token') || request.cookies.get('staff-token')?.value;
+  if (!token) return false;
+
+  const session = await verifyStaffToken(token);
+  return !!session;
+}
+
 export async function GET(request: NextRequest) {
   try {
-    if (!await verifyAccess(request, 'dashboard')) {
+    if (!await verifyNotificationAccess(request)) {
       return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
     }
 
@@ -47,7 +61,7 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    if (!await verifyAccess(request, 'dashboard')) {
+    if (!await verifyNotificationAccess(request)) {
       return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
     }
 

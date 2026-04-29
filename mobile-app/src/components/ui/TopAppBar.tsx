@@ -1,9 +1,10 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { colors, typography, spacing } from '../../theme';
 import { MaterialIcons } from '@expo/vector-icons';
 import { NotificationContext } from '@/src/hooks/useNotifications';
 import { useRouter } from 'expo-router';
+import NotificationDrawer from '@/src/components/admin/NotificationDrawer';
 
 interface TopAppBarProps {
   title?: string;
@@ -28,15 +29,14 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
 }) => {
   const router = useRouter();
   const notifCtx = useContext(NotificationContext);
-  // Ưu tiên prop nếu truyền vào, fallback lấy từ context
   const unreadCount = unreadProp ?? notifCtx?.unreadCount ?? 0;
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleNotificationPress = () => {
     if (onNotificationPress) {
       onNotificationPress();
     } else {
-      // Mặc định điều hướng sang màn thông báo
-      router.push('/(admin)/don-hang' as any);
+      setDrawerOpen(true);
     }
   };
 
@@ -85,6 +85,11 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
           </TouchableOpacity>
         )}
       </View>
+
+      <NotificationDrawer
+        visible={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+      />
     </View>
   );
 };
@@ -100,6 +105,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
     height: 64,
+    overflow: 'visible',
+    zIndex: 10,
   },
   leftSection: {
     flexDirection: 'row',
@@ -113,9 +120,13 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     padding: spacing.xs,
+    overflow: 'visible',
   },
   notifWrapper: {
     position: 'relative',
+    overflow: 'visible',
+    width: 24,
+    height: 24,
   },
   badge: {
     position: 'absolute',

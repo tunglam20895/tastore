@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import { useRequireQuyen } from "@/src/hooks/useRequireQuyen";
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Switch, RefreshControl, Modal, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCoupons, createCoupon, toggleCoupon, deleteCoupon } from "@/src/api/ma-giam-gia";
@@ -15,6 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { showSuccess, showError, showInfo } from "@/src/utils/toast";
 
 export default function CouponsScreen() {
+  useRequireQuyen('ma-giam-gia');
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [showAdd, setShowAdd] = useState(false);
@@ -39,22 +41,35 @@ export default function CouponsScreen() {
   };
 
   const handleCreate = async () => {
-    if (!ma || !giaTri) { showError("Điền đủ mã và giá trị"); return; }
+    if (!ma.trim()) { showError("Vui lòng nhập mã"); return; }
+    if (!giaTri || isNaN(parseFloat(giaTri))) { showError("Giá trị không hợp lệ"); return; }
+    if (loai === 'phan_tram' && parseFloat(giaTri) > 100) {
+      showError("Phần trăm không được vượt quá 100"); return;
+    }
     try {
       await createCoupon({
-        ma: ma.toUpperCase(),
+        ma: ma.trim().toUpperCase(),
         loai,
-        gia_tri: parseFloat(giaTri),
-        gia_tri_toi_da: giaTriToiDa ? parseFloat(giaTriToiDa) : null,
-        don_hang_toi_thieu: donHangToiThieu ? parseFloat(donHangToiThieu) : 0,
-        so_luong: soLuong ? parseInt(soLuong) : 0,
+        giaTri: parseFloat(giaTri),
+        giaTriToiDa: giaTriToiDa ? parseFloat(giaTriToiDa) : null,
+        donHangToiThieu: donHangToiThieu ? parseFloat(donHangToiThieu) : 0,
+        soLuong: soLuong ? parseInt(soLuong) : 1,
       });
       queryClient.invalidateQueries({ queryKey: ["coupons"] });
       setShowAdd(false);
       setMa(""); setGiaTri(""); setGiaTriToiDa(""); setDonHangToiThieu(""); setSoLuong("");
       showSuccess("Đã tạo mã giảm giá");
-    } catch {
-      showError("Không thể tạo mã giảm giá");
+    } catch (err: any) {
+      const apiMsg = err?.response?.data?.error || err?.response?.data?.message;
+      const status = err?.response?.status;
+      if (status === 401 || status === 403) {
+        showError("Bạn không có quyền tạo mã giảm giá");
+      } else if (status === 409 || apiMsg?.toLowerCase?.().includes('exist')) {
+        showError("Mã đã tồn tại, vui lòng chọn mã khác");
+      } else {
+        showError(apiMsg || "Không thể tạo mã giảm giá");
+      }
+      console.error('[ma-giam-gia] create error:', err?.response?.data || err);
     }
   };
 

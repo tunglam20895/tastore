@@ -15,7 +15,7 @@ export async function createCoupon(data: Record<string, unknown>) {
 }
 
 export async function toggleCoupon(id: string, conHieuLuc: boolean) {
-  const res = await apiClient.put(`/api/ma-giam-gia/${id}`, { con_hieu_luc: conHieuLuc });
+  const res = await apiClient.put(`/api/ma-giam-gia/${id}`, { conHieuLuc });
   return res.data;
 }
 

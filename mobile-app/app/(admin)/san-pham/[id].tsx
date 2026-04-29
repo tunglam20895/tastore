@@ -5,8 +5,8 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useQueryClient } from "@tanstack/react-query";
-import { updateProduct, deleteProduct, getCategories, generateMoTa } from "@/src/api/san-pham";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getProduct, updateProduct, deleteProduct, getCategories, generateMoTa } from "@/src/api/san-pham";
 import { uploadImage } from "@/src/utils/upload";
 import { showSuccess, showError, showInfo } from "@/src/utils/toast";
 import { colors, shadows, borderRadius } from "@/src/theme";
@@ -33,24 +33,27 @@ export default function EditProductScreen() {
   const [uploading, setUploading] = useState(false);
   const [generating, setGenerating] = useState(false);
 
-  // Try to get cached data from list first (fast, no extra API call)
+  // Cached data từ list (hiển thị nhanh trong khi chờ API)
   const cached = params.cachedData ? (() => {
-    try { 
-      return JSON.parse(params.cachedData); 
-    } catch { 
-      return null; 
-    }
+    try { return JSON.parse(params.cachedData); } catch { return null; }
   })() : null;
-  const cachedProduct = cached ? { data: cached, isLoading: false } : undefined;
 
-  // Only call API if no cached data
-  const { data, isLoading } = cachedProduct || {
-    data: undefined,
-    isLoading: false,
-  };
+  // Luôn gọi API để lấy data đầy đủ (bao gồm sizes, soLuong)
+  const { data, isLoading } = useQuery({
+    queryKey: ["product", id],
+    queryFn: () => getProduct(id),
+    enabled: !!id && id !== "undefined" && id !== "null",
+    initialData: cached || undefined,
+    staleTime: 30 * 1000,
+  });
 
-  const { data: categoriesData } = useQueryClient().getQueryData<{ data: any[] }>(["categories"]) || { data: [] };
-  const categories = categoriesData || [];
+  // Categories từ cache list (đã preload)
+  const categoriesCache = queryClient.getQueryData<any>(["categories"]);
+  const categories = Array.isArray(categoriesCache?.data)
+    ? categoriesCache.data
+    : Array.isArray(categoriesCache)
+    ? categoriesCache
+    : [];
 
   const [ten, setTen] = useState(data?.ten || "");
   const [giaGoc, setGiaGoc] = useState(data?.giaGoc?.toString() || "");
@@ -264,14 +267,49 @@ export default function EditProductScreen() {
                 </View>
               </View>
             )}
-            <View style={styles.stockInfo}>
-              <Ionicons name="cube-outline" size={14} color={totalStock > 0 ? colors.success : colors.danger} />
-              <Text style={[styles.stockText, { color: totalStock > 0 ? colors.success : colors.danger }]}>
-                {totalStock} SP
-              </Text>
-            </View>
           </View>
         )}
+
+        {/* Stock summary card — luôn hiển thị */}
+        <View style={[styles.stockCard, shadows.card]}>
+          <View style={styles.stockHeader}>
+            <Ionicons name="cube-outline" size={18} color={legacyColors.espresso} />
+            <Text style={styles.stockTitle}>Tồn kho</Text>
+          </View>
+          <View style={styles.stockBody}>
+            <View style={styles.stockNumberWrap}>
+              <Text style={[styles.stockNumber, { color: totalStock > 0 ? colors.success : colors.danger }]}>
+                {totalStock}
+              </Text>
+              <Text style={styles.stockUnit}>sản phẩm</Text>
+            </View>
+            <View style={styles.stockBadgeWrap}>
+              {totalStock === 0 ? (
+                <View style={[styles.stockBadge, { backgroundColor: `${colors.danger}15` }]}>
+                  <Text style={[styles.stockBadgeText, { color: colors.danger }]}>Hết hàng</Text>
+                </View>
+              ) : totalStock <= 10 ? (
+                <View style={[styles.stockBadge, { backgroundColor: '#FEF3C7' }]}>
+                  <Text style={[styles.stockBadgeText, { color: '#D97706' }]}>Sắp hết</Text>
+                </View>
+              ) : (
+                <View style={[styles.stockBadge, { backgroundColor: `${colors.success}15` }]}>
+                  <Text style={[styles.stockBadgeText, { color: colors.success }]}>Còn hàng</Text>
+                </View>
+              )}
+            </View>
+          </View>
+          {sizes.length > 0 && (
+            <View style={styles.stockSizes}>
+              {sizes.map((s) => (
+                <View key={s.ten} style={styles.stockSizeChip}>
+                  <Text style={styles.stockSizeName}>{s.ten}</Text>
+                  <Text style={styles.stockSizeQty}>{s.soLuong}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
 
         {/* Form */}
         <Input label="Tên sản phẩm" value={ten} onChangeText={setTen} placeholder="Nhập tên sản phẩm" />
@@ -382,6 +420,87 @@ const styles = StyleSheet.create({
   discountText: { fontSize: 10, color: legacyColors.rose, fontWeight: '700' },
   stockInfo: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   stockText: { fontSize: 12, fontWeight: '600' },
+
+  // Stock summary card
+  stockCard: {
+    backgroundColor: legacyColors.white,
+    borderRadius: borderRadius.sm,
+    padding: 14,
+    gap: 10,
+  },
+  stockHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  stockTitle: {
+    fontSize: 11,
+    textTransform: 'uppercase',
+    color: legacyColors.stone[600],
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  stockBody: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  stockNumberWrap: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+  },
+  stockNumber: {
+    fontSize: 28,
+    fontWeight: '800',
+  },
+  stockUnit: {
+    fontSize: 12,
+    color: legacyColors.stone[400],
+  },
+  stockBadgeWrap: {},
+  stockBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  stockBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  stockSizes: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: legacyColors.stone[200],
+  },
+  stockSizeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: `${legacyColors.blush}10`,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: `${legacyColors.blush}40`,
+  },
+  stockSizeName: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: legacyColors.espresso,
+  },
+  stockSizeQty: {
+    fontSize: 11,
+    color: legacyColors.stone[500],
+    backgroundColor: legacyColors.cream,
+    paddingHorizontal: 4,
+    borderRadius: 4,
+  },
 
   label: { fontSize: 10, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: legacyColors.stone[600], marginBottom: 6 },
   labelValue: { textTransform: 'none', color: legacyColors.espresso, fontWeight: '500' },

@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import { useRequireQuyen } from "@/src/hooks/useRequireQuyen";
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Switch, RefreshControl, Modal, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getStaff, createStaff, updateStaff, deleteStaff } from "@/src/api/nhan-vien";
@@ -16,6 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { showSuccess, showError, showInfo } from "@/src/utils/toast";
 
 export default function StaffScreen() {
+  useRequireQuyen(); // admin only
   const queryClient = useQueryClient();
   const [showAdd, setShowAdd] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -49,14 +51,31 @@ export default function StaffScreen() {
   };
 
   const handleSave = async () => {
-    if (!ten || (!editingStaff && !username) || (!editingStaff && !password)) {
-      showError("Điền đủ thông tin"); return;
+    if (!ten.trim()) { showError("Vui lòng nhập tên"); return; }
+    if (!editingStaff) {
+      if (!username.trim()) { showError("Vui lòng nhập username"); return; }
+      if (!password.trim()) { showError("Vui lòng nhập mật khẩu"); return; }
+      if (password.length < 6) { showError("Mật khẩu tối thiểu 6 ký tự"); return; }
+    } else if (password && password.length < 6) {
+      showError("Mật khẩu tối thiểu 6 ký tự"); return;
     }
+
     try {
-      const d: Record<string, unknown> = { ten, quyen, luong: parseFloat(luong) || 0, con_hoat_dong: conHoatDong };
-      if (!editingStaff) { d.username = username; d.password = password; }
+      // Backend nhận camelCase: conHoatDong (KHÔNG phải con_hoat_dong)
+      const d: Record<string, unknown> = {
+        ten: ten.trim(),
+        quyen,
+        luong: parseFloat(luong) || 0,
+        conHoatDong,
+      };
+      if (!editingStaff) {
+        d.username = username.trim();
+        d.password = password;
+      } else if (password) {
+        d.password = password;
+      }
+
       if (editingStaff) {
-        if (password) d.password = password;
         await updateStaff(editingStaff.id, d);
       } else {
         await createStaff(d);
@@ -64,8 +83,17 @@ export default function StaffScreen() {
       queryClient.invalidateQueries({ queryKey: ["staff"] });
       setShowAdd(false);
       showSuccess(editingStaff ? "Đã cập nhật" : "Đã thêm nhân viên");
-    } catch {
-      showError("Không thể lưu");
+    } catch (err: any) {
+      const apiMsg = err?.response?.data?.error;
+      const status = err?.response?.status;
+      if (status === 401 || status === 403) {
+        showError("Bạn không có quyền quản lý nhân viên");
+      } else if (status === 409) {
+        showError(apiMsg || "Username đã tồn tại");
+      } else {
+        showError(apiMsg || "Không thể lưu");
+      }
+      console.error('[nhan-vien] save error:', err?.response?.data || err);
     }
   };
 
@@ -93,10 +121,17 @@ export default function StaffScreen() {
         </View>
         <View style={{ flex: 1, marginLeft: 12 }}>
           <Text style={styles.name}>{item.ten}</Text>
-          <Text style={styles.username}>{item.username}</Text>
+          <View style={styles.usernameRow}>
+            <Ionicons name="at-circle-outline" size={13} color={legacyColors.blush} />
+            <Text style={styles.username}>{item.username}</Text>
+          </View>
         </View>
         <Switch value={item.conHoatDong} onValueChange={() => {
-          updateStaff(item.id, { con_hoat_dong: !item.conHoatDong }).then(() => queryClient.invalidateQueries({ queryKey: ["staff"] }));
+          updateStaff(item.id, { conHoatDong: !item.conHoatDong })
+            .then(() => queryClient.invalidateQueries({ queryKey: ["staff"] }))
+            .catch((err) => {
+              showError(err?.response?.data?.error || "Không thể cập nhật");
+            });
         }} />
       </View>
       <View style={styles.quyenRow}>
@@ -156,7 +191,17 @@ export default function StaffScreen() {
               <View style={styles.modalContent}>
                 <Text style={styles.modalTitle}>{editingStaff ? "Sửa nhân viên" : "Thêm nhân viên"}</Text>
                 <Input label="Tên" value={ten} onChangeText={setTen} />
-                {!editingStaff && <Input label="Username" value={username} onChangeText={setUsername} autoCapitalize="none" />}
+                {editingStaff ? (
+                  <View style={styles.readonlyField}>
+                    <Text style={styles.readonlyLabel}>Tên đăng nhập</Text>
+                    <View style={styles.readonlyValueWrap}>
+                      <Ionicons name="at-circle-outline" size={16} color={legacyColors.blush} />
+                      <Text style={styles.readonlyValue}>{username}</Text>
+                    </View>
+                  </View>
+                ) : (
+                  <Input label="Tên đăng nhập" value={username} onChangeText={setUsername} autoCapitalize="none" />
+                )}
                 <Input label="Mật khẩu" value={password} onChangeText={setPassword} secureTextEntry placeholder={editingStaff ? "Để trống nếu không đổi" : ""} />
                 <Input label="Lương (VNĐ)" value={luong} onChangeText={setLuong} keyboardType="numeric" />
 
@@ -200,7 +245,8 @@ const styles = StyleSheet.create({
   avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: legacyColors.espresso, justifyContent: "center", alignItems: "center" },
   avatarText: { fontSize: 16, fontWeight: "700", color: legacyColors.cream },
   name: { fontSize: 14, fontWeight: "600", color: legacyColors.espresso },
-  username: { fontSize: 12, color: legacyColors.stone[400] },
+  usernameRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
+  username: { fontSize: 12, fontWeight: "600", color: legacyColors.blush, fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace" },
   quyenRow: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 8 },
   cardFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8 },
   salary: { fontSize: 12, fontWeight: "600", color: legacyColors.espresso },
@@ -214,4 +260,8 @@ const styles = StyleSheet.create({
   quyenChipText: { fontSize: 11, color: legacyColors.stone[500] },
   switchRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   modalButtons: { flexDirection: "row", gap: 12, marginTop: 8 },
+  readonlyField: { marginBottom: 12 },
+  readonlyLabel: { fontSize: 10, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: legacyColors.stone[600], marginBottom: 6 },
+  readonlyValueWrap: { flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: legacyColors.cream, borderRadius: 8, padding: 12, borderWidth: 1, borderColor: legacyColors.stone[200] },
+  readonlyValue: { fontSize: 14, fontWeight: "600", color: legacyColors.espresso, fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace" },
 });
