@@ -38,8 +38,6 @@ export default function AdminKhachHangPage() {
   const [saving, setSaving] = useState(false);
   const { showSuccess, showError } = useToast();
 
-  const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : "";
-
   const loadTrangThai = useCallback((signal?: AbortSignal) => {
     fetch("/api/trang-thai-kh", { signal })
       .then((r) => r.json())
@@ -52,7 +50,7 @@ export default function AdminKhachHangPage() {
     const params = new URLSearchParams({ page: String(p), limit: String(limit) });
     if (tt) params.set("trang_thai", tt);
     if (s) params.set("search", s);
-    fetch(`/api/khach-hang?${params}`, { headers: { "x-admin-password": adminPassword || "" }, signal })
+    fetch(`/api/khach-hang?${params}`, { signal })
       .then((r) => r.json())
       .then((d) => {
         if (d.success) {
@@ -64,7 +62,7 @@ export default function AdminKhachHangPage() {
       })
       .catch((err) => { if (err.name !== "AbortError") {} })
       .finally(() => setLoading(false));
-  }, [adminPassword, limit]);
+  }, [limit]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -89,9 +87,7 @@ export default function AdminKhachHangPage() {
     setModalOrders([]);
     setSelectedKH(null);
     try {
-      const res = await fetch(`/api/khach-hang/${encodeURIComponent(sdt)}`, {
-        headers: { "x-admin-password": adminPassword || "" },
-      });
+      const res = await fetch(`/api/khach-hang/${encodeURIComponent(sdt)}`);
       const d = await res.json();
       if (d.success) {
         setSelectedKH(d.data.khachHang);
@@ -116,7 +112,7 @@ export default function AdminKhachHangPage() {
     try {
       const res = await fetch(`/api/khach-hang/${encodeURIComponent(selectedKH.sdt)}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword || "" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ trangThai: editTrangThai, ghiChu: editGhiChu }),
       });
       const d = await res.json();

@@ -21,7 +21,7 @@ function decodePayload<T>(str: string): T {
 
 // ── HMAC-SHA256 sign ────────────────────────────────────────────────────────
 async function hmacSign(data: string): Promise<string> {
-  const secret = process.env.ADMIN_PASSWORD ?? 'change-me';
+  const secret = process.env.AUTH_SECRET ?? process.env.ADMIN_PASSWORD ?? 'change-me';
   const key = await crypto.subtle.importKey(
     'raw', enc.encode(secret),
     { name: 'HMAC', hash: 'SHA-256' },
@@ -68,8 +68,10 @@ export interface StaffSession {
 }
 
 export async function createStaffToken(session: StaffSession): Promise<string> {
-  // Không set exp → session tồn tại vĩnh viễn cho đến khi đăng xuất thủ công
-  const payload = encodePayload({ ...session });
+  const payload = encodePayload({
+    ...session,
+    exp: Date.now() + 1000 * 60 * 60 * 24 * 7,
+  });
   const sig = await hmacSign(payload);
   return `${payload}.${sig}`;
 }
@@ -83,7 +85,7 @@ export async function verifyStaffToken(token: string): Promise<StaffSession | nu
     const expected = await hmacSign(payload);
     if (sig !== expected) return null;
     const data = decodePayload<StaffSession & { exp?: number }>(payload);
-    // Bỏ kiểm tra exp — token không expire
+    if (typeof data.exp === 'number' && data.exp <= Date.now()) return null;
     return { id: data.id, ten: data.ten, username: data.username, quyen: data.quyen };
   } catch { return null; }
 }

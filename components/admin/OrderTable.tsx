@@ -22,14 +22,12 @@ export default function OrderTable({
   const { showSuccess, showError } = useToast();
   const { trangThais } = useTrangThaiDH();
 
-  const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
-
   const handleStatusChange = async (orderId: string, status: string) => {
     setUpdating(orderId);
     try {
       const res = await fetch(`/api/don-hang/${orderId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword || "" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ trangThai: status }),
       });
       const data = await res.json();

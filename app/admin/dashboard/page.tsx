@@ -201,9 +201,6 @@ export default function DashboardPage() {
   const [tuNgay, setTuNgay] = useState(() => firstDayOfMonthISO());
   const [denNgay, setDenNgay] = useState(() => todayISO());
 
-  const adminPassword =
-    typeof window !== "undefined" ? localStorage.getItem("admin-password") : "";
-
   const hasFilterRef = useRef(false);
 
   const load = useCallback((initialLoad = false, signal?: AbortSignal) => {
@@ -219,7 +216,6 @@ export default function DashboardPage() {
 
     Promise.all([
       fetch(`/api/thong-ke?${params}`, {
-        headers: { "x-admin-password": adminPassword || "" },
         signal,
       }).then((r) => r.json()),
       minLoading,
@@ -231,7 +227,7 @@ export default function DashboardPage() {
       })
       .catch((err) => { if (err.name !== "AbortError") {} })
       .finally(() => setLoading(false));
-  }, [adminPassword, tuNgay, denNgay]);
+  }, [tuNgay, denNgay]);
 
   useEffect(() => {
     const controller = new AbortController();

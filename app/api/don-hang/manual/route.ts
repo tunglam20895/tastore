@@ -3,8 +3,7 @@ import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { appendDonHangToSheet } from '@/lib/google-sheets'
 import { sendOrderNotification } from '@/lib/telegram'
-import { verifyAccess } from '@/lib/auth'
-import { verifyStaffToken } from '@/lib/staff-auth'
+import { verifyAccess, getAuthenticatedActorName } from '@/lib/auth'
 import type { DonHang } from '@/types'
 
 function mapRow(row: Record<string, unknown>): DonHang {
@@ -25,17 +24,7 @@ function mapRow(row: Record<string, unknown>): DonHang {
 
 /** Lấy tên người đang đăng nhập (admin hoặc nhân viên) từ request */
 async function getNguoiXuLy(request: NextRequest): Promise<string> {
-  const pw = request.headers.get('x-admin-password')
-  const adminPw = process.env.ADMIN_PASSWORD
-  if (pw && adminPw && pw === adminPw) return 'Admin'
-
-  const token = request.cookies.get('staff-token')?.value
-  if (token) {
-    const session = await verifyStaffToken(token)
-    if (session) return session.ten
-  }
-
-  return 'Chưa có'
+  return (await getAuthenticatedActorName(request)) || 'Chưa có'
 }
 
 export async function POST(request: NextRequest) {

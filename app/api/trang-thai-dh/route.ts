@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { verifyAdminPassword } from '@/lib/auth'
+import { verifyAccess } from '@/lib/auth'
 import { CORS_HEADERS, handleOptions } from "@/lib/cors";
 
 export const dynamic = "force-dynamic";
@@ -46,8 +46,7 @@ export async function GET() {
 // PUT — chỉ admin, cập nhật màu
 export async function PUT(request: NextRequest) {
   try {
-    const pw = request.headers.get('x-admin-password');
-    if (!pw || !verifyAdminPassword(pw)) {
+    if (!await verifyAccess(request)) {
       return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS });
     }
 
@@ -75,8 +74,7 @@ export async function PUT(request: NextRequest) {
 // POST — chỉ admin, thêm trạng thái mới
 export async function POST(request: NextRequest) {
   try {
-    const pw = request.headers.get('x-admin-password');
-    if (!pw || !verifyAdminPassword(pw)) {
+    if (!await verifyAccess(request)) {
       return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS });
     }
 
@@ -133,8 +131,7 @@ export async function POST(request: NextRequest) {
 // DELETE — chỉ admin, xóa trạng thái
 export async function DELETE(request: NextRequest) {
   try {
-    const pw = request.headers.get('x-admin-password');
-    if (!pw || !verifyAdminPassword(pw)) {
+    if (!await verifyAccess(request)) {
       return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS });
     }
 

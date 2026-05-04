@@ -43,7 +43,6 @@ export default function AdminOrdersPage() {
 
   const { showSuccess, showError } = useToast();
   const { trangThais } = useTrangThaiDH();
-  const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
 
   const loadOrders = useCallback((
     p: number, tt: string, ten: string, sdt: string, tu: string, den: string, signal?: AbortSignal, lim?: number
@@ -57,7 +56,7 @@ export default function AdminOrdersPage() {
     if (sdt) params.set("search_sdt", sdt);
     if (tu) params.set("tu_ngay", tu);
     if (den) params.set("den_ngay", den);
-    fetch(`/api/don-hang?${params}`, { headers: { "x-admin-password": adminPassword || "" }, signal })
+    fetch(`/api/don-hang?${params}`, { signal })
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -69,7 +68,7 @@ export default function AdminOrdersPage() {
       })
       .catch((err) => { if (err.name !== "AbortError") {} })
       .finally(() => setLoading(false));
-  }, [adminPassword, limit]);
+  }, [limit]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -108,7 +107,7 @@ export default function AdminOrdersPage() {
     try {
       const res = await fetch("/api/don-hang/bulk-status", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword || "" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: selectedIds, trangThai: status }),
       });
       const data = await res.json();
@@ -130,7 +129,7 @@ export default function AdminOrdersPage() {
     try {
       const res = await fetch("/api/don-hang/export-excel", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword || "" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids }),
       });
       if (!res.ok) {
@@ -161,9 +160,7 @@ export default function AdminOrdersPage() {
   const handleExportChotDonHang = async () => {
     setExportLoading(true);
     try {
-      const res = await fetch(`/api/don-hang?trang_thai=${encodeURIComponent("Chốt để lên đơn")}`, {
-        headers: { "x-admin-password": adminPassword || "" },
-      });
+      const res = await fetch(`/api/don-hang?trang_thai=${encodeURIComponent("Chốt để lên đơn")}`);
       const data = await res.json();
       if (!data.success || !data.data?.length) {
         showError("Không có đơn nào ở trạng thái Chốt để lên đơn");

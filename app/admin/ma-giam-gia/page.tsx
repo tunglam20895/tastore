@@ -22,7 +22,6 @@ function CouponForm({
   onCancel: () => void;
 }) {
   const isEditing = !!coupon;
-  const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
   const { showSuccess, showError } = useToast();
 
   const [ma, setMa] = useState(coupon?.ma || "");
@@ -61,7 +60,7 @@ function CouponForm({
 
       const res = await fetch(endpoint, {
         method,
-        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword || "" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
       const data = await res.json();
@@ -263,12 +262,11 @@ export default function AdminCouponsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [limit, setLimit] = useState(20);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; ma: string } | null>(null);
-  const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
   const { showSuccess, showError } = useToast();
 
   const loadCoupons = useCallback((p = 1, signal?: AbortSignal) => {
     setLoading(true);
-    fetch(`/api/ma-giam-gia?page=${p}&limit=${limit}`, { headers: { "x-admin-password": adminPassword || "" }, signal })
+    fetch(`/api/ma-giam-gia?page=${p}&limit=${limit}`, { signal })
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -280,7 +278,7 @@ export default function AdminCouponsPage() {
       })
       .catch((err) => { if (err.name !== "AbortError") {} })
       .finally(() => setLoading(false));
-  }, [adminPassword, limit]);
+  }, [limit]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -294,7 +292,6 @@ export default function AdminCouponsPage() {
     try {
       const res = await fetch(`/api/ma-giam-gia/${confirmDelete.id}`, {
         method: "DELETE",
-        headers: { "x-admin-password": adminPassword || "" },
       });
       const data = await res.json();
       if (data.success) {
@@ -316,7 +313,7 @@ export default function AdminCouponsPage() {
     try {
       const res = await fetch(`/api/ma-giam-gia/${coupon.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword || "" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ conHieuLuc: !coupon.conHieuLuc }),
       });
       const data = await res.json();

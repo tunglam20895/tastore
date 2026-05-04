@@ -6,6 +6,7 @@ export async function OPTIONS() { return handleOptions(); }
 export async function POST() {
   const response = NextResponse.json({ success: true }, { headers: CORS_HEADERS });
   const clear = { maxAge: 0, path: "/" };
+  response.cookies.set("admin-token", "", clear);
   response.cookies.set("admin-auth", "", clear);
   response.cookies.set("admin-role", "", clear);
   response.cookies.set("staff-token", "", clear);

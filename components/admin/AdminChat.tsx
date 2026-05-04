@@ -13,10 +13,7 @@ type AdminChatProps = {
 };
 
 function getAuthHeaders(): Record<string, string> {
-  const pw = typeof window !== 'undefined' ? localStorage.getItem('admin-password') : '';
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (pw) headers['x-admin-password'] = pw;
-  return headers;
+  return { 'Content-Type': 'application/json' };
 }
 
 function formatMoney(n: number): string {

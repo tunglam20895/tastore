@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { verifyAccess } from '@/lib/auth'
-import { verifyStaffToken } from '@/lib/staff-auth'
+import { verifyAccess, getAuthenticatedActorName } from '@/lib/auth'
 import ExcelJS from 'exceljs'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -25,15 +24,7 @@ function mapRow(row: Record<string, unknown>): DonHang {
 }
 
 async function getNguoiXuLy(request: NextRequest): Promise<string> {
-  const pw = request.headers.get('x-admin-password')
-  const adminPw = process.env.ADMIN_PASSWORD
-  if (pw && adminPw && pw === adminPw) return 'Admin'
-  const token = request.cookies.get('staff-token')?.value
-  if (token) {
-    const session = await verifyStaffToken(token)
-    if (session) return session.ten
-  }
-  return 'Chưa có'
+  return (await getAuthenticatedActorName(request)) || 'Chưa có'
 }
 
 // POST: nhận danh sách id, điền vào template Excel, rồi chuyển trạng thái sang "Đã lên đơn"

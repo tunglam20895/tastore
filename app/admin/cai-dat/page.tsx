@@ -14,8 +14,6 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [uploading, setUploading] = useState(false);
-
-  const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : "";
   const { showToast, showSuccess, showError } = useToast();
   const [confirmDeleteDH, setConfirmDeleteDH] = useState<{ key: string; ten: string } | null>(null);
   const [confirmDeleteKH, setConfirmDeleteKH] = useState<{ id: string; ten: string } | null>(null);
@@ -31,7 +29,6 @@ export default function AdminSettingsPage() {
       formData.append("bucket", "shop-assets");
       const res = await fetch("/api/upload", {
         method: "POST",
-        headers: { "x-admin-password": adminPassword || "" },
         body: formData,
       });
       const data = await res.json();
@@ -58,7 +55,7 @@ export default function AdminSettingsPage() {
     try {
       const res = await fetch("/api/trang-thai-dh", {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword || "" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ key: tt.key, mau }),
       });
       const d = await res.json();
@@ -80,7 +77,7 @@ export default function AdminSettingsPage() {
     try {
       const res = await fetch("/api/trang-thai-dh", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword || "" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ten: newStatusName.trim(), mau: newStatusColor }),
       });
       const d = await res.json();
@@ -104,7 +101,6 @@ export default function AdminSettingsPage() {
     try {
       const res = await fetch(`/api/trang-thai-dh?key=${encodeURIComponent(confirmDeleteDH.key)}`, {
         method: "DELETE",
-        headers: { "x-admin-password": adminPassword || "" },
       });
       const d = await res.json();
       if (d.success) {
@@ -146,7 +142,7 @@ export default function AdminSettingsPage() {
     try {
       const res = await fetch("/api/trang-thai-kh", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword || "" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ten: newTenTT.trim(), mau: newMauTT }),
       });
       const d = await res.json();
@@ -169,7 +165,6 @@ export default function AdminSettingsPage() {
     try {
       const res = await fetch(`/api/trang-thai-kh/${confirmDeleteKH.id}`, {
         method: "DELETE",
-        headers: { "x-admin-password": adminPassword || "" },
       });
       const d = await res.json();
       if (d.success) {
@@ -191,11 +186,10 @@ export default function AdminSettingsPage() {
   const handleSave = async () => {
     setSaving(true);
     setSuccess(false);
-    const adminPw = localStorage.getItem("admin-password") || "";
     try {
       const res = await fetch("/api/cai-dat", {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "x-admin-password": adminPw },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(localSettings),
       });
       const data = await res.json();

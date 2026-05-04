@@ -1,23 +1,14 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { verifyAccess } from '@/lib/auth'
-import { verifyStaffToken } from '@/lib/staff-auth'
+import { verifyAccess, getAuthenticatedActorName } from '@/lib/auth'
 import type { DonHang, CartItem } from '@/types'
 import { CORS_HEADERS, handleOptions } from "@/lib/cors";
 
 export async function OPTIONS() { return handleOptions(); }
 
 async function getNguoiXuLy(request: NextRequest): Promise<string> {
-  const pw = request.headers.get('x-admin-password')
-  const adminPw = process.env.ADMIN_PASSWORD
-  if (pw && adminPw && pw === adminPw) return 'Admin'
-  const token = request.cookies.get('staff-token')?.value
-  if (token) {
-    const session = await verifyStaffToken(token)
-    if (session) return session.ten
-  }
-  return 'Chưa có'
+  return (await getAuthenticatedActorName(request)) || 'Chưa có'
 }
 
 export async function GET(

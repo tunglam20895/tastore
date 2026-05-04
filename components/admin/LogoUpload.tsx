@@ -15,8 +15,6 @@ export default function LogoUpload({
   const inputRef = useRef<HTMLInputElement>(null);
   const { showSuccess, showError } = useToast();
 
-  const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
-
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -29,7 +27,6 @@ export default function LogoUpload({
 
       const res = await fetch("/api/upload", {
         method: "POST",
-        headers: { "x-admin-password": adminPassword || "" },
         body: formData,
       });
 

@@ -19,7 +19,6 @@ interface CreateOrderModalProps {
 
 export default function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModalProps) {
   const { showSuccess, showError } = useToast();
-  const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<SanPham[]>([]);
@@ -41,9 +40,7 @@ export default function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateO
     setSearchLoading(true);
     setSearched(true);
     try {
-      const res = await fetch(`/api/san-pham?search=${encodeURIComponent(term)}&limit=30`, {
-        headers: { "x-admin-password": adminPassword || "" },
-      });
+      const res = await fetch(`/api/san-pham?search=${encodeURIComponent(term)}&limit=30`);
       const data = await res.json();
       if (data.success) setSearchResults(data.data);
     } catch {
@@ -51,7 +48,7 @@ export default function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateO
     } finally {
       setSearchLoading(false);
     }
-  }, [adminPassword, showError]);
+  }, [showError]);
 
   useEffect(() => {
     const timer = setTimeout(() => { if (searchTerm.trim()) searchProducts(searchTerm); }, 400);
@@ -114,7 +111,7 @@ export default function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateO
     try {
       const res = await fetch("/api/don-hang/manual", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword || "" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tenKH: tenKH.trim(), sdt: sdt.trim(), diaChi: diaChi.trim(), sanPham: cartItems }),
       });
       const data = await res.json();

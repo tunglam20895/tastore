@@ -1,22 +1,21 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { verifyAdminPassword } from '@/lib/auth'
+import { verifyAccess } from '@/lib/auth'
 import { hashPassword } from '@/lib/staff-auth'
 import { CORS_HEADERS, handleOptions } from "@/lib/cors";
 
 export async function OPTIONS() { return handleOptions(); }
 
-function isAdmin(request: NextRequest) {
-  const pw = request.headers.get('x-admin-password')
-  return pw && verifyAdminPassword(pw)
+async function isAdmin(request: NextRequest) {
+  return verifyAccess(request)
 }
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  if (!isAdmin(request)) {
+  if (!await isAdmin(request)) {
     return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
   }
   try {
@@ -47,7 +46,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  if (!isAdmin(request)) {
+  if (!await isAdmin(request)) {
     return NextResponse.json({ success: false, error: 'Không có quyền' }, { status: 401, headers: CORS_HEADERS })
   }
   try {

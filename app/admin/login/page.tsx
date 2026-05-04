@@ -60,7 +60,7 @@ export default function AdminLoginPage() {
 
       if (data.success) {
         if (data.role === "admin") {
-          localStorage.setItem("admin-password", password);
+          localStorage.removeItem("admin-password");
           window.location.replace("/admin/dashboard");
         } else {
           // Nhân viên: vào trang đầu tiên được phép

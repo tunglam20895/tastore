@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifyAdminPassword } from "@/lib/auth";
+import { verifyAdminPassword, createAdminToken } from "@/lib/auth";
 import { verifyPassword, createStaffToken } from "@/lib/staff-auth";
 import { supabase } from "@/lib/supabase";
 import { CORS_HEADERS, handleOptions } from "@/lib/cors";
@@ -18,12 +18,14 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: false, error: "Sai mật khẩu" }, { status: 401, headers: CORS_HEADERS });
       }
       const response = NextResponse.json({ success: true, role: "admin" }, { headers: CORS_HEADERS });
+      const adminToken = await createAdminToken();
       const cookieBase = {
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax" as const,
         path: "/",
         maxAge: 60 * 60 * 24,
       };
+      response.cookies.set("admin-token", adminToken, { ...cookieBase, httpOnly: true });
       response.cookies.set("admin-auth", "true", { ...cookieBase, httpOnly: true });
       response.cookies.set("admin-role", "true", cookieBase);
       return response;

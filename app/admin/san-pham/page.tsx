@@ -38,8 +38,6 @@ export default function AdminProductsPage() {
   const [tonKho, setTonKho] = useState("");
   const [conHang, setConHang] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
-
-  const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
@@ -97,7 +95,6 @@ export default function AdminProductsPage() {
     try {
       const res = await fetch(`/api/san-pham/${confirmDelete.id}`, {
         method: "DELETE",
-        headers: { "x-admin-password": adminPassword || "" },
       });
       const data = await res.json();
       if (data.success) {

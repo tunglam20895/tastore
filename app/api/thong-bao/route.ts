@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { verifyAdminPassword } from '@/lib/auth'
+import { hasAdminAccess } from '@/lib/auth'
 import { verifyStaffToken } from '@/lib/staff-auth'
 import { CORS_HEADERS, handleOptions } from "@/lib/cors";
 export const dynamic = "force-dynamic";
@@ -11,8 +11,7 @@ export async function OPTIONS() { return handleOptions(); }
 // Thông báo là quyền mặc định cho mọi user đã đăng nhập.
 // Không phụ thuộc quyền màn hình (dashboard/sản phẩm/đơn hàng...).
 async function verifyNotificationAccess(request: NextRequest): Promise<boolean> {
-  const pw = request.headers.get('x-admin-password');
-  if (pw && verifyAdminPassword(pw)) return true;
+  if (await hasAdminAccess(request)) return true;
 
   const token = request.headers.get('staff-token') || request.cookies.get('staff-token')?.value;
   if (!token) return false;

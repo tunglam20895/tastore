@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyStaffToken } from "@/lib/staff-auth";
+import { verifyAdminToken } from "@/lib/auth";
 
 // Map route segment → key quyền yêu cầu
 const ROUTE_QUYEN: Record<string, string> = {
@@ -36,8 +37,8 @@ export async function middleware(request: NextRequest) {
 
   if (pathname === "/admin/login") return NextResponse.next();
 
-  const adminCookie = request.cookies.get("admin-auth");
-  if (adminCookie?.value === "true") return NextResponse.next(); // Admin: full access
+  const adminToken = request.cookies.get("admin-token")?.value;
+  if (adminToken && await verifyAdminToken(adminToken)) return NextResponse.next();
 
   // Kiểm tra staff token
   const staffToken = request.cookies.get("staff-token")?.value;

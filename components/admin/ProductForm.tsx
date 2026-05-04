@@ -17,7 +17,6 @@ export default function ProductForm({
   onCancel: () => void;
 }) {
   const isEditing = !!product;
-  const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : null;
   const { showSuccess, showError } = useToast();
 
   const [ten, setTen] = useState(product?.ten || "");
@@ -78,7 +77,7 @@ export default function ProductForm({
     try {
       const res = await fetch("/api/generate-mo-ta", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword || "" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tenSanPham: ten, danhMuc }),
       });
       const data = await res.json();
@@ -121,7 +120,6 @@ export default function ProductForm({
         method,
         headers: {
           "Content-Type": "application/json",
-          "x-admin-password": adminPassword || "",
         },
         body: JSON.stringify(body),
       });

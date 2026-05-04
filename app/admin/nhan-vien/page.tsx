@@ -6,9 +6,7 @@ import { ALL_QUYEN } from "@/types";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { useToast } from "@/contexts/ToastContext";
-
-const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : "";
-const headers = () => ({ "Content-Type": "application/json", "x-admin-password": adminPassword || "" });
+const headers = () => ({ "Content-Type": "application/json" });
 
 type FormState = {
   ten: string;

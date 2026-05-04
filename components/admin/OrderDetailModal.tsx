@@ -29,13 +29,10 @@ export default function OrderDetailModal({ orderId, onClose, onStatusChange }: P
   const { showSuccess, showError } = useToast();
   const { trangThais } = useTrangThaiDH();
 
-  const adminPassword = typeof window !== "undefined" ? localStorage.getItem("admin-password") : "";
-
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     fetch(`/api/don-hang/${orderId}`, {
-      headers: { "x-admin-password": adminPassword || "" },
       signal: controller.signal,
     })
       .then((r) => r.json())
@@ -43,7 +40,7 @@ export default function OrderDetailModal({ orderId, onClose, onStatusChange }: P
       .catch((err) => { if (err.name !== "AbortError") {} })
       .finally(() => setLoading(false));
     return () => controller.abort();
-  }, [orderId, adminPassword]);
+  }, [orderId]);
 
   const handleStatusChange = async (status: string) => {
     if (!order) return;
@@ -51,7 +48,7 @@ export default function OrderDetailModal({ orderId, onClose, onStatusChange }: P
     try {
       const res = await fetch(`/api/don-hang/${order.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword || "" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ trangThai: status }),
       });
       const d = await res.json();
