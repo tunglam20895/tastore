@@ -59,11 +59,11 @@ export default function LoginScreen() {
     try {
       if (mode === "admin") {
         const data = await loginAdmin(password);
-        if (data.success) {
-          await loginAsAdmin(password);
+        if (data.success && data.adminToken) {
+          await loginAsAdmin(data.adminToken);
           router.replace("/(admin)");
         } else {
-          setError(data.error || "Sai mật khẩu");
+          setError(data.error || "Không thể tạo phiên đăng nhập admin");
         }
       } else {
         const data = await loginStaff(username.trim(), password);

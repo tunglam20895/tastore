@@ -18,7 +18,7 @@ type ChatMessage = {
 
 export default function AIChatScreen() {
   const router = useRouter();
-  const { role, adminPassword, staffToken } = useAuthStore();
+  const { role, adminToken, staffToken } = useAuthStore();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -31,7 +31,7 @@ export default function AIChatScreen() {
 
   const getAuthHeaders = (): Record<string, string> => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (role === 'admin' && adminPassword) headers['x-admin-password'] = adminPassword;
+    if (role === 'admin' && adminToken) headers['admin-token'] = adminToken;
     else if (role === 'staff' && staffToken) headers['staff-token'] = staffToken;
     return headers;
   };

@@ -70,8 +70,11 @@ export async function verifyAdminToken(token: string): Promise<boolean> {
 }
 
 export async function hasAdminAccess(request: NextRequest): Promise<boolean> {
-  const token = request.cookies.get('admin-token')?.value;
-  if (token && await verifyAdminToken(token)) return true;
+  const headerToken = request.headers.get('admin-token');
+  if (headerToken && await verifyAdminToken(headerToken)) return true;
+
+  const cookieToken = request.cookies.get('admin-token')?.value;
+  if (cookieToken && await verifyAdminToken(cookieToken)) return true;
 
   const pw = request.headers.get('x-admin-password');
   return !!(pw && verifyAdminPassword(pw));

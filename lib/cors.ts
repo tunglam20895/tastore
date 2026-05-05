@@ -5,7 +5,7 @@
 export const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-admin-password, staff-token, x-requested-with',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, admin-token, x-admin-password, staff-token, x-requested-with',
   'Access-Control-Max-Age': '86400',
 } as const;
 

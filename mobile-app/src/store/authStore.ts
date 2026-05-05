@@ -16,7 +16,7 @@ type AuthRole = 'admin' | 'staff' | null;
 
 interface AuthState {
   role: AuthRole;
-  adminPassword: string | null;
+  adminToken: string | null;
   staffToken: string | null;
   staffQuyen: string[];
   staffTen: string;
@@ -24,7 +24,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
 
-  loginAsAdmin: (password: string) => Promise<void>;
+  loginAsAdmin: (token: string) => Promise<void>;
   loginAsStaff: (token: string, quyen: string[], ten: string, id: string) => Promise<void>;
   logout: () => Promise<void>;
   initialize: () => Promise<void>;
@@ -32,7 +32,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set) => ({
   role: null,
-  adminPassword: null,
+  adminToken: null,
   staffToken: null,
   staffQuyen: [],
   staffTen: '',
@@ -42,11 +42,17 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   initialize: async () => {
     try {
-      const adminPw = await SecureStore.getItemAsync('admin-password');
-      if (adminPw && adminPw.trim().length > 0) {
-        set({ role: 'admin', adminPassword: adminPw, isAuthenticated: true, isLoading: false });
+      const adminToken = await SecureStore.getItemAsync('admin-token');
+      if (adminToken && adminToken.trim().length > 0) {
+        set({ role: 'admin', adminToken, isAuthenticated: true, isLoading: false });
         return;
       }
+
+      const legacyAdminPassword = await SecureStore.getItemAsync('admin-password');
+      if (legacyAdminPassword) {
+        await SecureStore.deleteItemAsync('admin-password').catch(() => {});
+      }
+
       const staffToken = await SecureStore.getItemAsync('staff-token');
       if (staffToken && staffToken.trim().length > 0) {
         const quyen = (await SecureStore.getItemAsync('staff-quyen'))?.split(',').filter(Boolean) || [];
@@ -59,13 +65,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isAuthenticated: false, isLoading: false });
   },
 
-  loginAsAdmin: async (password: string) => {
-    await SecureStore.setItemAsync('admin-password', password);
+  loginAsAdmin: async (token: string) => {
+    await SecureStore.setItemAsync('admin-token', token);
+    await SecureStore.deleteItemAsync('admin-password').catch(() => {});
     await SecureStore.deleteItemAsync('staff-token').catch(() => {});
     await SecureStore.deleteItemAsync('staff-quyen').catch(() => {});
     await SecureStore.deleteItemAsync('staff-ten').catch(() => {});
     await SecureStore.deleteItemAsync('staff-id').catch(() => {});
-    set({ role: 'admin', adminPassword: password, staffToken: null, staffQuyen: [], staffTen: '', staffId: null, isAuthenticated: true });
+    set({ role: 'admin', adminToken: token, staffToken: null, staffQuyen: [], staffTen: '', staffId: null, isAuthenticated: true });
   },
 
   loginAsStaff: async (token: string, quyen: string[], ten: string, id: string) => {
@@ -73,16 +80,18 @@ export const useAuthStore = create<AuthState>((set) => ({
     await SecureStore.setItemAsync('staff-quyen', quyen.join(','));
     await SecureStore.setItemAsync('staff-ten', ten);
     await SecureStore.setItemAsync('staff-id', id);
+    await SecureStore.deleteItemAsync('admin-token').catch(() => {});
     await SecureStore.deleteItemAsync('admin-password').catch(() => {});
-    set({ role: 'staff', staffToken: token, staffQuyen: quyen, staffTen: ten, staffId: id, adminPassword: null, isAuthenticated: true });
+    set({ role: 'staff', staffToken: token, staffQuyen: quyen, staffTen: ten, staffId: id, adminToken: null, isAuthenticated: true });
   },
 
   logout: async () => {
+    await SecureStore.deleteItemAsync('admin-token').catch(() => {});
     await SecureStore.deleteItemAsync('admin-password').catch(() => {});
     await SecureStore.deleteItemAsync('staff-token').catch(() => {});
     await SecureStore.deleteItemAsync('staff-quyen').catch(() => {});
     await SecureStore.deleteItemAsync('staff-ten').catch(() => {});
     await SecureStore.deleteItemAsync('staff-id').catch(() => {});
-    set({ role: null, adminPassword: null, staffToken: null, staffQuyen: [], staffTen: '', staffId: null, isAuthenticated: false });
+    set({ role: null, adminToken: null, staffToken: null, staffQuyen: [], staffTen: '', staffId: null, isAuthenticated: false });
   },
 }));

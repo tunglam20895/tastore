@@ -17,8 +17,8 @@ export async function POST(request: NextRequest) {
       if (!verifyAdminPassword(password)) {
         return NextResponse.json({ success: false, error: "Sai mật khẩu" }, { status: 401, headers: CORS_HEADERS });
       }
-      const response = NextResponse.json({ success: true, role: "admin" }, { headers: CORS_HEADERS });
       const adminToken = await createAdminToken();
+      const response = NextResponse.json({ success: true, role: "admin", adminToken }, { headers: CORS_HEADERS });
       const cookieBase = {
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax" as const,

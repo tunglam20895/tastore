@@ -31,7 +31,7 @@ type CartItem = {
 export default function CreateOrderScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { role, adminPassword, staffToken } = useAuthStore();
+  const { role } = useAuthStore();
   const isAdmin = role === "admin";
 
   // Customer

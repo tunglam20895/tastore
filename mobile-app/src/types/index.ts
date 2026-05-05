@@ -135,7 +135,7 @@ export type OrderNotif = {
 
 export type AuthSession = {
   role: 'admin' | 'staff';
-  adminPassword?: string;
+  adminToken?: string;
   staffToken?: string;
   staffQuyen?: string[];
   staffTen?: string;

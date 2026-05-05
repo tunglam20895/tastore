@@ -19,8 +19,8 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use((config) => {
   const state = useAuthStore.getState();
 
-  if (state.role === 'admin' && state.adminPassword) {
-    config.headers['x-admin-password'] = state.adminPassword;
+  if (state.role === 'admin' && state.adminToken) {
+    config.headers['admin-token'] = state.adminToken;
   } else if (state.role === 'staff' && state.staffToken) {
     config.headers['staff-token'] = state.staffToken;
   }

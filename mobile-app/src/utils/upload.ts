@@ -52,8 +52,8 @@ export async function uploadImage(
     xhr.open('POST', url);
 
     // Set auth headers
-    if (state.role === 'admin' && state.adminPassword) {
-      xhr.setRequestHeader('x-admin-password', state.adminPassword);
+    if (state.role === 'admin' && state.adminToken) {
+      xhr.setRequestHeader('admin-token', state.adminToken);
     } else if (state.role === 'staff' && state.staffToken) {
       xhr.setRequestHeader('staff-token', state.staffToken);
     }
