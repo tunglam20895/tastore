@@ -14,136 +14,55 @@ import { colors, spacing, typography, borderRadius, shadows } from '../../../src
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { getOrders } from '@/src/api/don-hang';
-import { getProducts } from '@/src/api/san-pham';
+import { getDashboardStats } from '@/src/api/thong-ke';
 import { NotificationContext } from '@/src/hooks/useNotifications';
 import { formatMoney, formatDate } from '@/src/utils/format';
 import type { OrderNotif } from '@/src/types';
 import { useRequireQuyen } from '@/src/hooks/useRequireQuyen';
 
-const today = new Date();
-const todayStr = today.toISOString().slice(0, 10); // yyyy-MM-dd
-const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
-
 export default function DashboardScreen() {
   useRequireQuyen('dashboard');
   const router = useRouter();
 
-  // Lấy đơn hàng tháng này để tính doanh thu + đơn hôm nay
-  const { data: ordersData, isLoading: loadingOrders } = useQuery({
-    queryKey: ['dashboard', 'orders-month'],
-    queryFn: () => getOrders({ page: 1, limit: 500, tu_ngay: firstDayOfMonth }),
+  const { data: dashboardData, isLoading: loadingDashboard } = useQuery({
+    queryKey: ['dashboard', 'thong-ke'],
+    queryFn: () => getDashboardStats(),
     staleTime: 2 * 60 * 1000,
-  });
-
-  // Lấy sản phẩm để tính tồn kho
-  const { data: sanPhamData, isLoading: loadingSP } = useQuery({
-    queryKey: ['dashboard', 'san-pham'],
-    queryFn: () => getProducts({ page: 1, limit: 500 }),
-    staleTime: 5 * 60 * 1000,
   });
 
   // Lấy thông báo từ Context (đã được polling sẵn trong _layout)
   const notifCtx = useContext(NotificationContext);
   const loadingNotif = notifCtx?.loading ?? false;
 
-  // Tính toán thống kê từ dữ liệu API
   const stats = useMemo(() => {
-    const rawOrders: any[] = Array.isArray(ordersData?.data)
-      ? ordersData.data
-      : Array.isArray(ordersData)
-      ? ordersData
-      : [];
-
-    const rawProducts: any[] = Array.isArray(sanPhamData?.data)
-      ? sanPhamData.data
-      : Array.isArray(sanPhamData)
-      ? sanPhamData
-      : [];
-
-    // Đơn hôm nay
-    const donHomNay = rawOrders.filter((o: any) => {
-      if (!o.thoiGian) return false;
-      return o.thoiGian.slice(0, 10) === todayStr;
-    }).length;
-
-    // Doanh thu tháng (chỉ tính đơn Đã giao)
-    const doanhThuThang = rawOrders
-      .filter((o: any) => o.trangThai === 'Đã giao')
-      .reduce((sum: number, o: any) => sum + (o.tongTien || 0), 0);
-
-    // Tổng đơn tháng
-    const tongDonThang = rawOrders.length;
-
-    // Sản phẩm
-    const soSanPham = sanPhamData?.total ?? rawProducts.length ?? 0;
-    const sanPhamHetHang = rawProducts.filter((p: any) => (p.soLuong ?? 0) === 0).length;
-    const sanPhamSapHet = rawProducts.filter((p: any) => {
-      const sl = p.soLuong ?? 0;
-      return sl > 0 && sl <= 10;
-    }).length;
-    const tongTonKho = rawProducts.reduce((sum: number, p: any) => sum + (p.soLuong || 0), 0);
-
-    // Top 5 sản phẩm bán chạy (chỉ tính đơn Đã giao)
-    const productSales: Record<string, { ten: string; anhURL?: string; soLuong: number; doanhThu: number }> = {};
-    rawOrders.filter((o) => o.trangThai === 'Đã giao').forEach((o) => {
-      (o.sanPham || []).forEach((sp: any) => {
-        const id = sp.id || sp.ten;
-        if (!productSales[id]) {
-          productSales[id] = { ten: sp.ten || 'Sản phẩm', anhURL: sp.anhURL, soLuong: 0, doanhThu: 0 };
-        }
-        productSales[id].soLuong += sp.soLuong || 1;
-        productSales[id].doanhThu += (sp.giaHienThi || sp.gia || 0) * (sp.soLuong || 1);
-      });
-    });
-    const topProducts = Object.values(productSales)
-      .sort((a, b) => b.soLuong - a.soLuong)
-      .slice(0, 5);
-
-    // Top 5 khách hàng (theo doanh thu, đơn Đã giao)
-    const customerStats: Record<string, { ten: string; sdt: string; soDon: number; doanhThu: number }> = {};
-    rawOrders.filter((o) => o.trangThai === 'Đã giao').forEach((o) => {
-      const key = o.sdt || o.tenKH || 'unknown';
-      if (!customerStats[key]) {
-        customerStats[key] = { ten: o.tenKH || 'Khách lẻ', sdt: o.sdt || '', soDon: 0, doanhThu: 0 };
-      }
-      customerStats[key].soDon += 1;
-      customerStats[key].doanhThu += o.tongTien || 0;
-    });
-    const topCustomers = Object.values(customerStats)
-      .sort((a, b) => b.doanhThu - a.doanhThu)
-      .slice(0, 5);
-
-    // Doanh thu 7 ngày gần nhất
-    const last7Days: { day: string; doanhThu: number; soDon: number }[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dayStr = d.toISOString().slice(0, 10);
-      const dayOrders = rawOrders.filter((o) => o.thoiGian?.slice(0, 10) === dayStr);
-      const doanhThu = dayOrders
-        .filter((o) => o.trangThai === 'Đã giao')
-        .reduce((s, o) => s + (o.tongTien || 0), 0);
-      last7Days.push({
-        day: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][d.getDay()],
-        doanhThu,
-        soDon: dayOrders.length,
-      });
-    }
+    const data = dashboardData;
 
     return {
-      donHomNay,
-      doanhThuThang,
-      tongDonThang,
-      soSanPham,
-      sanPhamHetHang,
-      sanPhamSapHet,
-      tongTonKho,
-      topProducts,
-      topCustomers,
-      last7Days,
+      donHomNay: data?.donHang.homNay ?? 0,
+      doanhThuThang: data?.doanhThu.thangNay ?? 0,
+      tongDonThang: data?.donHang.tongCong ?? 0,
+      soSanPham: data?.sanPham.dangBan ?? 0,
+      sanPhamHetHang: data?.sanPham.hetHang ?? 0,
+      sanPhamSapHet: 0,
+      tongTonKho: 0,
+      topProducts: (data?.sanPham.topBanChay ?? []).map((p) => ({
+        ten: p.ten,
+        soLuong: p.soLuong,
+        doanhThu: 0,
+      })),
+      topCustomers: (data?.khachHang.topKhachHang ?? []).map((c) => ({
+        ten: c.ten,
+        sdt: c.sdt,
+        soDon: c.tongDon,
+        doanhThu: c.tongDoanhThu,
+      })),
+      last7Days: (data?.donHangChart ?? []).map((d) => ({
+        day: d.ngay,
+        doanhThu: 0,
+        soDon: d.don,
+      })),
     };
-  }, [ordersData, sanPhamData]);
+  }, [dashboardData]);
 
   // Hoạt động gần đây từ NotificationContext (đã normalize sẵn)
   const recentActivities: OrderNotif[] = useMemo(() => {
@@ -177,7 +96,7 @@ export default function DashboardScreen() {
     return parts.join(' • ') || '—';
   };
 
-  const isLoading = loadingOrders || loadingSP;
+  const isLoading = loadingDashboard;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -260,7 +179,7 @@ export default function DashboardScreen() {
               </View>
               <View style={styles.productInfo}>
                 <Text style={styles.productLabel}>Sản phẩm đang bán</Text>
-                {loadingSP ? (
+                {loadingDashboard ? (
                   <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 4 }} />
                 ) : (
                   <Text style={styles.productValue}>{stats.soSanPham} mặt hàng</Text>
@@ -294,18 +213,18 @@ export default function DashboardScreen() {
         <View style={styles.chartSection}>
           <View style={styles.chartHeader}>
             <View>
-              <Text style={styles.chartTitle}>Doanh thu 7 ngày</Text>
+              <Text style={styles.chartTitle}>Đơn hàng 7 ngày</Text>
               <Text style={styles.chartSubtitle}>
-                Tổng: {formatMoney(stats.last7Days.reduce((s, d) => s + d.doanhThu, 0))}
+                Tổng: {stats.last7Days.reduce((s, d) => s + d.soDon, 0)} đơn
               </Text>
             </View>
           </View>
           {(() => {
-            const maxRevenue = Math.max(...stats.last7Days.map((d) => d.doanhThu), 1);
+            const maxOrders = Math.max(...stats.last7Days.map((d) => d.soDon), 1);
             return (
               <View style={styles.barChart}>
                 {stats.last7Days.map((d, i) => {
-                  const heightPct = (d.doanhThu / maxRevenue) * 100;
+                  const heightPct = (d.soDon / maxOrders) * 100;
                   return (
                     <View key={i} style={styles.barColumn}>
                       <View style={styles.barWrapper}>
@@ -314,15 +233,13 @@ export default function DashboardScreen() {
                             styles.bar,
                             {
                               height: `${Math.max(heightPct, 3)}%`,
-                              backgroundColor: d.doanhThu > 0 ? colors.primary : colors['surface-container'],
+                              backgroundColor: d.soDon > 0 ? colors.primary : colors['surface-container'],
                             },
                           ]}
                         />
                       </View>
                       <Text style={styles.barLabel}>{d.day}</Text>
-                      <Text style={styles.barValue}>
-                        {d.doanhThu > 0 ? `${Math.round(d.doanhThu / 1000)}k` : '—'}
-                      </Text>
+                      <Text style={styles.barValue}>{d.soDon > 0 ? `${d.soDon}` : '—'}</Text>
                     </View>
                   );
                 })}
@@ -350,7 +267,7 @@ export default function DashboardScreen() {
                   </View>
                   <View style={styles.rankInfo}>
                     <Text style={styles.rankName} numberOfLines={1}>{p.ten}</Text>
-                    <Text style={styles.rankSub}>{p.soLuong} đã bán · {formatMoney(p.doanhThu)}</Text>
+                    <Text style={styles.rankSub}>{p.soLuong} đã bán</Text>
                   </View>
                 </View>
               ))
