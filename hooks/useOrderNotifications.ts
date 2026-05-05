@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { supabaseClient } from "@/lib/supabase-client";
 
 export type NotifType = "don_moi" | "chuyen_trang_thai";
 
@@ -19,138 +18,141 @@ export interface OrderNotif {
   thoiGian: string;
 }
 
+type RealtimeConfig = {
+  enabled: boolean;
+  provider: "pusher" | null;
+  key: string | null;
+  cluster: string | null;
+  notificationsChannel: string | null;
+};
+
 const LAST_READ_KEY = "admin-notif-last-read";
 
-function mapRow(row: Record<string, unknown>): OrderNotif {
-  return {
-    id: row.id as string,
-    loai: (row.loai as NotifType) || "don_moi",
-    donHangId: (row.don_hang_id as string) || "",
-    tenKH: (row.ten_kh as string) || "",
-    tenSP: (row.ten_sp as string) || "",
-    tongTien: Number(row.tong_tien ?? 0),
-    nguoiXuLy: row.nguoi_xu_ly as string | undefined,
-    trangThaiCu: row.trang_thai_cu as string | undefined,
-    trangThaiMoi: (row.trang_thai_moi as string) || "",
-    daDoc: (row.da_doc as boolean) || false,
-    thoiGian: row.thoi_gian as string,
-  };
+function sortNotifs(items: OrderNotif[]) {
+  return [...items]
+    .sort((a, b) => new Date(b.thoiGian).getTime() - new Date(a.thoiGian).getTime())
+    .slice(0, 50);
 }
 
-/**
- * Hook quản lý thông báo — lắng nghe don_hang REALTIME TRỰC TIẾP (không qua trigger thong_bao)
- * 
- * Tại sao lắng nghe don_hang thay vì thong_bao?
- * - don_hang INSERT/UPDATE → broadcast realtime NGAY LẬP TỨC
- * - thong_bao → phải chờ trigger INSERT xong → thêm 1 bước trễ
- * 
- * Flow:
- * 1. Fetch danh sách từ /api/thong-bao (lịch sử, trạng thái đã đọc)
- * 2. Lắng nghe don_hang INSERT → thêm thông báo "đơn mới" ngay lập tức (local)
- * 3. Lắng nghe don_hang UPDATE → nếu trang_thai thay đổi → thêm "chuyển trạng thái" ngay (local)
- * 4. Polling 60s đồng bộ lại với server (backup + đánh dấu đã đọc)
- */
+async function getRealtimeConfig(): Promise<RealtimeConfig> {
+  const res = await fetch("/api/realtime-config", { cache: "no-store" });
+  const body = await res.json();
+  return body?.data || { enabled: false, provider: null, key: null, cluster: null, notificationsChannel: null };
+}
+
 export function useOrderNotifications() {
   const [notifs, setNotifs] = useState<OrderNotif[]>([]);
   const [lastRead, setLastRead] = useState<string>(() => {
     if (typeof window === "undefined") return new Date(0).toISOString();
     return localStorage.getItem(LAST_READ_KEY) || new Date(0).toISOString();
   });
+  const [realtimeStatus, setRealtimeStatus] = useState<"idle" | "connecting" | "connected" | "fallback">("idle");
 
-  const adminPassword = useRef<string>("");
-  useEffect(() => {
-    adminPassword.current = localStorage.getItem("admin-password") || "";
-  }, []);
+  const isFirstFetchRef = useRef(true);
+  const knownIdsRef = useRef<Set<string>>(new Set());
+  const pusherRef = useRef<any>(null);
+  const channelRef = useRef<any>(null);
+  const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const backupIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchNotifs = useCallback(async () => {
     try {
       const res = await fetch("/api/thong-bao", {
-        headers: { "x-admin-password": adminPassword.current },
         cache: "no-store",
+        credentials: "same-origin",
       });
       const data = await res.json();
-      if (data.success) {
-        // Merge: cập nhật da_doc từ server nhưng GIỮ LẠI các notif realtime chưa có trong server
-        const serverNotifs = data.data as OrderNotif[];
-        setNotifs((prev) => {
-          // Tạo set các donHangId đã có trong server
-          const serverDonHangIds = new Set(serverNotifs.map((n) => n.donHangId + "_" + n.trangThaiMoi));
+      if (!data.success) return;
 
-          // Giữ lại các notif realtime chưa có trong server (đơn mới/chuyển trạng thái vừa xảy ra)
-          const realtimeOnly = prev.filter((n) => !serverDonHangIds.has(n.donHangId + "_" + n.trangThaiMoi));
-
-          return [...serverNotifs, ...realtimeOnly].slice(0, 50);
-        });
-      }
+      const serverNotifs = sortNotifs(data.data as OrderNotif[]);
+      setNotifs(serverNotifs);
+      knownIdsRef.current = new Set(serverNotifs.map((n) => n.id));
+      if (isFirstFetchRef.current) isFirstFetchRef.current = false;
     } catch {
       // ignore
     }
   }, []);
 
+  const scheduleSync = useCallback(() => {
+    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+    syncTimeoutRef.current = setTimeout(() => {
+      fetchNotifs();
+    }, 250);
+  }, [fetchNotifs]);
+
   useEffect(() => {
-    adminPassword.current = localStorage.getItem("admin-password") || "";
-    fetchNotifs();
+    let cancelled = false;
 
-    // === LẮNG NGHE DON_HANG TRỰC TIẾP — NHẬN NGAY LẬP TỨC ===
-    const channel = supabaseClient
-      .channel("don-hang-notif-realtime")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "don_hang" },
-        (payload) => {
-          const row = payload.new as Record<string, unknown>;
-          const items = (row.san_pham as Array<{ ten: string }>) || [];
-          const newNotif: OrderNotif = {
-            id: crypto.randomUUID(),
-            loai: "don_moi",
-            donHangId: row.id as string,
-            tenKH: row.ten_kh as string,
-            tenSP: items[0]?.ten || "",
-            tongTien: Number(row.tong_tien ?? 0),
-            trangThaiMoi: row.trang_thai as string,
-            daDoc: false,
-            thoiGian: row.thoi_gian as string,
-          };
-          setNotifs((prev) => [newNotif, ...prev].slice(0, 50));
+    const cleanup = () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+        syncTimeoutRef.current = null;
+      }
+      if (backupIntervalRef.current) {
+        clearInterval(backupIntervalRef.current);
+        backupIntervalRef.current = null;
+      }
+      if (channelRef.current && pusherRef.current) {
+        try {
+          pusherRef.current.unsubscribe(channelRef.current.name);
+        } catch {}
+      }
+      if (pusherRef.current) {
+        try {
+          pusherRef.current.disconnect();
+        } catch {}
+      }
+      channelRef.current = null;
+      pusherRef.current = null;
+    };
+
+    (async () => {
+      await fetchNotifs();
+      if (cancelled) return;
+
+      try {
+        const config = await getRealtimeConfig();
+        if (cancelled) return;
+
+        if (!config.enabled || !config.key || !config.cluster || !config.notificationsChannel) {
+          setRealtimeStatus("fallback");
+          backupIntervalRef.current = setInterval(fetchNotifs, 60_000);
+          return;
         }
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "don_hang" },
-        (payload) => {
-          const oldStatus = payload.old?.trang_thai as string | undefined;
-          const newStatus = payload.new?.trang_thai as string | undefined;
 
-          // Chỉ tạo thông báo khi trạng thái thay đổi
-          if (oldStatus && newStatus && oldStatus !== newStatus) {
-            const row = payload.new as Record<string, unknown>;
-            const items = (row.san_pham as Array<{ ten: string }>) || [];
-            const newNotif: OrderNotif = {
-              id: crypto.randomUUID(),
-              loai: "chuyen_trang_thai",
-              donHangId: row.id as string,
-              tenKH: row.ten_kh as string,
-              tenSP: items[0]?.ten || "",
-              nguoiXuLy: row.nguoi_xu_ly as string,
-              trangThaiCu: oldStatus,
-              trangThaiMoi: newStatus,
-              daDoc: false,
-              thoiGian: new Date().toISOString(),
-            };
-            setNotifs((prev) => [newNotif, ...prev].slice(0, 50));
-          }
-        }
-      )
-      .subscribe();
+        setRealtimeStatus("connecting");
+        const PusherModule = await import("pusher-js");
+        const Pusher = PusherModule.default;
+        const pusher = new Pusher(config.key, {
+          cluster: config.cluster,
+          forceTLS: true,
+          channelAuthorization: {
+            endpoint: "/api/pusher/auth",
+            transport: "ajax",
+          },
+        });
 
-    // Polling 60s đồng bộ lại với server (backup + cập nhật da_doc)
-    const interval = setInterval(fetchNotifs, 60_000);
+        pusher.connection.bind("connected", () => setRealtimeStatus("connected"));
+        pusher.connection.bind("error", () => setRealtimeStatus("fallback"));
+
+        const channel = pusher.subscribe(config.notificationsChannel);
+        channel.bind("pusher:subscription_error", () => setRealtimeStatus("fallback"));
+        channel.bind("notifications:sync", () => scheduleSync());
+
+        pusherRef.current = pusher;
+        channelRef.current = channel;
+        backupIntervalRef.current = setInterval(fetchNotifs, 300_000);
+      } catch {
+        setRealtimeStatus("fallback");
+        backupIntervalRef.current = setInterval(fetchNotifs, 60_000);
+      }
+    })();
 
     return () => {
-      supabaseClient.removeChannel(channel);
-      clearInterval(interval);
+      cancelled = true;
+      cleanup();
     };
-  }, [fetchNotifs]);
+  }, [fetchNotifs, scheduleSync]);
 
   const unreadCount = notifs.filter((n) => !n.daDoc).length;
 
@@ -158,33 +160,22 @@ export function useOrderNotifications() {
     const unread = notifs.filter((n) => !n.daDoc);
     if (unread.length === 0) return;
 
-    // Lọc ra các notif có id từ server (uuid hợp lệ)
-    const serverIds = unread
-      .filter((n) => /^[0-9a-f-]{36}$/i.test(n.id))
-      .map((n) => n.id);
-
-    // Đánh dấu đã đọc trên server (chỉ những id từ thong_bao)
-    if (serverIds.length > 0) {
-      try {
-        await fetch("/api/thong-bao", {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "x-admin-password": adminPassword.current,
-          },
-          body: JSON.stringify({ ids: serverIds }),
-        });
-      } catch {
-        // ignore
-      }
+    try {
+      await fetch("/api/thong-bao", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ markAll: true }),
+      });
+    } catch {
+      // ignore
     }
 
-    // Cập nhật UI ngay lập tức
     const now = new Date().toISOString();
     localStorage.setItem(LAST_READ_KEY, now);
     setLastRead(now);
     setNotifs((prev) => prev.map((n) => ({ ...n, daDoc: true })));
   }, [notifs]);
 
-  return { notifs, unreadCount, markAllRead, lastRead, refresh: fetchNotifs };
+  return { notifs, unreadCount, markAllRead, lastRead, refresh: fetchNotifs, realtimeStatus };
 }
