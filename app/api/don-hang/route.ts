@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { appendDonHangToSheet } from '@/lib/google-sheets'
 import { sendOrderNotification } from '@/lib/telegram'
 import { verifyAccess, getAuthenticatedActorName } from '@/lib/auth'
+import { triggerNotificationSync } from '@/lib/pusher-server'
 import type { DonHang } from '@/types'
 import { CORS_HEADERS, handleOptions } from "@/lib/cors";
 
@@ -212,6 +213,12 @@ export async function POST(request: NextRequest) {
     Promise.allSettled([
       appendDonHangToSheet(donHang),
     ]).catch(() => {})
+
+    try {
+      await triggerNotificationSync('order_created')
+    } catch (notifyError) {
+      console.error('Pusher notify order_created error:', notifyError)
+    }
 
     return NextResponse.json({ success: true, data: donHang }, { headers: CORS_HEADERS })
   } catch (error) {

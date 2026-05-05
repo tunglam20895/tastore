@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { appendDonHangToSheet } from '@/lib/google-sheets'
 import { sendOrderNotification } from '@/lib/telegram'
 import { verifyAccess, getAuthenticatedActorName } from '@/lib/auth'
+import { triggerNotificationSync } from '@/lib/pusher-server'
 import type { DonHang } from '@/types'
 
 function mapRow(row: Record<string, unknown>): DonHang {
@@ -195,6 +196,12 @@ export async function POST(request: NextRequest) {
       appendDonHangToSheet(donHang),
       sendOrderNotification(donHang),
     ]).catch(() => {})
+
+    try {
+      await triggerNotificationSync('manual_order_created')
+    } catch (notifyError) {
+      console.error('Pusher notify manual_order_created error:', notifyError)
+    }
 
     return NextResponse.json({ success: true, data: donHang })
   } catch (error: unknown) {

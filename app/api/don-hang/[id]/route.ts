@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyAccess, getAuthenticatedActorName } from '@/lib/auth'
+import { triggerNotificationSync } from '@/lib/pusher-server'
 import type { DonHang, CartItem } from '@/types'
 import { CORS_HEADERS, handleOptions } from "@/lib/cors";
 
@@ -90,6 +91,13 @@ export async function PUT(
       .eq('id', params.id)
 
     if (error) throw error
+
+    try {
+      await triggerNotificationSync('order_status_updated')
+    } catch (notifyError) {
+      console.error('Pusher notify order_status_updated error:', notifyError)
+    }
+
     return NextResponse.json({ success: true }, { headers: CORS_HEADERS })
   } catch (error) {
     console.error('PUT /api/don-hang/[id] error:', error)

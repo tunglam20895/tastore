@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { hasAdminAccess } from '@/lib/auth'
 import { verifyStaffToken } from '@/lib/staff-auth'
+import { triggerNotificationSync } from '@/lib/pusher-server'
 import { CORS_HEADERS, handleOptions } from "@/lib/cors";
 export const dynamic = "force-dynamic";
 
@@ -45,7 +46,8 @@ export async function GET(request: NextRequest) {
         loai: row.loai,
         donHangId: row.don_hang_id,
         tenKH: row.ten_kh,
-        tenSP: row.ten_sp,
+        tenSP: row.san_pham_tom_tat,
+        tongTien: row.tong_tien,
         nguoiXuLy: row.nguoi_xu_ly,
         trangThaiCu: row.trang_thai_cu,
         trangThaiMoi: row.trang_thai_moi,
@@ -83,6 +85,13 @@ export async function PUT(request: NextRequest) {
     }
 
     if (error) throw error;
+
+    try {
+      await triggerNotificationSync(markAll || !ids || !Array.isArray(ids) || ids.length === 0 ? 'notifications_mark_all_read' : 'notifications_mark_read');
+    } catch (notifyError) {
+      console.error('Pusher notify notifications_read error:', notifyError);
+    }
+
     return NextResponse.json({ success: true }, { headers: CORS_HEADERS });
   } catch (e) {
     console.error('PUT /api/thong-bao error:', e);

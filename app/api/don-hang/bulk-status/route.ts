@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyAccess, getAuthenticatedActorName } from '@/lib/auth'
+import { triggerNotificationSync } from '@/lib/pusher-server'
 import type { DonHang } from '@/types'
 import { CORS_HEADERS, handleOptions } from "@/lib/cors";
 
@@ -33,6 +34,12 @@ export async function POST(request: NextRequest) {
       .in('id', ids)
 
     if (error) throw error
+
+    try {
+      await triggerNotificationSync('bulk_order_status_updated')
+    } catch (notifyError) {
+      console.error('Pusher notify bulk_order_status_updated error:', notifyError)
+    }
 
     return NextResponse.json({ success: true, updated: ids.length }, { headers: CORS_HEADERS })
   } catch (error) {
